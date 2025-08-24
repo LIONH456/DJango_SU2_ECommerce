@@ -1,0 +1,176 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block content %}
+<main class="content">
+    <div class="container-fluid p-0">
+
+        <h1 class="h3 mb-3">Slider Management</h1>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Sliders</h5>
+                        <div class="card-actions">
+                            <a href="{% url 'dashboard:slider_create' %}" class="btn btn-primary">
+                                <i class="align-middle" data-feather="plus"></i> Add New Slider
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }} alert-dismissible" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Order</th>
+                                        <th>Image</th>
+                                        <th>Title</th>
+                                        <th>Subtitle</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sliders-tbody">
+                                    {% for slider in sliders %}
+                                    <tr data-slider-id="{{ slider.id }}">
+                                        <td>{{ slider.order }}</td>
+                                        <td>
+                                            {% if slider.img %}
+                                                <img src="{{ slider.img }}" alt="{{ slider.title }}" style="width: 50px; height: 30px; object-fit: cover;">
+                                            {% else %}
+                                                <span class="text-muted">No image</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ slider.title|default:"-" }}</td>
+                                        <td>{{ slider.subtitle|default:"-" }}</td>
+                                        <td>
+                                            <span class="badge bg-{{ slider.status|yesno:'success,danger' }}" id="status-{{ slider.id }}">
+                                                {{ slider.status|title }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{% url 'dashboard:slider_edit' slider.id %}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="align-middle" data-feather="edit-2"></i>
+                                                </a>
+                                                <button class="btn btn-sm btn-outline-secondary toggle-status" data-slider-id="{{ slider.id }}">
+                                                    <i class="align-middle" data-feather="toggle-right"></i>
+                                                </button>
+                                                <a href="{% url 'dashboard:slider_delete' slider.id %}" class="btn btn-sm btn-outline-danger" 
+                                                   onclick="return confirm('Are you sure you want to delete this slider?')">
+                                                    <i class="align-middle" data-feather="trash-2"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="6" class="text-center">No sliders found. <a href="{% url 'dashboard:slider_create' %}">Create your first slider</a></td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Toggle slider status
+        document.querySelectorAll('.toggle-status').forEach(button => {
+            button.addEventListener('click', function() {
+                const sliderId = this.dataset.sliderId;
+                fetch(`/ecadmin/sliders/${sliderId}/toggle-status/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '',
+                        'Content-Type': 'application/json',
+                    },
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const statusBadge = document.getElementById(`status-${sliderId}`);
+                        statusBadge.textContent = data.status.charAt(0).toUpperCase() + data.status.slice(1);
+                        statusBadge.className = `badge bg-${data.status === 'active' ? 'success' : 'danger'}`;
+                    } else {
+                        alert('Error toggling status: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error toggling status');
+                });
+            });
+        });
+
+        // Make table rows sortable
+        const tbody = document.getElementById('sliders-tbody');
+        if (tbody) {
+            new Sortable(tbody, {
+                animation: 150,
+                onEnd: function(evt) {
+                    const items = [];
+                    document.querySelectorAll('#sliders-tbody tr').forEach((row, index) => {
+                        const sliderId = row.dataset.sliderId;
+                        if (sliderId) {
+                            items.push({
+                                id: parseInt(sliderId),
+                                order: index + 1  // Start from 1, not 0
+                            });
+                        }
+                    });
+
+                    // Update order numbers in the table immediately
+                    document.querySelectorAll('#sliders-tbody tr').forEach((row, index) => {
+                        const orderCell = row.querySelector('td:first-child');
+                        if (orderCell) {
+                            orderCell.textContent = index + 1;
+                        }
+                    });
+
+                    fetch('/ecadmin/sliders/reorder/', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '',
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ items: items })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.success) {
+                            alert('Error reordering sliders: ' + data.error);
+                            // Reload page if there's an error to restore original order
+                            location.reload();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Error reordering sliders');
+                        // Reload page if there's an error to restore original order
+                        location.reload();
+                    });
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

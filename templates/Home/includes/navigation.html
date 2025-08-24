@@ -1,0 +1,28 @@
+<!-- Secondary Navigation -->
+<nav class="breadcrumb-nav" aria-label="breadcrumb">
+    <div class="container">
+        <ol class="breadcrumb">
+            {% block breadcrumb %}
+                            <li class="breadcrumb-item"><a href="{% url 'main:home' %}">Home</a></li>
+            {% endblock %}
+        </ol>
+    </div>
+</nav>
+
+<!-- Category Navigation -->
+<div class="category-nav">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <ul class="category-menu">
+                                            <li><a href="{% url 'main:shop' %}?category=women">Women's Fashion</a></li>
+                        <li><a href="{% url 'main:shop' %}?category=men">Men's Fashion</a></li>
+                        <li><a href="{% url 'main:shop' %}?category=accessories">Accessories</a></li>
+                        <li><a href="{% url 'main:shop' %}?category=shoes">Shoes</a></li>
+                        <li><a href="{% url 'main:shop' %}?category=bags">Bags</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+

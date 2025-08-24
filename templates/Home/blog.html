@@ -1,0 +1,360 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block title %}Blog | Fashion{% endblock %}
+{% block meta_description %}Read our latest fashion blog posts and articles{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'main:home' %}">Home</a></li>
+<li class="breadcrumb-item active" aria-current="page">Blog</li>
+{% endblock %}
+
+{% block content %}
+<!-- Blog Section -->
+<section class="blog-area section-padding30">
+    <div class="container">
+        <div class="row">
+            <!-- Blog Posts -->
+            <div class="col-lg-8 col-md-12">
+                <div class="blog-posts">
+                    {% for post in blog_posts %}
+                    <article class="blog-post mb-50">
+                        <div class="post-image mb-30">
+                            <a href="{% url 'main:blog_details' post.slug %}">
+                                <img src="{{ post.featured_image.url }}" alt="{{ post.title }}" class="img-fluid">
+                            </a>
+                        </div>
+                        
+                        <div class="post-content">
+                            <div class="post-meta mb-20">
+                                <span class="post-date">
+                                    <i class="far fa-calendar-alt"></i> {{ post.published_date|date:"M d, Y" }}
+                                </span>
+                                <span class="post-author">
+                                    <i class="far fa-user"></i> {{ post.author.get_full_name|default:post.author.username }}
+                                </span>
+                                <span class="post-category">
+                                    <i class="far fa-folder"></i> {{ post.category.name }}
+                                </span>
+                            </div>
+                            
+                            <h2 class="post-title mb-20">
+                                <a href="{% url 'main:blog_details' post.slug %}">{{ post.title }}</a>
+                            </h2>
+                            
+                            <div class="post-excerpt mb-20">
+                                <p>{{ post.excerpt|default:post.content|truncatewords:30 }}</p>
+                            </div>
+                            
+                            <div class="post-footer">
+                                <a href="{% url 'main:blog_details' post.slug %}" class="btn btn-outline-primary">Read More</a>
+                                <div class="post-stats">
+                                    <span class="post-views">
+                                        <i class="far fa-eye"></i> {{ post.views }} views
+                                    </span>
+                                    <span class="post-comments">
+                                        <i class="far fa-comments"></i> {{ post.comments.count }} comments
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+                    {% empty %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-blog fa-3x text-muted mb-3"></i>
+                        <h4>No blog posts yet</h4>
+                        <p class="text-muted">Check back soon for our latest fashion insights and tips.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Pagination -->
+                {% if blog_posts.has_other_pages %}
+                <div class="pagination-area">
+                    <nav aria-label="Blog pagination">
+                        <ul class="pagination justify-content-center">
+                            {% if blog_posts.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ blog_posts.previous_page_number }}">Previous</a>
+                            </li>
+                            {% endif %}
+
+                            {% for num in blog_posts.paginator.page_range %}
+                            <li class="page-item {% if blog_posts.number == num %}active{% endif %}">
+                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                            </li>
+                            {% endfor %}
+
+                            {% if blog_posts.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ blog_posts.next_page_number }}">Next</a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Blog Sidebar -->
+            <div class="col-lg-4 col-md-12">
+                <div class="blog-sidebar">
+                    <!-- Search Widget -->
+                    <div class="sidebar-widget mb-30">
+                        <h4>Search Blog</h4>
+                        <form class="search-form">
+                            <div class="input-group">
+                                <input type="text" class="form-control" placeholder="Search posts...">
+                                <div class="input-group-append">
+                                    <button class="btn btn-primary" type="submit">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Categories Widget -->
+                    <div class="sidebar-widget mb-30">
+                        <h4>Categories</h4>
+                        <ul class="category-list">
+                            {% for category in blog_categories %}
+                            <li>
+                                <a href="{% url 'main:blog' %}?category={{ category.slug }}">
+                                    {{ category.name }}
+                                    <span class="count">({{ category.post_count }})</span>
+                                </a>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <!-- Recent Posts Widget -->
+                    <div class="sidebar-widget mb-30">
+                        <h4>Recent Posts</h4>
+                        {% for post in recent_posts %}
+                        <div class="recent-post-item mb-20">
+                            <div class="row">
+                                <div class="col-4">
+                                    <img src="{{ post.featured_image.url }}" alt="{{ post.title }}" class="img-fluid rounded">
+                                </div>
+                                <div class="col-8">
+                                    <h6><a href="{% url 'main:blog_details' post.slug %}">{{ post.title|truncatewords:8 }}</a></h6>
+                                    <small class="text-muted">{{ post.published_date|date:"M d, Y" }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Tags Widget -->
+                    <div class="sidebar-widget mb-30">
+                        <h4>Popular Tags</h4>
+                        <div class="tag-cloud">
+                            {% for tag in popular_tags %}
+                            <a href="{% url 'main:blog' %}?tag={{ tag.slug }}" class="tag-item">{{ tag.name }}</a>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Newsletter Widget -->
+                    <div class="sidebar-widget mb-30">
+                        <h4>Subscribe to Newsletter</h4>
+                        <p>Get the latest fashion tips and trends delivered to your inbox.</p>
+                        <form class="newsletter-form">
+                            <div class="form-group">
+                                <input type="email" class="form-control" placeholder="Enter your email">
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block">Subscribe</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.blog-post {
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+}
+
+.blog-post:hover {
+    transform: translateY(-5px);
+}
+
+.post-image img {
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+}
+
+.post-content {
+    padding: 30px;
+}
+
+.post-meta {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.post-meta span {
+    margin-right: 20px;
+}
+
+.post-meta i {
+    margin-right: 5px;
+    color: #007bff;
+}
+
+.post-title h2 {
+    font-size: 1.8rem;
+    margin-bottom: 15px;
+}
+
+.post-title a {
+    color: #333;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.post-title a:hover {
+    color: #007bff;
+}
+
+.post-excerpt p {
+    color: #666;
+    line-height: 1.6;
+}
+
+.post-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.post-stats {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.post-stats span {
+    margin-left: 15px;
+}
+
+.post-stats i {
+    margin-right: 5px;
+    color: #007bff;
+}
+
+.blog-sidebar {
+    position: sticky;
+    top: 20px;
+}
+
+.sidebar-widget {
+    background: #fff;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+}
+
+.sidebar-widget h4 {
+    color: #333;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #007bff;
+}
+
+.category-list {
+    list-style: none;
+    padding: 0;
+}
+
+.category-list li {
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.category-list li:last-child {
+    border-bottom: none;
+}
+
+.category-list a {
+    color: #333;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.category-list a:hover {
+    color: #007bff;
+}
+
+.category-list .count {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.recent-post-item h6 {
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+}
+
+.recent-post-item a {
+    color: #333;
+    text-decoration: none;
+}
+
+.recent-post-item a:hover {
+    color: #007bff;
+}
+
+.tag-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.tag-item {
+    background: #f8f9fa;
+    color: #666;
+    padding: 5px 12px;
+    border-radius: 20px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.tag-item:hover {
+    background: #007bff;
+    color: white;
+    text-decoration: none;
+}
+
+.newsletter-form .form-control {
+    margin-bottom: 15px;
+}
+
+.pagination-area {
+    margin-top: 50px;
+}
+
+.page-link {
+    color: #007bff;
+    border: 1px solid #007bff;
+}
+
+.page-item.active .page-link {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+</style>
+{% endblock %}

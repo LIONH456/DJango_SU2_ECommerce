@@ -1,0 +1,98 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block title %}Fashion | About Us{% endblock %}
+{% block meta_description %}Learn more about our fashion brand and mission{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'main:home' %}">Home</a></li>
+<li class="breadcrumb-item active" aria-current="page">About</li>
+{% endblock %}
+
+{% block content %}
+<!-- About Section -->
+<section class="about-area section-padding30">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6 col-md-12">
+                <div class="about-img">
+                    <img src="{% static 'main/img/gallery/about1.png' %}" alt="About Us">
+                </div>
+            </div>
+            <div class="col-lg-6 col-md-12">
+                <div class="about-caption">
+                    <div class="section-tittle mb-30">
+                        <h2>About Our Fashion Brand</h2>
+                    </div>
+                    <p class="mb-25">We are passionate about bringing you the latest trends in fashion while maintaining the highest quality standards. Our collection is carefully curated to meet the diverse needs of our customers.</p>
+                    <p class="mb-25">Founded with a vision to make fashion accessible to everyone, we have been serving our customers with dedication and style for years.</p>
+                    <div class="about-features">
+                        <div class="single-features">
+                            <i class="fas fa-check"></i>
+                            <span>Quality Materials</span>
+                        </div>
+                        <div class="single-features">
+                            <i class="fas fa-check"></i>
+                            <span>Latest Trends</span>
+                        </div>
+                        <div class="single-features">
+                            <i class="fas fa-check"></i>
+                            <span>Customer Satisfaction</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Team Section -->
+<section class="team-area section-padding30">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-xl-7 col-lg-8 col-md-10">
+                <div class="section-tittle text-center mb-90">
+                    <h2>Our Team</h2>
+                    <p>Meet the creative minds behind our fashion brand</p>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-4 col-md-6 col-sm-6">
+                <div class="single-team text-center mb-50">
+                    <div class="team-img">
+                        <img src="{% static 'main/img/gallery/team1.png' %}" alt="Team Member">
+                    </div>
+                    <div class="team-caption">
+                        <h4>John Doe</h4>
+                        <p>Creative Director</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6 col-sm-6">
+                <div class="single-team text-center mb-50">
+                    <div class="team-img">
+                        <img src="{% static 'main/img/gallery/team2.png' %}" alt="Team Member">
+                    </div>
+                    <div class="team-caption">
+                        <h4>Jane Smith</h4>
+                        <p>Fashion Designer</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6 col-sm-6">
+                <div class="single-team text-center mb-50">
+                    <div class="team-img">
+                        <img src="{% static 'main/img/gallery/team3.png' %}" alt="Team Member">
+                    </div>
+                    <div class="team-caption">
+                        <h4>Mike Johnson</h4>
+                        <p>Marketing Manager</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+

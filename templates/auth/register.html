@@ -1,0 +1,280 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block title %}Register | Fashion{% endblock %}
+{% block meta_description %}Create a new account{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'main:home' %}">Home</a></li>
+<li class="breadcrumb-item active" aria-current="page">Register</li>
+{% endblock %}
+
+{% block content %}
+<!-- Register Section -->
+<section class="register-area section-padding30">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 col-md-10">
+                <div class="register-form">
+                    <div class="form-header text-center mb-40">
+                        <h2>Create Your Account</h2>
+                        <p>Join us and start shopping for the latest fashion trends</p>
+                    </div>
+
+                    {% if messages %}
+                    <div class="messages">
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <form method="post" class="register-form">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-30">
+                                    <label for="first_name">First Name *</label>
+                                    <input type="text" class="form-control" id="first_name" name="first_name" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-30">
+                                    <label for="last_name">Last Name *</label>
+                                    <input type="text" class="form-control" id="last_name" name="last_name" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-30">
+                            <label for="email">Email Address *</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+
+                        <div class="form-group mb-30">
+                            <label for="username">Username *</label>
+                            <input type="text" class="form-control" id="username" name="username" required>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-30">
+                                    <label for="password1">Password *</label>
+                                    <input type="password" class="form-control" id="password1" name="password1" required>
+                                    <small class="form-text text-muted">Password must be at least 8 characters long</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-30">
+                                    <label for="password2">Confirm Password *</label>
+                                    <input type="password" class="form-control" id="password2" name="password2" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-30">
+                            <label for="phone">Phone Number</label>
+                            <input type="tel" class="form-control" id="phone" name="phone">
+                        </div>
+
+                        <div class="form-group mb-30">
+                            <label for="date_of_birth">Date of Birth</label>
+                            <input type="date" class="form-control" id="date_of_birth" name="date_of_birth">
+                        </div>
+
+                        <div class="form-group mb-30">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="newsletter" name="newsletter">
+                                <label class="form-check-label" for="newsletter">
+                                    Subscribe to our newsletter for updates and special offers
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-30">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="terms" name="terms" required>
+                                <label class="form-check-label" for="terms">
+                                    I agree to the <a href="#" target="_blank">Terms and Conditions</a> and <a href="#" target="_blank">Privacy Policy</a> *
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-30">
+                            <button type="submit" class="btn btn-primary btn-block btn-lg">
+                                <i class="fas fa-user-plus"></i> Create Account
+                            </button>
+                        </div>
+
+                        <div class="form-footer text-center">
+                            <p>Already have an account? <a href="{% url 'main:login' %}">Sign in here</a></p>
+                        </div>
+                    </form>
+
+                    <!-- Social Registration -->
+                    <div class="social-register mt-40">
+                        <div class="divider">
+                            <span>Or register with</span>
+                        </div>
+                        <div class="social-buttons">
+                                                    <a href="#" class="btn btn-outline-danger btn-block mb-20">
+                            <i class="fab fa-google"></i> Continue with Google
+                        </a>
+                        <a href="#" class="btn btn-outline-primary btn-block mb-20">
+                            <i class="fab fa-facebook-f"></i> Continue with Facebook
+                        </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.register-form {
+    background: #fff;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+}
+
+.form-header h2 {
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.form-header p {
+    color: #666;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: #333;
+}
+
+.form-control {
+    border: 2px solid #e1e1e1;
+    border-radius: 5px;
+    padding: 12px 15px;
+    transition: border-color 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+}
+
+.btn-primary {
+    background: #007bff;
+    border: none;
+    padding: 12px 30px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background: #0056b3;
+    transform: translateY(-2px);
+}
+
+.form-footer a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.form-footer a:hover {
+    text-decoration: underline;
+}
+
+.divider {
+    text-align: center;
+    margin: 30px 0;
+    position: relative;
+}
+
+.divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #e1e1e1;
+}
+
+.divider span {
+    background: #fff;
+    padding: 0 20px;
+    color: #666;
+    font-size: 14px;
+}
+
+.social-buttons .btn {
+    padding: 12px 20px;
+    font-weight: 600;
+    border-radius: 5px;
+}
+
+.form-text {
+    font-size: 12px;
+    color: #6c757d;
+}
+
+.form-check-label a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.form-check-label a:hover {
+    text-decoration: underline;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Password confirmation validation
+    $('#password2').on('input', function() {
+        var password1 = $('#password1').val();
+        var password2 = $(this).val();
+        
+        if (password1 !== password2) {
+            $(this).addClass('is-invalid');
+            $(this).removeClass('is-valid');
+        } else {
+            $(this).removeClass('is-invalid');
+            $(this).addClass('is-valid');
+        }
+    });
+
+    // Form submission validation
+    $('.register-form').on('submit', function(e) {
+        var password1 = $('#password1').val();
+        var password2 = $('#password2').val();
+        
+        if (password1 !== password2) {
+            e.preventDefault();
+            alert('Passwords do not match!');
+            return false;
+        }
+        
+        if (password1.length < 8) {
+            e.preventDefault();
+            alert('Password must be at least 8 characters long!');
+            return false;
+        }
+    });
+});
+</script>
+{% endblock %}
+

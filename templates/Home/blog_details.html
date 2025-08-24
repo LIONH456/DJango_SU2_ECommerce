@@ -1,0 +1,633 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block title %}{{ post.title|default:"Blog Post" }} | Fashion{% endblock %}
+{% block meta_description %}{{ post.excerpt|default:post.content|truncatewords:20 }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'main:home' %}">Home</a></li>
+<li class="breadcrumb-item"><a href="{% url 'main:blog' %}">Blog</a></li>
+<li class="breadcrumb-item active" aria-current="page">{{ post.title|default:"Blog Post" }}</li>
+{% endblock %}
+
+{% block content %}
+<!-- Blog Details Section -->
+<section class="blog-details-area section-padding30">
+    <div class="container">
+        <div class="row">
+            <!-- Blog Post Content -->
+            <div class="col-lg-8 col-md-12">
+                {% if post %}
+                <article class="blog-post-detail">
+                    <!-- Post Header -->
+                    <div class="post-header mb-40">
+                        <h1 class="post-title">{{ post.title }}</h1>
+                        <div class="post-meta">
+                            <span class="post-date">
+                                <i class="far fa-calendar-alt"></i> {{ post.published_date|date:"M d, Y" }}
+                            </span>
+                            <span class="post-author">
+                                <i class="far fa-user"></i> {{ post.author.get_full_name|default:post.author.username }}
+                            </span>
+                            <span class="post-category">
+                                <i class="far fa-folder"></i> {{ post.category.name }}
+                            </span>
+                            <span class="post-views">
+                                <i class="far fa-eye"></i> {{ post.views }} views
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Featured Image -->
+                    {% if post.featured_image %}
+                    <div class="post-featured-image mb-40">
+                        <img src="{{ post.featured_image.url }}" alt="{{ post.title }}" class="img-fluid">
+                    </div>
+                    {% endif %}
+
+                    <!-- Post Content -->
+                    <div class="post-content mb-40">
+                        {{ post.content|safe }}
+                    </div>
+
+                    <!-- Post Tags -->
+                    {% if post.tags.all %}
+                    <div class="post-tags mb-40">
+                        <h5>Tags:</h5>
+                        <div class="tag-cloud">
+                            {% for tag in post.tags.all %}
+                            <a href="{% url 'main:blog' %}?tag={{ tag.slug }}" class="tag-item">{{ tag.name }}</a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Post Share -->
+                    <div class="post-share mb-40">
+                        <h5>Share this post:</h5>
+                        <div class="social-share">
+                            <a href="#" class="share-btn facebook">
+                                <i class="fab fa-facebook-f"></i> Facebook
+                            </a>
+                            <a href="#" class="share-btn twitter">
+                                <i class="fab fa-twitter"></i> Twitter
+                            </a>
+                            <a href="#" class="share-btn linkedin">
+                                <i class="fab fa-linkedin-in"></i> LinkedIn
+                            </a>
+                            <a href="#" class="share-btn pinterest">
+                                <i class="fab fa-pinterest-p"></i> Pinterest
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Author Bio -->
+                    <div class="author-bio mb-40">
+                        <div class="author-info">
+                            <div class="author-avatar">
+                                {% if post.author.profile.avatar %}
+                                <img src="{{ post.author.profile.avatar.url }}" alt="{{ post.author.get_full_name }}" class="rounded-circle">
+                                {% else %}
+                                <div class="default-avatar rounded-circle d-flex align-items-center justify-content-center">
+                                    {{ post.author.first_name|first|upper }}{{ post.author.last_name|first|upper }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="author-details">
+                                <h5>About {{ post.author.get_full_name|default:post.author.username }}</h5>
+                                <p>{{ post.author.profile.bio|default:"This author hasn't written a bio yet." }}</p>
+                                <div class="author-social">
+                                    <a href="#"><i class="fab fa-twitter"></i></a>
+                                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+                                    <a href="#"><i class="fab fa-instagram"></i></a>
+                                    <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Comments Section -->
+                    <div class="comments-section mb-40">
+                        <h4>Comments ({{ post.comments.count }})</h4>
+                        
+                        {% if post.comments.all %}
+                        <div class="comments-list">
+                            {% for comment in post.comments.all %}
+                            <div class="comment-item mb-30">
+                                <div class="comment-avatar">
+                                    {% if comment.user.profile.avatar %}
+                                    <img src="{{ comment.user.profile.avatar.url }}" alt="{{ comment.user.get_full_name }}" class="rounded-circle">
+                                    {% else %}
+                                    <div class="default-avatar rounded-circle d-flex align-items-center justify-content-center">
+                                        {{ comment.user.first_name|first|upper }}{{ comment.user.last_name|first|upper }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="comment-content">
+                                    <div class="comment-header">
+                                        <h6>{{ comment.user.get_full_name|default:comment.user.username }}</h6>
+                                        <span class="comment-date">{{ comment.created_at|date:"M d, Y H:i" }}</span>
+                                    </div>
+                                    <p>{{ comment.content }}</p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-muted">No comments yet. Be the first to comment!</p>
+                        {% endif %}
+
+                        <!-- Comment Form -->
+                        {% if user.is_authenticated %}
+                        <div class="comment-form">
+                            <h5>Leave a Comment</h5>
+                            <form method="post" action="#">
+                                {% csrf_token %}
+                                <div class="form-group">
+                                    <textarea class="form-control" name="content" rows="4" placeholder="Write your comment here..." required></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Post Comment</button>
+                            </form>
+                        </div>
+                        {% else %}
+                        <div class="comment-login-prompt">
+                            <p>Please <a href="{% url 'main:login' %}">login</a> to leave a comment.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Navigation -->
+                    <div class="post-navigation">
+                        <div class="row">
+                            <div class="col-6">
+                                {% if post.previous_post %}
+                                <a href="{% url 'main:blog_details' post.previous_post.slug %}" class="nav-link prev">
+                                    <i class="fas fa-arrow-left"></i>
+                                    <span>Previous Post</span>
+                                    <h6>{{ post.previous_post.title|truncatewords:8 }}</h6>
+                                </a>
+                                {% endif %}
+                            </div>
+                            <div class="col-6 text-right">
+                                {% if post.next_post %}
+                                <a href="{% url 'main:blog_details' post.next_post.slug %}" class="nav-link next">
+                                    <span>Next Post</span>
+                                    <h6>{{ post.next_post.title|truncatewords:8 }}</h6>
+                                    <i class="fas fa-arrow-right"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </article>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                    <h4>Post Not Found</h4>
+                    <p class="text-muted">The blog post you're looking for doesn't exist or has been removed.</p>
+                                            <a href="{% url 'main:blog' %}" class="btn btn-primary">Back to Blog</a>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Blog Sidebar -->
+            <div class="col-lg-4 col-md-12">
+                <div class="blog-sidebar">
+                    <!-- Search Widget -->
+                    <div class="sidebar-widget mb-30">
+                        <h4>Search Blog</h4>
+                        <form class="search-form">
+                            <div class="input-group">
+                                <input type="text" class="form-control" placeholder="Search posts...">
+                                <div class="input-group-append">
+                                    <button class="btn btn-primary" type="submit">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Categories Widget -->
+                    <div class="sidebar-widget mb-30">
+                        <h4>Categories</h4>
+                        <ul class="category-list">
+                            {% for category in blog_categories %}
+                            <li>
+                                <a href="{% url 'main:blog' %}?category={{ category.slug }}">
+                                    {{ category.name }}
+                                    <span class="count">({{ category.post_count }})</span>
+                                </a>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <!-- Recent Posts Widget -->
+                    <div class="sidebar-widget mb-30">
+                        <h4>Recent Posts</h4>
+                        {% for post in recent_posts %}
+                        <div class="recent-post-item mb-20">
+                            <div class="row">
+                                <div class="col-4">
+                                    <img src="{{ post.featured_image.url }}" alt="{{ post.title }}" class="img-fluid rounded">
+                                </div>
+                                <div class="col-8">
+                                    <h6><a href="{% url 'main:blog_details' post.slug %}">{{ post.title|truncatewords:8 }}</a></h6>
+                                    <small class="text-muted">{{ post.published_date|date:"M d, Y" }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Tags Widget -->
+                    <div class="sidebar-widget mb-30">
+                        <h4>Popular Tags</h4>
+                        <div class="tag-cloud">
+                            {% for tag in popular_tags %}
+                            <a href="{% url 'main:blog' %}?tag={{ tag.slug }}" class="tag-item">{{ tag.name }}</a>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Newsletter Widget -->
+                    <div class="sidebar-widget mb-30">
+                        <h4>Subscribe to Newsletter</h4>
+                        <p>Get the latest fashion tips and trends delivered to your inbox.</p>
+                        <form class="newsletter-form">
+                            <div class="form-group">
+                                <input type="email" class="form-control" placeholder="Enter your email">
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block">Subscribe</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.blog-post-detail {
+    background: #fff;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+}
+
+.post-title {
+    font-size: 2.5rem;
+    color: #333;
+    margin-bottom: 20px;
+    line-height: 1.2;
+}
+
+.post-meta {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.post-meta span {
+    margin-right: 20px;
+}
+
+.post-meta i {
+    margin-right: 5px;
+    color: #007bff;
+}
+
+.post-featured-image img {
+    width: 100%;
+    border-radius: 8px;
+}
+
+.post-content {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #333;
+}
+
+.post-content h2, .post-content h3, .post-content h4 {
+    color: #333;
+    margin: 30px 0 15px 0;
+}
+
+.post-content p {
+    margin-bottom: 20px;
+}
+
+.post-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+.post-tags h5 {
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.tag-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.tag-item {
+    background: #f8f9fa;
+    color: #666;
+    padding: 5px 12px;
+    border-radius: 20px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.tag-item:hover {
+    background: #007bff;
+    color: white;
+    text-decoration: none;
+}
+
+.post-share h5 {
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.social-share {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.share-btn {
+    padding: 10px 20px;
+    border-radius: 25px;
+    text-decoration: none;
+    color: white;
+    font-weight: 600;
+    transition: transform 0.3s ease;
+}
+
+.share-btn:hover {
+    transform: translateY(-2px);
+    text-decoration: none;
+    color: white;
+}
+
+.share-btn.facebook { background: #3b5998; }
+.share-btn.twitter { background: #1da1f2; }
+.share-btn.linkedin { background: #0077b5; }
+.share-btn.pinterest { background: #bd081c; }
+
+.author-bio {
+    background: #f8f9fa;
+    padding: 30px;
+    border-radius: 8px;
+}
+
+.author-info {
+    display: flex;
+    align-items: flex-start;
+}
+
+.author-avatar {
+    margin-right: 20px;
+    flex-shrink: 0;
+}
+
+.author-avatar img,
+.author-avatar .default-avatar {
+    width: 80px;
+    height: 80px;
+}
+
+.default-avatar {
+    background: #007bff;
+    color: white;
+    font-size: 24px;
+}
+
+.author-details h5 {
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.author-details p {
+    color: #666;
+    margin-bottom: 15px;
+    line-height: 1.6;
+}
+
+.author-social a {
+    color: #666;
+    margin-right: 15px;
+    font-size: 1.2rem;
+    transition: color 0.3s ease;
+}
+
+.author-social a:hover {
+    color: #007bff;
+}
+
+.comments-section h4 {
+    color: #333;
+    margin-bottom: 30px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #007bff;
+}
+
+.comment-item {
+    display: flex;
+    align-items: flex-start;
+}
+
+.comment-avatar {
+    margin-right: 20px;
+    flex-shrink: 0;
+}
+
+.comment-avatar img,
+.comment-avatar .default-avatar {
+    width: 50px;
+    height: 50px;
+}
+
+.comment-content h6 {
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.comment-date {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.comment-content p {
+    color: #333;
+    line-height: 1.6;
+    margin-top: 10px;
+}
+
+.comment-form h5 {
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.comment-form .form-control {
+    border: 2px solid #e1e1e1;
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.comment-login-prompt {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.comment-login-prompt a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.post-navigation {
+    border-top: 1px solid #eee;
+    padding-top: 30px;
+}
+
+.nav-link {
+    display: block;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+    background: #e9ecef;
+    text-decoration: none;
+}
+
+.nav-link.prev {
+    text-align: left;
+}
+
+.nav-link.next {
+    text-align: right;
+}
+
+.nav-link span {
+    color: #666;
+    font-size: 0.9rem;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.nav-link h6 {
+    color: #333;
+    margin: 0;
+    font-size: 1rem;
+}
+
+.nav-link i {
+    color: #007bff;
+    margin: 0 10px;
+}
+
+.blog-sidebar {
+    position: sticky;
+    top: 20px;
+}
+
+.sidebar-widget {
+    background: #fff;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+}
+
+.sidebar-widget h4 {
+    color: #333;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #007bff;
+}
+
+.category-list {
+    list-style: none;
+    padding: 0;
+}
+
+.category-list li {
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.category-list li:last-child {
+    border-bottom: none;
+}
+
+.category-list a {
+    color: #333;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.category-list a:hover {
+    color: #007bff;
+}
+
+.category-list .count {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.recent-post-item h6 {
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+}
+
+.recent-post-item a {
+    color: #333;
+    text-decoration: none;
+}
+
+.recent-post-item a:hover {
+    color: #007bff;
+}
+
+.tag-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.tag-item {
+    background: #f8f9fa;
+    color: #666;
+    padding: 5px 12px;
+    border-radius: 20px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.tag-item:hover {
+    background: #007bff;
+    color: white;
+    text-decoration: none;
+}
+
+.newsletter-form .form-control {
+    margin-bottom: 15px;
+}
+</style>
+{% endblock %}

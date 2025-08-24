@@ -1,0 +1,159 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block title %}Fashion | Shop{% endblock %}
+{% block meta_description %}Browse our collection of fashion items{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'main:home' %}">Home</a></li>
+<li class="breadcrumb-item active" aria-current="page">Shop</li>
+{% endblock %}
+
+{% block content %}
+<!-- Shop Section -->
+<section class="shop-area section-padding30">
+    <div class="container">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-lg-3 col-md-4">
+                <div class="shop-sidebar">
+                    <!-- Category Filter -->
+                    <div class="sidebar-widget mb-50">
+                        <h3 class="widget-title">Categories</h3>
+                        <div class="widget-content">
+                            <ul class="category-list">
+                                <li><a href="{% url 'main:shop' %}">All Categories</a></li>
+                                <li><a href="{% url 'main:shop' %}?category=women">Women's Fashion</a></li>
+                                <li><a href="{% url 'main:shop' %}?category=men">Men's Fashion</a></li>
+                                <li><a href="{% url 'main:shop' %}?category=accessories">Accessories</a></li>
+                                <li><a href="{% url 'main:shop' %}?category=shoes">Shoes</a></li>
+                                <li><a href="{% url 'main:shop' %}?category=bags">Bags</a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Price Filter -->
+                    <div class="sidebar-widget mb-50">
+                        <h3 class="widget-title">Price Range</h3>
+                        <div class="widget-content">
+                            <div class="price-range">
+                                <input type="range" min="0" max="1000" class="price-slider" id="priceRange">
+                                <div class="price-values">
+                                    <span>$0</span>
+                                    <span>$1000</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Brand Filter -->
+                    <div class="sidebar-widget mb-50">
+                        <h3 class="widget-title">Brands</h3>
+                        <div class="widget-content">
+                            <ul class="brand-list">
+                                <li><input type="checkbox" id="brand1"> <label for="brand1">Brand A</label></li>
+                                <li><input type="checkbox" id="brand2"> <label for="brand2">Brand B</label></li>
+                                <li><input type="checkbox" id="brand3"> <label for="brand3">Brand C</label></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Grid -->
+            <div class="col-lg-9 col-md-8">
+                <!-- Sort and View Options -->
+                <div class="shop-top-bar mb-30">
+                    <div class="row align-items-center">
+                        <div class="col-lg-6 col-md-6">
+                            <div class="shop-top-bar-left">
+                                <p>Showing 1-12 of 36 results</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-6 col-md-6">
+                            <div class="shop-top-bar-right">
+                                <select class="form-control">
+                                    <option>Sort by: Featured</option>
+                                    <option>Price: Low to High</option>
+                                    <option>Price: High to Low</option>
+                                    <option>Newest First</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Products Grid -->
+                <div class="row">
+                    {% for product in products %}
+                    <div class="col-lg-4 col-md-6 col-sm-6">
+                        <div class="single-product mb-50">
+                            <div class="product-img">
+                                <img src="{{ product.image.url }}" alt="{{ product.name }}">
+                                <div class="product-overlay">
+                                    <div class="overlay-content">
+                                        <a href="{% url 'main:product_detail' product.id %}" class="btn btn-primary">View Details</a>
+                                        <button class="btn btn-secondary add-to-cart" data-product-id="{{ product.id }}">Add to Cart</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="product-caption text-center">
+                                <h4><a href="{% url 'main:product_detail' product.id %}">{{ product.name }}</a></h4>
+                                <div class="price">
+                                    <span class="current-price">${{ product.price }}</span>
+                                    {% if product.old_price %}
+                                    <span class="old-price">${{ product.old_price }}</span>
+                                    {% endif %}
+                                </div>
+                                <div class="rating">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="far fa-star"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-12">
+                        <div class="text-center">
+                            <h3>No products found</h3>
+                            <p>Try adjusting your search criteria or browse all categories.</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Pagination -->
+                {% if products.has_other_pages %}
+                <div class="pagination-area">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            {% if products.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ products.previous_page_number }}">Previous</a>
+                            </li>
+                            {% endif %}
+
+                            {% for num in products.paginator.page_range %}
+                            <li class="page-item {% if products.number == num %}active{% endif %}">
+                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                            </li>
+                            {% endfor %}
+
+                            {% if products.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ products.next_page_number }}">Next</a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+

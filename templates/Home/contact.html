@@ -1,0 +1,542 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block title %}Contact Us | Fashion{% endblock %}
+{% block meta_description %}Get in touch with us for any questions or support{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'main:home' %}">Home</a></li>
+<li class="breadcrumb-item active" aria-current="page">Contact</li>
+{% endblock %}
+
+{% block content %}
+<!-- Contact Section -->
+<section class="contact-area section-padding30">
+    <div class="container">
+        <div class="row">
+            <!-- Contact Information -->
+            <div class="col-lg-4 col-md-12">
+                <div class="contact-info">
+                    <div class="section-header mb-40">
+                        <h2>Get in Touch</h2>
+                        <p>We'd love to hear from you. Send us a message and we'll respond as soon as possible.</p>
+                    </div>
+
+                    <div class="contact-item mb-30">
+                        <div class="contact-icon">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <div class="contact-details">
+                            <h5>Address</h5>
+                            <p>67/A, Colorlib, Green road, NYC<br>New York, NY 10001</p>
+                        </div>
+                    </div>
+
+                    <div class="contact-item mb-30">
+                        <div class="contact-icon">
+                            <i class="fas fa-phone"></i>
+                        </div>
+                        <div class="contact-details">
+                            <h5>Phone</h5>
+                            <p>(89) 982-278 356</p>
+                            <p>(89) 982-278 357</p>
+                        </div>
+                    </div>
+
+                    <div class="contact-item mb-30">
+                        <div class="contact-icon">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                        <div class="contact-details">
+                            <h5>Email</h5>
+                            <p>demo@colorlib.com</p>
+                            <p>support@fashion.com</p>
+                        </div>
+                    </div>
+
+                    <div class="contact-item mb-30">
+                        <div class="contact-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="contact-details">
+                            <h5>Business Hours</h5>
+                            <p>Monday - Friday: 9:00 AM - 6:00 PM</p>
+                            <p>Saturday: 10:00 AM - 4:00 PM</p>
+                            <p>Sunday: Closed</p>
+                        </div>
+                    </div>
+
+                    <!-- Social Media -->
+                    <div class="social-links mt-40">
+                        <h5>Follow Us</h5>
+                        <div class="social-icons">
+                            <a href="#" class="social-icon"><i class="fab fa-facebook-f"></i></a>
+                            <a href="#" class="social-icon"><i class="fab fa-twitter"></i></a>
+                            <a href="#" class="social-icon"><i class="fab fa-instagram"></i></a>
+                            <a href="#" class="social-icon"><i class="fab fa-linkedin-in"></i></a>
+                            <a href="#" class="social-icon"><i class="fab fa-youtube"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Form -->
+            <div class="col-lg-8 col-md-12">
+                <div class="contact-form">
+                    <div class="form-header mb-30">
+                        <h3>Send us a Message</h3>
+                        <p>Fill out the form below and we'll get back to you as soon as possible.</p>
+                    </div>
+
+                    {% if messages %}
+                    <div class="messages mb-30">
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <form method="post" class="contact-form">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-20">
+                                    <label for="first_name">First Name *</label>
+                                    <input type="text" class="form-control" id="first_name" name="first_name" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-20">
+                                    <label for="last_name">Last Name *</label>
+                                    <input type="text" class="form-control" id="last_name" name="last_name" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-20">
+                                    <label for="email">Email Address *</label>
+                                    <input type="email" class="form-control" id="email" name="email" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-20">
+                                    <label for="phone">Phone Number</label>
+                                    <input type="tel" class="form-control" id="phone" name="phone">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-20">
+                            <label for="subject">Subject *</label>
+                            <select class="form-control" id="subject" name="subject" required>
+                                <option value="">Select a subject</option>
+                                <option value="general">General Inquiry</option>
+                                <option value="support">Customer Support</option>
+                                <option value="sales">Sales Question</option>
+                                <option value="partnership">Partnership</option>
+                                <option value="feedback">Feedback</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group mb-20">
+                            <label for="message">Message *</label>
+                            <textarea class="form-control" id="message" name="message" rows="6" required placeholder="Please describe your inquiry in detail..."></textarea>
+                        </div>
+
+                        <div class="form-group mb-20">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="newsletter" name="newsletter">
+                                <label class="form-check-label" for="newsletter">
+                                    Subscribe to our newsletter for updates and special offers
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-20">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="privacy" name="privacy" required>
+                                <label class="form-check-label" for="privacy">
+                                    I agree to the <a href="#" target="_blank">Privacy Policy</a> and consent to being contacted regarding my inquiry *
+                                </label>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-paper-plane"></i> Send Message
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Map Section -->
+<section class="map-section">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="map-container">
+                    <div class="map-placeholder">
+                        <div class="map-content text-center">
+                            <i class="fas fa-map fa-3x text-muted mb-3"></i>
+                            <h4>Interactive Map</h4>
+                            <p>Google Maps integration will be displayed here</p>
+                            <small>Add your Google Maps API key to show the actual map</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ Section -->
+<section class="faq-section section-padding30">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <div class="section-header text-center mb-50">
+                    <h2>Frequently Asked Questions</h2>
+                    <p>Find answers to common questions about our services</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div class="faq-accordion">
+                    <div class="accordion" id="faqAccordion">
+                        <div class="card">
+                            <div class="card-header" id="faq1">
+                                <h2 class="mb-0">
+                                    <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse1" aria-expanded="true" aria-controls="collapse1">
+                                        How can I track my order?
+                                    </button>
+                                </h2>
+                            </div>
+                            <div id="collapse1" class="collapse show" aria-labelledby="faq1" data-parent="#faqAccordion">
+                                <div class="card-body">
+                                    You can track your order by logging into your account and visiting the "My Orders" section. You'll also receive email updates with tracking information once your order ships.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header" id="faq2">
+                                <h2 class="mb-0">
+                                    <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#collapse2" aria-expanded="false" aria-controls="collapse2">
+                                        What is your return policy?
+                                    </button>
+                                </h2>
+                            </div>
+                            <div id="collapse2" class="collapse" aria-labelledby="faq2" data-parent="#faqAccordion">
+                                <div class="card-body">
+                                    We offer a 30-day return policy for most items. Products must be in their original condition with all tags attached. Please contact our customer service team to initiate a return.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header" id="faq3">
+                                <h2 class="mb-0">
+                                    <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#collapse3" aria-expanded="false" aria-controls="collapse3">
+                                        Do you ship internationally?
+                                    </button>
+                                </h2>
+                            </div>
+                            <div id="collapse3" class="collapse" aria-labelledby="faq3" data-parent="#faqAccordion">
+                                <div class="card-body">
+                                    Yes, we ship to most countries worldwide. Shipping costs and delivery times vary by location. You can check shipping options during checkout.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header" id="faq4">
+                                <h2 class="mb-0">
+                                    <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#collapse4" aria-expanded="false" aria-controls="collapse4">
+                                        How can I contact customer support?
+                                    </button>
+                                </h2>
+                            </div>
+                            <div id="collapse4" class="collapse" aria-labelledby="faq4" data-parent="#faqAccordion">
+                                <div class="card-body">
+                                    You can reach our customer support team through this contact form, by phone at (89) 982-278 356, or by email at support@fashion.com. We typically respond within 24 hours.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.contact-info {
+    background: #fff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    height: 100%;
+}
+
+.section-header h2 {
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.section-header p {
+    color: #666;
+    line-height: 1.6;
+}
+
+.contact-item {
+    display: flex;
+    align-items: flex-start;
+}
+
+.contact-icon {
+    background: #007bff;
+    color: white;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 20px;
+    flex-shrink: 0;
+}
+
+.contact-icon i {
+    font-size: 1.2rem;
+}
+
+.contact-details h5 {
+    color: #333;
+    margin-bottom: 8px;
+    font-size: 1.1rem;
+}
+
+.contact-details p {
+    color: #666;
+    margin-bottom: 5px;
+    line-height: 1.4;
+}
+
+.social-links h5 {
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.social-icons {
+    display: flex;
+    gap: 15px;
+}
+
+.social-icon {
+    background: #f8f9fa;
+    color: #666;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.social-icon:hover {
+    background: #007bff;
+    color: white;
+    transform: translateY(-2px);
+    text-decoration: none;
+}
+
+.contact-form {
+    background: #fff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+}
+
+.form-header h3 {
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.form-header p {
+    color: #666;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.form-control {
+    border: 2px solid #e1e1e1;
+    border-radius: 5px;
+    padding: 12px 15px;
+    transition: border-color 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+}
+
+.btn-primary {
+    background: #007bff;
+    border: none;
+    padding: 12px 30px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background: #0056b3;
+    transform: translateY(-2px);
+}
+
+.map-container {
+    height: 400px;
+    background: #f8f9fa;
+}
+
+.map-placeholder {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #e9ecef;
+    border: 2px dashed #dee2e6;
+}
+
+.map-content {
+    color: #6c757d;
+}
+
+.map-content h4 {
+    margin-bottom: 10px;
+}
+
+.faq-section {
+    background: #f8f9fa;
+}
+
+.section-header h2 {
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.section-header p {
+    color: #666;
+}
+
+.faq-accordion .card {
+    border: none;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.faq-accordion .card-header {
+    background: #fff;
+    border: none;
+    padding: 0;
+}
+
+.faq-accordion .btn-link {
+    color: #333;
+    text-decoration: none;
+    font-weight: 600;
+    width: 100%;
+    text-align: left;
+    padding: 20px;
+    border: none;
+    background: none;
+    transition: all 0.3s ease;
+}
+
+.faq-accordion .btn-link:hover {
+    color: #007bff;
+    text-decoration: none;
+    background: #f8f9fa;
+}
+
+.faq-accordion .btn-link:focus {
+    box-shadow: none;
+}
+
+.faq-accordion .card-body {
+    padding: 20px;
+    color: #666;
+    line-height: 1.6;
+}
+
+.alert {
+    border-radius: 8px;
+    border: none;
+}
+
+.alert-success {
+    background: #d4edda;
+    color: #155724;
+}
+
+.alert-danger {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.alert-info {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Form validation
+    $('.contact-form').on('submit', function(e) {
+        var required = $(this).find('[required]');
+        var valid = true;
+        
+        required.each(function() {
+            if (!$(this).val()) {
+                $(this).addClass('is-invalid');
+                valid = false;
+            } else {
+                $(this).removeClass('is-invalid');
+            }
+        });
+        
+        if (!valid) {
+            e.preventDefault();
+            alert('Please fill in all required fields.');
+        }
+    });
+    
+    // Remove validation styling on input
+    $('.form-control').on('input', function() {
+        $(this).removeClass('is-invalid');
+    });
+});
+</script>
+{% endblock %}

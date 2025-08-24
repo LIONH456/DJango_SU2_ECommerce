@@ -1,0 +1,291 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block title %}Shopping Cart | Fashion{% endblock %}
+{% block meta_description %}View and manage your shopping cart{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'main:home' %}">Home</a></li>
+<li class="breadcrumb-item"><a href="{% url 'main:shop' %}">Shop</a></li>
+<li class="breadcrumb-item active" aria-current="page">Cart</li>
+{% endblock %}
+
+{% block content %}
+<!-- Cart Section -->
+<section class="cart-area section-padding30">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <div class="cart-title">
+                    <h2>Shopping Cart</h2>
+                </div>
+            </div>
+        </div>
+
+        {% if cart_items %}
+        <div class="row">
+            <!-- Cart Items -->
+            <div class="col-lg-8 col-md-12">
+                <div class="cart-items">
+                    {% for item in cart_items %}
+                    <div class="cart-item mb-30" data-item-id="{{ item.id }}">
+                        <div class="row align-items-center">
+                            <div class="col-md-3 col-sm-4">
+                                <div class="cart-item-image">
+                                    <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="img-fluid">
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-sm-4">
+                                <div class="cart-item-details">
+                                    <h5><a href="{% url 'main:product_detail' item.product.id %}">{{ item.product.name }}</a></h5>
+                                    {% if item.variant %}
+                                    <p class="variant-info">
+                                        {% if item.variant.size %}Size: {{ item.variant.size.name }}{% endif %}
+                                        {% if item.variant.color %} | Color: {{ item.variant.color.name }}{% endif %}
+                                    </p>
+                                    {% endif %}
+                                    <div class="item-price">
+                                        <span class="current-price">${{ item.price }}</span>
+                                        {% if item.product.old_price %}
+                                        <span class="old-price">${{ item.product.old_price }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-sm-4">
+                                <div class="cart-item-actions">
+                                    <div class="quantity-controls">
+                                        <button type="button" class="qty-btn minus" data-item-id="{{ item.id }}">-</button>
+                                        <input type="number" value="{{ item.quantity }}" min="1" max="{{ item.product.stock }}" class="qty-input" data-item-id="{{ item.id }}">
+                                        <button type="button" class="qty-btn plus" data-item-id="{{ item.id }}">+</button>
+                                    </div>
+                                    <div class="item-total">
+                                        <span>Total: ${{ item.total_price }}</span>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-danger remove-item" data-item-id="{{ item.id }}">
+                                        <i class="fas fa-trash"></i> Remove
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Cart Actions -->
+                <div class="cart-actions mt-30">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <a href="{% url 'main:shop' %}" class="btn btn-outline-primary">
+                                <i class="fas fa-arrow-left"></i> Continue Shopping
+                            </a>
+                        </div>
+                        <div class="col-md-6 text-right">
+                            <button type="button" class="btn btn-outline-secondary" id="updateCart">
+                                <i class="fas fa-sync-alt"></i> Update Cart
+                            </button>
+                            <button type="button" class="btn btn-outline-danger" id="clearCart">
+                                <i class="fas fa-trash"></i> Clear Cart
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cart Summary -->
+            <div class="col-lg-4 col-md-12">
+                <div class="cart-summary">
+                    <div class="summary-header">
+                        <h4>Order Summary</h4>
+                    </div>
+                    <div class="summary-content">
+                        <div class="summary-row">
+                            <span>Subtotal:</span>
+                            <span>${{ cart_subtotal }}</span>
+                        </div>
+                        {% if cart_discount %}
+                        <div class="summary-row discount">
+                            <span>Discount:</span>
+                            <span>-${{ cart_discount }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="summary-row">
+                            <span>Shipping:</span>
+                            <span>${{ shipping_cost }}</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Tax:</span>
+                            <span>${{ tax_amount }}</span>
+                        </div>
+                        <hr>
+                        <div class="summary-row total">
+                            <span>Total:</span>
+                            <span>${{ cart_total }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Coupon Code -->
+                    <div class="coupon-section mt-30">
+                        <h5>Have a Coupon?</h5>
+                        <div class="coupon-form">
+                            <input type="text" class="form-control" id="couponCode" placeholder="Enter coupon code">
+                            <button type="button" class="btn btn-primary btn-sm" id="applyCoupon">Apply</button>
+                        </div>
+                    </div>
+
+                    <!-- Checkout Button -->
+                    <div class="checkout-section mt-30">
+                                                    <a href="#" class="btn btn-primary btn-lg btn-block">
+                            <i class="fas fa-lock"></i> Proceed to Checkout
+                        </a>
+                    </div>
+
+                    <!-- Payment Methods -->
+                    <div class="payment-methods mt-20">
+                        <h6>We Accept:</h6>
+                        <div class="payment-icons">
+                            <i class="fab fa-cc-visa"></i>
+                            <i class="fab fa-cc-mastercard"></i>
+                            <i class="fab fa-cc-amex"></i>
+                            <i class="fab fa-cc-paypal"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recommended Products -->
+        <div class="row mt-50">
+            <div class="col-12">
+                <div class="section-tittle text-center mb-50">
+                    <h2>You Might Also Like</h2>
+                </div>
+                <div class="row">
+                    {% for product in recommended_products %}
+                    <div class="col-lg-3 col-md-6 col-sm-6">
+                        <div class="single-product mb-30">
+                            <div class="product-img">
+                                <img src="{{ product.image.url }}" alt="{{ product.name }}">
+                                <div class="product-overlay">
+                                    <div class="overlay-content">
+                                        <a href="{% url 'main:product_detail' product.id %}" class="btn btn-primary">View Details</a>
+                                        <button class="btn btn-secondary add-to-cart" data-product-id="{{ product.id }}">Add to Cart</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="product-caption text-center">
+                                <h4><a href="{% url 'main:product_detail' product.id %}">{{ product.name }}</a></h4>
+                                <div class="price">
+                                    <span class="current-price">${{ product.price }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        {% else %}
+        <!-- Empty Cart -->
+        <div class="row">
+            <div class="col-12">
+                <div class="empty-cart text-center">
+                    <div class="empty-cart-icon mb-30">
+                        <i class="fas fa-shopping-cart fa-5x text-muted"></i>
+                    </div>
+                    <h3>Your cart is empty</h3>
+                    <p class="text-muted mb-30">Looks like you haven't added any items to your cart yet.</p>
+                                                <a href="{% url 'main:shop' %}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-shopping-bag"></i> Start Shopping
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Quantity controls
+    $('.qty-btn').click(function() {
+        var itemId = $(this).data('item-id');
+        var input = $('.qty-input[data-item-id="' + itemId + '"]');
+        var currentVal = parseInt(input.val());
+        
+        if ($(this).hasClass('plus')) {
+            input.val(currentVal + 1);
+        } else if ($(this).hasClass('minus') && currentVal > 1) {
+            input.val(currentVal - 1);
+        }
+    });
+
+    // Update cart
+    $('#updateCart').click(function() {
+        var updates = [];
+        $('.qty-input').each(function() {
+            updates.push({
+                item_id: $(this).data('item-id'),
+                quantity: $(this).val()
+            });
+        });
+        
+        // Send AJAX request to update cart
+        $.ajax({
+            url: '{% url "store:update_cart" %}',
+            method: 'POST',
+            data: {
+                updates: JSON.stringify(updates),
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            },
+            success: function(response) {
+                if (response.success) {
+                    location.reload();
+                }
+            }
+        });
+    });
+
+    // Remove item
+    $('.remove-item').click(function() {
+        var itemId = $(this).data('item-id');
+        
+        $.ajax({
+            url: '{% url "store:remove_from_cart" %}',
+            method: 'POST',
+            data: {
+                item_id: itemId,
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            },
+            success: function(response) {
+                if (response.success) {
+                    location.reload();
+                }
+            }
+        });
+    });
+
+    // Clear cart
+    $('#clearCart').click(function() {
+        if (confirm('Are you sure you want to clear your cart?')) {
+            $.ajax({
+                url: '{% url "store:clear_cart" %}',
+                method: 'POST',
+                data: {
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        location.reload();
+                    }
+                }
+            });
+        }
+    });
+});
+</script>
+{% endblock %}
+

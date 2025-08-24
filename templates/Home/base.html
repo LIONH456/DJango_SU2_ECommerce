@@ -1,0 +1,145 @@
+{% load static %}
+<!doctype html>
+<html class="no-js" lang="zxx">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>{% block title %}Fashion | Template{% endblock %}</title>
+    <meta name="description" content="{% block meta_description %}{% endblock %}">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="manifest" href="site.webmanifest">
+    <link rel="shortcut icon" type="image/x-icon" href="{% static 'main/img/favicon.ico' %}">
+
+    <!-- CSS here -->
+    <link rel="stylesheet" href="{% static 'main/css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'main/css/owl.carousel.min.css' %}">
+    <link rel="stylesheet" href="{% static 'main/css/slicknav.css' %}">
+    <link rel="stylesheet" href="{% static 'main/css/flaticon.css' %}">
+    <link rel="stylesheet" href="{% static 'main/css/progressbar_barfiller.css' %}">
+    <link rel="stylesheet" href="{% static 'main/css/gijgo.css' %}">
+    <link rel="stylesheet" href="{% static 'main/css/animate.min.css' %}">
+    <link rel="stylesheet" href="{% static 'main/css/animated-headline.css' %}">
+    <link rel="stylesheet" href="{% static 'main/css/magnific-popup.css' %}">
+    <link rel="stylesheet" href="{% static 'main/css/fontawesome-all.min.css' %}">
+    <link rel="stylesheet" href="{% static 'main/css/themify-icons.css' %}">
+    <link rel="stylesheet" href="{% static 'main/css/slick.css' %}">
+    <link rel="stylesheet" href="{% static 'main/css/nice-select.css' %}">
+    <link rel="stylesheet" href="{% static 'main/css/style.css' %}">
+    
+    <style>
+        /* Custom styles for dynamic sliders */
+        .single-slider {
+            background-size: cover !important;
+            background-position: center !important;
+            background-repeat: no-repeat !important;
+        }
+        
+        .hero__caption h1 {
+            color: #fff;
+            font-size: 60px;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            white-space: pre-line;
+        }
+        
+        .hero__caption p {
+            color: #fff;
+            font-size: 18px;
+            margin-bottom: 15px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        
+        .hero__caption .btn {
+            background: #ff2020;
+            color: #fff;
+            padding: 15px 30px;
+            border-radius: 5px;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        
+        .hero__caption .btn:hover {
+            background: #e01e1e;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 32, 32, 0.3);
+        }
+        
+        /* Fallback background for sliders without images */
+        .single-slider:not([style*="background-image"]) {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        /* Overlay for better text readability */
+        .hero-overly::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 1;
+        }
+        
+        .hero__caption {
+            position: relative;
+            z-index: 2;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .hero__caption h1 {
+                font-size: 40px;
+            }
+            .hero__caption p {
+                font-size: 16px;
+            }
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="full-wrapper">
+    <!-- ? Preloader Start -->
+    <div id="preloader-active">
+        <div class="preloader d-flex align-items-center justify-content-center">
+            <div class="preloader-inner position-relative">
+                <div class="preloader-circle"></div>
+                <div class="preloader-img pere-text">
+                    <img src="{% static 'main/img/logo/loder.png' %}" alt="">
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Preloader Start-->
+    
+    {% include 'Home/includes/header.html' %}
+    
+    {% block content %}{% endblock %}
+    
+    {% include 'Home/includes/footer.html' %}
+    
+    <!--? Search model Begin -->
+    <div class="search-model-box">
+        <div class="h-100 d-flex align-items-center justify-content-center">
+            <div class="search-close-btn">+</div>
+            <form class="search-model-form">
+                <input type="text" id="search-input" placeholder="Searching key.....">
+            </form>
+        </div>
+    </div>
+    <!-- Search model end -->
+    
+    <!-- Scroll Up -->
+    <div id="back-top" >
+        <a title="Go to Top" href="#"> <i class="fas fa-level-up-alt"></i></a>
+    </div>
+
+    {% include 'Home/includes/scripts.html' %}
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

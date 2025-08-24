@@ -1,0 +1,179 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block title %}Login | Fashion{% endblock %}
+{% block meta_description %}Sign in to your account{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'main:home' %}">Home</a></li>
+<li class="breadcrumb-item active" aria-current="page">Login</li>
+{% endblock %}
+
+{% block content %}
+<!-- Login Section -->
+<section class="login-area section-padding30">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-6 col-md-8">
+                <div class="login-form">
+                    <div class="form-header text-center mb-40">
+                        <h2>Welcome Back</h2>
+                        <p>Sign in to your account to continue shopping</p>
+                    </div>
+
+                    {% if messages %}
+                    <div class="messages">
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <form method="post" class="login-form">
+                        {% csrf_token %}
+                        
+                        <div class="form-group mb-30">
+                            <label for="username">Username or Email</label>
+                            <input type="text" class="form-control" id="username" name="username" required>
+                        </div>
+
+                        <div class="form-group mb-30">
+                            <label for="password">Password</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+
+                        <div class="form-group mb-30">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="remember" name="remember">
+                                <label class="form-check-label" for="remember">
+                                    Remember me
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-30">
+                            <button type="submit" class="btn btn-primary btn-block btn-lg">
+                                <i class="fas fa-sign-in-alt"></i> Sign In
+                            </button>
+                        </div>
+
+                        <div class="form-footer text-center">
+                                            <p>Don't have an account? <a href="{% url 'main:register' %}">Sign up here</a></p>
+                <p><a href="#">Forgot your password?</a></p>
+                        </div>
+                    </form>
+
+                    <!-- Social Login -->
+                    <div class="social-login mt-40">
+                        <div class="divider">
+                            <span>Or sign in with</span>
+                        </div>
+                        <div class="social-buttons">
+                                                    <a href="#" class="btn btn-outline-danger btn-block mb-20">
+                            <i class="fab fa-google"></i> Continue with Google
+                        </a>
+                        <a href="#" class="btn btn-outline-primary btn-block mb-20">
+                            <i class="fab fa-facebook-f"></i> Continue with Facebook
+                        </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.login-form {
+    background: #fff;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+}
+
+.form-header h2 {
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.form-header p {
+    color: #666;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: #333;
+}
+
+.form-control {
+    border: 2px solid #e1e1e1;
+    border-radius: 5px;
+    padding: 12px 15px;
+    transition: border-color 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+}
+
+.btn-primary {
+    background: #007bff;
+    border: none;
+    padding: 12px 30px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background: #0056b3;
+    transform: translateY(-2px);
+}
+
+.form-footer a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.form-footer a:hover {
+    text-decoration: underline;
+}
+
+.divider {
+    text-align: center;
+    margin: 30px 0;
+    position: relative;
+}
+
+.divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #e1e1e1;
+}
+
+.divider span {
+    background: #fff;
+    padding: 0 20px;
+    color: #666;
+    font-size: 14px;
+}
+
+.social-buttons .btn {
+    padding: 12px 20px;
+    font-weight: 600;
+    border-radius: 5px;
+}
+</style>
+{% endblock %}
+

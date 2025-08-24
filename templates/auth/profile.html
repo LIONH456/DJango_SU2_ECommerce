@@ -1,0 +1,356 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block title %}Profile | Fashion{% endblock %}
+{% block meta_description %}Manage your account profile{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'main:home' %}">Home</a></li>
+<li class="breadcrumb-item active" aria-current="page">Profile</li>
+{% endblock %}
+
+{% block content %}
+<!-- Profile Section -->
+<section class="profile-area section-padding30">
+    <div class="container">
+        <div class="row">
+            <!-- Profile Sidebar -->
+            <div class="col-lg-3 col-md-4">
+                <div class="profile-sidebar">
+                    <div class="profile-avatar text-center mb-30">
+                        {% if user.profile.avatar %}
+                        <img src="{{ user.profile.avatar.url }}" alt="Profile Avatar" class="rounded-circle" style="width: 120px; height: 120px;">
+                        {% else %}
+                        <div class="default-avatar rounded-circle d-flex align-items-center justify-content-center" style="width: 120px; height: 120px; background: #007bff; color: white; font-size: 48px;">
+                            {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                        </div>
+                        {% endif %}
+                        <h4 class="mt-3">{{ user.get_full_name|default:user.username }}</h4>
+                        <p class="text-muted">{{ user.email }}</p>
+                    </div>
+                    
+                    <div class="profile-menu">
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link active" href="#profile" data-toggle="tab">Profile</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#orders" data-toggle="tab">Orders</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#wishlist" data-toggle="tab">Wishlist</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#addresses" data-toggle="tab">Addresses</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#settings" data-toggle="tab">Settings</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Content -->
+            <div class="col-lg-9 col-md-8">
+                <div class="profile-content">
+                    <div class="tab-content">
+                        <!-- Profile Tab -->
+                        <div class="tab-pane fade show active" id="profile">
+                            <div class="tab-header mb-30">
+                                <h3>Profile Information</h3>
+                                <p>Update your personal information</p>
+                            </div>
+
+                            <form method="post" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-20">
+                                            <label for="first_name">First Name</label>
+                                            <input type="text" class="form-control" id="first_name" name="first_name" value="{{ user.first_name }}" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-20">
+                                            <label for="last_name">Last Name</label>
+                                            <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user.last_name }}" required>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group mb-20">
+                                    <label for="email">Email Address</label>
+                                    <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
+                                </div>
+
+                                <div class="form-group mb-20">
+                                    <label for="phone">Phone Number</label>
+                                    <input type="tel" class="form-control" id="phone" name="phone" value="{{ user.profile.phone|default:'' }}">
+                                </div>
+
+                                <div class="form-group mb-20">
+                                    <label for="date_of_birth">Date of Birth</label>
+                                    <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" value="{{ user.profile.date_of_birth|date:'Y-m-d'|default:'' }}">
+                                </div>
+
+                                <div class="form-group mb-20">
+                                    <label for="avatar">Profile Picture</label>
+                                    <input type="file" class="form-control-file" id="avatar" name="avatar" accept="image/*">
+                                </div>
+
+                                <div class="form-group mb-20">
+                                    <label for="bio">Bio</label>
+                                    <textarea class="form-control" id="bio" name="bio" rows="3">{{ user.profile.bio|default:'' }}</textarea>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary">Update Profile</button>
+                            </form>
+                        </div>
+
+                        <!-- Orders Tab -->
+                        <div class="tab-pane fade" id="orders">
+                            <div class="tab-header mb-30">
+                                <h3>Order History</h3>
+                                <p>View your previous orders</p>
+                            </div>
+
+                            {% if orders %}
+                            <div class="orders-list">
+                                {% for order in orders %}
+                                <div class="order-item mb-20 p-3 border rounded">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-3">
+                                            <strong>Order #{{ order.order_number }}</strong>
+                                            <br>
+                                            <small class="text-muted">{{ order.created_at|date:"M d, Y" }}</small>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <span class="badge badge-{{ order.status_color }}">{{ order.get_status_display }}</span>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <strong>${{ order.total_amount }}</strong>
+                                        </div>
+                                        <div class="col-md-3 text-right">
+                                            <a href="#" class="btn btn-sm btn-outline-primary">View Details</a>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="text-center py-5">
+                                <i class="fas fa-shopping-bag fa-3x text-muted mb-3"></i>
+                                <h4>No orders yet</h4>
+                                <p class="text-muted">Start shopping to see your order history here.</p>
+                                <a href="{% url 'main:shop' %}" class="btn btn-primary">Start Shopping</a>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Wishlist Tab -->
+                        <div class="tab-pane fade" id="wishlist">
+                            <div class="tab-header mb-30">
+                                <h3>My Wishlist</h3>
+                                <p>Products you've saved for later</p>
+                            </div>
+
+                            {% if wishlist_items %}
+                            <div class="row">
+                                {% for item in wishlist_items %}
+                                <div class="col-lg-4 col-md-6 col-sm-6 mb-30">
+                                    <div class="wishlist-item">
+                                        <div class="product-img">
+                                            <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="img-fluid">
+                                            <div class="product-overlay">
+                                                <div class="overlay-content">
+                                                    <a href="{% url 'main:product_detail' item.product.id %}" class="btn btn-primary btn-sm">View Details</a>
+                                                    <button class="btn btn-secondary btn-sm add-to-cart" data-product-id="{{ item.product.id }}">Add to Cart</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="product-caption text-center">
+                                            <h5><a href="{% url 'main:product_detail' item.product.id %}">{{ item.product.name }}</a></h5>
+                                            <div class="price mb-2">
+                                                <span class="current-price">${{ item.product.price }}</span>
+                                            </div>
+                                            <button class="btn btn-danger btn-sm remove-from-wishlist" data-item-id="{{ item.id }}">
+                                                <i class="fas fa-heart-broken"></i> Remove
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="text-center py-5">
+                                <i class="far fa-heart fa-3x text-muted mb-3"></i>
+                                <h4>Your wishlist is empty</h4>
+                                <p class="text-muted">Start adding products to your wishlist while browsing.</p>
+                                <a href="{% url 'main:shop' %}" class="btn btn-primary">Browse Products</a>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Addresses Tab -->
+                        <div class="tab-pane fade" id="addresses">
+                            <div class="tab-header mb-30">
+                                <h3>Addresses</h3>
+                                <p>Manage your shipping addresses</p>
+                            </div>
+
+                            <div class="row">
+                                {% for address in addresses %}
+                                <div class="col-md-6 mb-20">
+                                    <div class="address-card p-3 border rounded">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h6>{{ address.address_type }}</h6>
+                                            <div class="address-actions">
+                                                <button class="btn btn-sm btn-outline-primary edit-address" data-address-id="{{ address.id }}">Edit</button>
+                                                <button class="btn btn-sm btn-outline-danger delete-address" data-address-id="{{ address.id }}">Delete</button>
+                                            </div>
+                                        </div>
+                                        <p class="mb-1">{{ address.full_name }}</p>
+                                        <p class="mb-1">{{ address.address_line1 }}</p>
+                                        {% if address.address_line2 %}
+                                        <p class="mb-1">{{ address.address_line2 }}</p>
+                                        {% endif %}
+                                        <p class="mb-1">{{ address.city }}, {{ address.state }} {{ address.postal_code }}</p>
+                                        <p class="mb-0">{{ address.country }}</p>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <div class="col-12">
+                                    <div class="text-center py-5">
+                                        <i class="fas fa-map-marker-alt fa-3x text-muted mb-3"></i>
+                                        <h4>No addresses saved</h4>
+                                        <p class="text-muted">Add your first shipping address to make checkout easier.</p>
+                                        <button class="btn btn-primary" data-toggle="modal" data-target="#addAddressModal">Add Address</button>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+
+                            <div class="text-center mt-30">
+                                <button class="btn btn-primary" data-toggle="modal" data-target="#addAddressModal">
+                                    <i class="fas fa-plus"></i> Add New Address
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Settings Tab -->
+                        <div class="tab-pane fade" id="settings">
+                            <div class="tab-header mb-30">
+                                <h3>Account Settings</h3>
+                                <p>Manage your account preferences</p>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="settings-section mb-30">
+                                        <h5>Password</h5>
+                                        <p class="text-muted">Change your account password</p>
+                                        <button class="btn btn-outline-primary" data-toggle="modal" data-target="#changePasswordModal">
+                                            Change Password
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="settings-section mb-30">
+                                        <h5>Notifications</h5>
+                                        <p class="text-muted">Manage your notification preferences</p>
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" id="emailNotifications" checked>
+                                            <label class="form-check-label" for="emailNotifications">Email Notifications</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" id="smsNotifications">
+                                            <label class="form-check-label" for="smsNotifications">SMS Notifications</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="settings-section">
+                                <h5>Account Deletion</h5>
+                                <p class="text-muted">Permanently delete your account and all associated data</p>
+                                <button class="btn btn-danger" data-toggle="modal" data-target="#deleteAccountModal">
+                                    Delete Account
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.profile-sidebar {
+    background: #fff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+}
+
+.profile-menu .nav-link {
+    color: #333;
+    padding: 12px 0;
+    border-bottom: 1px solid #eee;
+    transition: all 0.3s ease;
+}
+
+.profile-menu .nav-link:hover,
+.profile-menu .nav-link.active {
+    color: #007bff;
+    background: none;
+    border-left: 3px solid #007bff;
+    padding-left: 15px;
+}
+
+.profile-content {
+    background: #fff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+}
+
+.tab-header h3 {
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.tab-header p {
+    color: #666;
+}
+
+.address-card {
+    background: #f8f9fa;
+    transition: all 0.3s ease;
+}
+
+.address-card:hover {
+    background: #e9ecef;
+    transform: translateY(-2px);
+}
+
+.settings-section {
+    padding: 20px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+}
+
+.settings-section h5 {
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.settings-section p {
+    color: #666;
+    margin-bottom: 15px;
+}
+</style>
+{% endblock %}

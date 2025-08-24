@@ -1,0 +1,129 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block content %}
+<main class="content">
+    <div class="container-fluid p-0">
+
+        <h1 class="h3 mb-3">{% if slider %}Edit Slider{% else %}Create New Slider{% endif %}</h1>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Slider Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post">
+                            {% csrf_token %}
+                            
+                            <div class="mb-3">
+                                <label for="title" class="form-label">Title</label>
+                                <textarea class="form-control" id="title" name="title" rows="3" 
+                                          placeholder="Enter slider title with line breaks">{{ slider.title|default:'' }}</textarea>
+                                <small class="form-text text-muted">Use Enter key to create line breaks in the title</small>
+                            </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="subtitle" class="form-label">Subtitle</label>
+                                        <input type="text" class="form-control" id="subtitle" name="subtitle" 
+                                               value="{{ slider.subtitle|default:'' }}" placeholder="Enter slider subtitle">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Description</label>
+                                <textarea class="form-control" id="description" name="description" rows="3" 
+                                          placeholder="Enter slider description">{{ slider.description|default:'' }}</textarea>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="link" class="form-label">Link URL</label>
+                                        <input type="url" class="form-control" id="link" name="link" 
+                                               value="{{ slider.link|default:'' }}" placeholder="https://example.com">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="img" class="form-label">Image URL</label>
+                                        <input type="url" class="form-control" id="img" name="img" 
+                                               value="{{ slider.img|default:'' }}" placeholder="https://example.com/image.jpg">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="status" class="form-label">Status</label>
+                                        <select class="form-select" id="status" name="status">
+                                            <option value="active" {% if slider.status == 'active' %}selected{% endif %}>Active</option>
+                                            <option value="inactive" {% if slider.status == 'inactive' %}selected{% endif %}>Inactive</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="order" class="form-label">Order</label>
+                                        <input type="number" class="form-control" id="order" name="order" 
+                                               value="{% if slider %}{{ slider.order }}{% else %}{{ next_order }}{% endif %}" min="1" placeholder="1">
+                                        <small class="form-text text-muted">
+                                            {% if slider %}
+                                                Current order: {{ slider.order }}
+                                            {% else %}
+                                                Next available order: {{ next_order }}
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="image-preview" class="form-label">Image Preview</label>
+                                <div id="image-preview" class="border rounded p-3 text-center" style="min-height: 200px;">
+                                    {% if slider.img %}
+                                        <img src="{{ slider.img }}" alt="Slider Image" class="img-fluid" style="max-height: 180px;">
+                                    {% else %}
+                                        <p class="text-muted">No image selected</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between">
+                                <a href="{% url 'dashboard:sliders_list' %}" class="btn btn-secondary">
+                                    <i class="align-middle" data-feather="arrow-left"></i> Back to Sliders
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="align-middle" data-feather="save"></i> 
+                                    {% if slider %}Update Slider{% else %}Create Slider{% endif %}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Image preview functionality
+        const imgInput = document.getElementById('img');
+        const imagePreview = document.getElementById('image-preview');
+
+        imgInput.addEventListener('input', function() {
+            const imgUrl = this.value.trim();
+            if (imgUrl) {
+                imagePreview.innerHTML = `<img src="${imgUrl}" alt="Slider Image" class="img-fluid" style="max-height: 180px;" onerror="this.parentElement.innerHTML='<p class=\\"text-danger\\">Invalid image URL</p>'">`;
+            } else {
+                imagePreview.innerHTML = '<p class="text-muted">No image selected</p>';
+            }
+        });
+    });
+</script>
+{% endblock %}
