@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: ecommerce-django
+    env: python
+    plan: free
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn ECommerce.wsgi:application"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.0
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: false
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: MONGODB_HOST
+        value: "localhost"
+      - key: MONGODB_PORT
+        value: "27017"
+      - key: MONGODB_DATABASE
+        value: "ECommerceDB"
+      - key: MONGODB_COLLECTION
+        value: "users"
+
+databases:
+  - name: ecommerce-postgres
+    databaseName: ecommerce
+    user: ecommerce
