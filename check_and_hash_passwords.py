@@ -14,7 +14,7 @@ from datetime import datetime
 MONGODB_CONFIG = {
     'host': 'localhost',
     'port': 27017,
-    'database': 'ECommerceDB',
+    'database': 'EcommerceSU2',
     'collection': 'users'
 }
 
@@ -190,6 +190,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 

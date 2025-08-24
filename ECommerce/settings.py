@@ -103,8 +103,9 @@ if not all([config('DB_NAME', default=''), config('DB_USER', default=''),
 MONGODB_CONFIG = {
     'host': config('MONGODB_HOST', default='localhost'),
     'port': config('MONGODB_PORT', default=27017, cast=int),
-    'database': config('MONGODB_DATABASE', default='ECommerceDB'),
-    'collection': config('MONGODB_COLLECTION', default='users')
+    'database': config('MONGODB_DATABASE', default='ECommerceSU2'),
+    'collection': config('MONGODB_COLLECTION', default='users'),
+    'atlas_uri': config('MONGODB_ATLAS_URI', default='')
 }
 
 

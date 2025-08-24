@@ -6,10 +6,14 @@ from bson import ObjectId
 
 class MongoDBManager:
     def __init__(self):
-        self.client = MongoClient(
-            host=settings.MONGODB_CONFIG['host'],
-            port=settings.MONGODB_CONFIG['port']
-        )
+        # Use Atlas connection string if available (production), otherwise use local
+        if settings.MONGODB_CONFIG.get('atlas_uri'):
+            self.client = MongoClient(settings.MONGODB_CONFIG['atlas_uri'])
+        else:
+            self.client = MongoClient(
+                host=settings.MONGODB_CONFIG['host'],
+                port=settings.MONGODB_CONFIG['port']
+            )
         self.db = self.client[settings.MONGODB_CONFIG['database']]
         self.users_collection = self.db[settings.MONGODB_CONFIG['collection']]
     

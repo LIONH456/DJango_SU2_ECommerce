@@ -14,14 +14,12 @@ services:
         value: false
       - key: ALLOWED_HOSTS
         value: ".onrender.com"
-      - key: MONGODB_HOST
-        value: "localhost"
-      - key: MONGODB_PORT
-        value: "27017"
       - key: MONGODB_DATABASE
-        value: "ECommerceDB"
+        value: "ECommerceSU2"
       - key: MONGODB_COLLECTION
         value: "users"
+      - key: MONGODB_ATLAS_URI
+        sync: false
 
 databases:
   - name: ecommerce-postgres

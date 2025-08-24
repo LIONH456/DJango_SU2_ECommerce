@@ -67,11 +67,16 @@ class Slider(models.Model):
     def save_to_mongodb(self):
         """Save slider data to MongoDB"""
         try:
-            # Connect to MongoDB
-            client = pymongo.MongoClient(
-                host=settings.MONGODB_CONFIG['host'],
-                port=settings.MONGODB_CONFIG['port']
-            )
+            # Connect to MongoDB using connection string
+            connection_string = config('MONGODB_CONNECTION_STRING', default='')
+            if connection_string:
+                client = pymongo.MongoClient(connection_string)
+            else:
+                # Fallback to individual settings
+                client = pymongo.MongoClient(
+                    host=settings.MONGODB_CONFIG['host'],
+                    port=settings.MONGODB_CONFIG['port']
+                )
             db = client[settings.MONGODB_CONFIG['database']]
             collection = db['sliders']  # Use 'sliders' collection
             
@@ -104,10 +109,15 @@ class Slider(models.Model):
         """Delete from both Django and MongoDB"""
         # Delete from MongoDB first
         try:
-            client = pymongo.MongoClient(
-                host=settings.MONGODB_CONFIG['host'],
-                port=settings.MONGODB_CONFIG['port']
-            )
+            connection_string = config('MONGODB_CONNECTION_STRING', default='')
+            if connection_string:
+                client = pymongo.MongoClient(connection_string)
+            else:
+                # Fallback to individual settings
+                client = pymongo.MongoClient(
+                    host=settings.MONGODB_CONFIG['host'],
+                    port=settings.MONGODB_CONFIG['port']
+                )
             db = client[settings.MONGODB_CONFIG['database']]
             collection = db['sliders']
             collection.delete_one({'django_id': self.id})
