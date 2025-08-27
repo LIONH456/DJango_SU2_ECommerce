@@ -19,11 +19,18 @@ def home(request):
     # Fetch active sliders from database, ordered by their order field
     sliders = Slider.objects.filter(status='active').order_by('order')
     
+    # Fetch last 4 products for new arrivals (most recent first)
+    new_arrivals = mongodb_manager.list_products(
+        sort_by='newest',
+        page=1,
+        page_size=4
+    )['items']
+    
     context = {
         'page_title': 'Home',
         'sliders': sliders,
         'featured_products': [],  # Add featured products logic here
-        'new_arrivals': [],       # Add new arrivals logic here
+        'new_arrivals': new_arrivals,
         'popular_products': [],   # Add popular products logic here
     }
     return render(request, 'Home/index.html', context)
@@ -99,20 +106,56 @@ def elements(request):
     return render(request, 'Home/elements.html', context)
 
 def shop(request):
-    """Shop/Product listing page view"""
+    """Shop/Product listing page view (MongoDB)"""
+    category = request.GET.get('category')
+    search = request.GET.get('q')
+    max_price = request.GET.get('max_price')
+    sort_by = request.GET.get('sort')
+    
+    # Get initial 21 products for infinite scroll
+    result = mongodb_manager.list_products(
+        category=category, 
+        search=search, 
+        max_price=max_price,
+        sort_by=sort_by,
+        page=1, 
+        page_size=1000  # Load all products at once
+    )
+
     context = {
         'page_title': 'Shop',
-        'products': [],  # Add products logic here
-        'categories': [],  # Add categories logic here
+        'products': result['items'],
+        'total_products': result['total'],
+        'categories': [],
+        'current_category': category or '',
+        'search_query': search or '',
     }
     return render(request, 'store/product_list.html', context)
 
+
+
+
+
 def product_detail(request, product_id):
-    """Product detail page view"""
+    """Product detail page view (MongoDB)"""
+    product = mongodb_manager.get_product_by_id(str(product_id))
+    if not product:
+        return render(request, 'store/product_detail.html', {
+            'page_title': 'Product not found',
+            'product': None,
+            'related_products': [],
+        })
+
+    # naive related products: same category if present
+    related = []
+    if product.get('category_id'):
+        rel_result = mongodb_manager.list_products(category=product['category_id'], page=1, page_size=4)
+        related = [p for p in rel_result['items'] if p['id'] != product['id']][:4]
+
     context = {
-        'page_title': 'Product Detail',
-        'product': None,  # Add product logic here
-        'related_products': [],  # Add related products logic here
+        'page_title': product['name'],
+        'product': product,
+        'related_products': related,
     }
     return render(request, 'store/product_detail.html', context)
 
@@ -310,6 +353,13 @@ def clear_cart(request):
         
         return JsonResponse({'success': True, 'message': 'Cart cleared successfully'})
     
-    return JsonResponse({'success': False, 'message': 'Invalid request method'})
+    return JsonResponse({'success': False, 'message': 'Cart cleared successfully'})
+
+def checkout(request):
+    """Checkout page view"""
+    context = {
+        'page_title': 'Checkout',
+    }
+    return render(request, 'store/checkout.html', context)
 
 

@@ -12,71 +12,453 @@
 {% block content %}
 <!-- Shop Section -->
 <section class="shop-area section-padding30">
-    <div class="container">
+    <div class="container product-container">
+        <style>
+            /* Mobile-first responsive design */
+            .product-container { max-width: 1400px; }
+            
+
+            
+
+            
+            /* Progressive Loading Animation */
+            .product-item {
+                opacity: 0;
+                transform: translateY(30px);
+                animation: fadeInUp 0.8s ease-out forwards;
+            }
+            
+            @keyframes fadeInUp {
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            
+
+            
+            /* Mobile filter toggle */
+            .mobile-filter-toggle {
+                display: none;
+                background: #007bff;
+                color: white;
+                border: none;
+                padding: 12px 20px;
+                border-radius: 8px;
+                font-weight: 600;
+                margin-bottom: 20px;
+                width: 100%;
+            }
+            
+            /* Sidebar responsive */
+            .shop-sidebar {
+                background: #f8f9fa;
+                padding: 20px;
+                border-radius: 12px;
+                border: 1px solid #e9ecef;
+                position: sticky;
+                top: 100px;
+                height: fit-content;
+                max-height: calc(100vh - 120px);
+                overflow-y: auto;
+                z-index: 100;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                backdrop-filter: blur(10px);
+                background: rgba(248, 249, 250, 0.95);
+                scrollbar-width: thin;
+                scrollbar-color: #007bff #f8f9fa;
+            }
+            
+            .shop-sidebar::-webkit-scrollbar {
+                width: 6px;
+            }
+            
+            .shop-sidebar::-webkit-scrollbar-track {
+                background: #f8f9fa;
+                border-radius: 3px;
+            }
+            
+            .shop-sidebar::-webkit-scrollbar-thumb {
+                background: #007bff;
+                border-radius: 3px;
+            }
+            
+            .shop-sidebar::-webkit-scrollbar-thumb:hover {
+                background: #0056b3;
+            }
+            
+            .sidebar-widget {
+                margin-bottom: 25px;
+            }
+            
+            .widget-title {
+                font-size: 18px;
+                font-weight: 700;
+                margin-bottom: 15px;
+                color: #333;
+                border-bottom: 2px solid #007bff;
+                padding-bottom: 8px;
+            }
+            
+            .category-list, .brand-list {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
+            
+            .category-list li, .brand-list li {
+                margin-bottom: 8px;
+            }
+            
+            .category-list a {
+                color: #555;
+                text-decoration: none;
+                padding: 8px 12px;
+                display: block;
+                border-radius: 6px;
+                transition: all 0.2s;
+            }
+            
+            .category-list a:hover, .category-list a.active {
+                background: #007bff;
+                color: white;
+            }
+            
+            .price-range {
+                padding: 10px 0;
+            }
+            
+            .price-slider {
+                width: 100%;
+                margin: 10px 0;
+            }
+            
+            .price-values {
+                display: flex;
+                justify-content: space-between;
+                font-weight: 600;
+                color: #007bff;
+            }
+            
+            /* Product grid responsive */
+            .product-grid .single-product {
+                border: 1px solid #eee;
+                border-radius: 14px;
+                overflow: hidden;
+                transition: transform .2s ease, box-shadow .2s ease;
+                background: #fff;
+                height: 100%;
+            }
+            
+            .product-grid .single-product:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 6px 20px rgba(0,0,0,.08);
+            }
+            
+            .product-grid .image-wrap {
+                display: block;
+                position: relative;
+                width: 100%;
+                padding-top: 133%;
+                overflow: hidden;
+                background: #f8f8f8;
+            }
+            
+            .product-grid .image-wrap img {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+            
+            .product-grid .product-caption {
+                padding: 20px 20px 25px;
+            }
+            
+            .product-grid .product-caption h4 {
+                font-size: 22px;
+                font-weight: 700;
+                line-height: 1.35;
+                margin-bottom: 12px;
+                min-height: 52px;
+                letter-spacing: .3px;
+            }
+            
+            .product-grid .price {
+                font-size: 20px;
+                font-weight: 700;
+            }
+            
+            .product-grid .old-price {
+                color: #9aa1a9;
+                text-decoration: line-through;
+                margin-left: 12px;
+                font-weight: 500;
+            }
+            
+            .product-grid .add-to-cart {
+                width: 100%;
+                margin-top: 16px;
+                padding: 20px 18px;
+                font-weight: 700;
+                border-radius: 20px;
+                letter-spacing: .2px;
+            }
+            
+            /* Mobile responsive breakpoints */
+            @media (max-width: 767px) {
+                .mobile-filter-toggle { display: block; }
+                .shop-sidebar { display: none; }
+                .shop-sidebar.show { display: block; }
+                .product-grid .col-sm-6 { flex: 0 0 50%; max-width: 50%; }
+                .product-grid .product-caption h4 { font-size: 18px; min-height: 44px; }
+                .product-grid .price { font-size: 18px; }
+                .product-grid .add-to-cart { padding: 16px 14px; font-size: 16px; }
+            }
+            
+            @media (min-width: 768px) and (max-width: 991px) {
+                .product-grid .col-md-6 { flex: 0 0 50%; max-width: 50%; }
+            }
+            
+            @media (min-width: 992px) {
+                .product-grid .col-lg-4 { flex: 0 0 33.3333%; max-width: 33.3333%; }
+            }
+            
+            @media (min-width: 1200px) {
+                .product-grid .col-xl-4 { flex: 0 0 33.3333%; max-width: 33.3333%; }
+            }
+
+            /* Toast Notification */
+            .toast-notification {
+                position: fixed;
+                top: 80px;
+                right: 20px;
+                background: #28a745;
+                color: white;
+                padding: 12px 16px;
+                border-radius: 6px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 9999;
+                transform: translateY(-100px);
+                transition: transform 0.3s ease-in-out;
+                max-width: 250px;
+                border-left: 3px solid #fff;
+                font-size: 14px;
+            }
+
+            .toast-notification.show {
+                transform: translateY(0);
+            }
+
+            .toast-notification::before {
+                content: '';
+                position: absolute;
+                top: -6px;
+                right: 15px;
+                width: 0;
+                height: 0;
+                border-left: 6px solid transparent;
+                border-right: 6px solid transparent;
+                border-bottom: 6px solid var(--arrow-color, #28a745);
+            }
+
+            .toast-content {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .toast-icon {
+                font-size: 20px;
+                color: #fff;
+            }
+
+            .toast-message {
+                font-size: 16px;
+                font-weight: 600;
+            }
+
+            /* Load More Indicator Styles */
+
+            .loading-spinner {
+                text-align: center;
+                position: relative;
+                padding: 20px 0;
+            }
+
+            .spinner-ring {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 60px;
+                height: 60px;
+                border: 4px solid transparent;
+                border-top: 4px solid #007bff;
+                border-radius: 50%;
+                animation: spin 1.5s linear infinite;
+            }
+
+            .spinner-ring:nth-child(2) {
+                width: 45px;
+                height: 45px;
+                border-top-color: #28a745;
+                animation-delay: 0.2s;
+            }
+
+            .spinner-ring:nth-child(3) {
+                width: 30px;
+                height: 30px;
+                border-top-color: #dc3545;
+                animation-delay: 0.4s;
+            }
+
+            .loading-text {
+                margin-top: 90px;
+                font-size: 16px;
+                font-weight: 600;
+                color: #6c757d;
+                animation: pulse 2s ease-in-out infinite;
+            }
+
+            @keyframes spin {
+                0% { transform: translate(-50%, -50%) rotate(0deg); }
+                100% { transform: translate(-50%, -50%) rotate(360deg); }
+            }
+
+            @keyframes pulse {
+                0%, 100% { opacity: 0.6; }
+                50% { opacity: 1; }
+            }
+
+            /* Product Item Animation */
+            .product-item {
+                opacity: 0;
+                transform: translateY(30px);
+                animation: fadeInUp 0.8s ease-out forwards;
+            }
+
+            @keyframes fadeInUp {
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            /* Staggered animation delays */
+            .product-item:nth-child(1) { animation-delay: 0.1s; }
+            .product-item:nth-child(2) { animation-delay: 0.2s; }
+            .product-item:nth-child(3) { animation-delay: 0.3s; }
+            .product-item:nth-child(4) { animation-delay: 0.4s; }
+            .product-item:nth-child(5) { animation-delay: 0.5s; }
+            .product-item:nth-child(6) { animation-delay: 0.6s; }
+            .product-item:nth-child(7) { animation-delay: 0.7s; }
+            .product-item:nth-child(8) { animation-delay: 0.8s; }
+            .product-item:nth-child(9) { animation-delay: 0.9s; }
+            
+            /* Staggered Animation */
+            @keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(30px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .product-item {
+                animation: fadeInUp 0.6s ease-out forwards;
+            }
+        </style>
+        
+        <!-- Mobile Filter Toggle -->
+        <button class="mobile-filter-toggle" onclick="toggleFilters()">
+            <i class="fas fa-filter"></i> Show/Hide Filters
+        </button>
+        
+        <div class="row mb-40">
+            <div class="col-12 text-center">
+                <h2 style="font-weight:800; font-size:44px; letter-spacing:.5px;">Shop With Us</h2>
+                <p style="color:#6b7280; font-size:16px;">Browse our latest items and find your style.</p>
+            </div>
+        </div>
+        
         <div class="row">
             <!-- Sidebar -->
-            <div class="col-lg-3 col-md-4">
-                <div class="shop-sidebar">
+            <div class="col-lg-3 col-md-4 col-12">
+                <div class="shop-sidebar" id="shopSidebar">
                     <!-- Category Filter -->
-                    <div class="sidebar-widget mb-50">
+                    <div class="sidebar-widget">
                         <h3 class="widget-title">Categories</h3>
                         <div class="widget-content">
                             <ul class="category-list">
-                                <li><a href="{% url 'main:shop' %}">All Categories</a></li>
-                                <li><a href="{% url 'main:shop' %}?category=women">Women's Fashion</a></li>
-                                <li><a href="{% url 'main:shop' %}?category=men">Men's Fashion</a></li>
-                                <li><a href="{% url 'main:shop' %}?category=accessories">Accessories</a></li>
-                                <li><a href="{% url 'main:shop' %}?category=shoes">Shoes</a></li>
-                                <li><a href="{% url 'main:shop' %}?category=bags">Bags</a></li>
+                                <li><a href="{% url 'main:shop' %}" class="{% if not current_category %}active{% endif %}">All Categories</a></li>
+                                <li><a href="{% url 'main:shop' %}?category=women" class="{% if current_category == 'women' %}active{% endif %}">Women's Fashion</a></li>
+                                <li><a href="{% url 'main:shop' %}?category=men" class="{% if current_category == 'men' %}active{% endif %}">Men's Fashion</a></li>
+                                <li><a href="{% url 'main:shop' %}?category=accessories" class="{% if current_category == 'accessories' %}active{% endif %}">Accessories</a></li>
+                                <li><a href="{% url 'main:shop' %}?category=shoes" class="{% if current_category == 'shoes' %}active{% endif %}">Shoes</a></li>
+                                <li><a href="{% url 'main:shop' %}?category=bags" class="{% if current_category == 'bags' %}active{% endif %}">Bags</a></li>
                             </ul>
                         </div>
                     </div>
 
                     <!-- Price Filter -->
-                    <div class="sidebar-widget mb-50">
+                    <div class="sidebar-widget">
                         <h3 class="widget-title">Price Range</h3>
                         <div class="widget-content">
+                            <form method="GET" action="{% url 'main:shop' %}">
+                                {% if current_category %}<input type="hidden" name="category" value="{{ current_category }}">{% endif %}
+                                {% if search_query %}<input type="hidden" name="q" value="{{ search_query }}">{% endif %}
                             <div class="price-range">
-                                <input type="range" min="0" max="1000" class="price-slider" id="priceRange">
+                                    <input type="range" min="0" max="100" class="price-slider" id="priceRange" name="max_price" value="{{ request.GET.max_price|default:100 }}">
                                 <div class="price-values">
                                     <span>$0</span>
-                                    <span>$1000</span>
+                                        <span id="priceValue">${{ request.GET.max_price|default:100 }}</span>
+                                    </div>
+                                    <button type="submit" class="btn btn-sm btn-primary mt-2">Apply Price Filter</button>
                                 </div>
-                            </div>
+                            </form>
                         </div>
                     </div>
 
-                    <!-- Brand Filter -->
-                    <div class="sidebar-widget mb-50">
-                        <h3 class="widget-title">Brands</h3>
+                    <!-- Search Filter -->
+                    <div class="sidebar-widget">
+                        <h3 class="widget-title">Search Products</h3>
                         <div class="widget-content">
-                            <ul class="brand-list">
-                                <li><input type="checkbox" id="brand1"> <label for="brand1">Brand A</label></li>
-                                <li><input type="checkbox" id="brand2"> <label for="brand2">Brand B</label></li>
-                                <li><input type="checkbox" id="brand3"> <label for="brand3">Brand C</label></li>
-                            </ul>
+                            <form method="GET" action="{% url 'main:shop' %}">
+                                {% if current_category %}<input type="hidden" name="category" value="{{ current_category }}">{% endif %}
+                                {% if request.GET.max_price %}<input type="hidden" name="max_price" value="{{ request.GET.max_price }}">{% endif %}
+                                <div class="input-group">
+                                    <input type="text" class="form-control" name="q" value="{{ search_query }}" placeholder="Search products...">
+                                    <button class="btn btn-primary" type="submit">Search</button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Product Grid -->
-            <div class="col-lg-9 col-md-8">
+            <div class="col-lg-9 col-md-8 col-12 product-grid">
                 <!-- Sort and View Options -->
                 <div class="shop-top-bar mb-30">
                     <div class="row align-items-center">
-                        <div class="col-lg-6 col-md-6">
+                        <div class="col-lg-6 col-md-6 col-12 mb-2">
                             <div class="shop-top-bar-left">
-                                <p>Showing 1-12 of 36 results</p>
+                                <p>Showing {{ products|length }} of {{ total_products }} results</p>
                             </div>
                         </div>
-                        <div class="col-lg-6 col-md-6">
+                        <div class="col-lg-6 col-md-6 col-12">
                             <div class="shop-top-bar-right">
-                                <select class="form-control">
-                                    <option>Sort by: Featured</option>
-                                    <option>Price: Low to High</option>
-                                    <option>Price: High to Low</option>
-                                    <option>Newest First</option>
+                                <select class="form-control" onchange="sortProducts(this.value)">
+                                    <option value="">Sort by: Featured</option>
+                                    <option value="price_low">Price: Low to High</option>
+                                    <option value="price_high">Price: High to Low</option>
+                                    <option value="newest">Newest First</option>
                                 </select>
                             </div>
                         </div>
@@ -84,34 +466,28 @@
                 </div>
 
                 <!-- Products Grid -->
-                <div class="row">
+                <div id="products-grid" class="row g-4">
                     {% for product in products %}
-                    <div class="col-lg-4 col-md-6 col-sm-6">
-                        <div class="single-product mb-50">
-                            <div class="product-img">
-                                <img src="{{ product.image.url }}" alt="{{ product.name }}">
-                                <div class="product-overlay">
-                                    <div class="overlay-content">
-                                        <a href="{% url 'main:product_detail' product.id %}" class="btn btn-primary">View Details</a>
-                                        <button class="btn btn-secondary add-to-cart" data-product-id="{{ product.id }}">Add to Cart</button>
-                                    </div>
-                                </div>
-                            </div>
+                    <div class="col-xl-4 col-lg-4 col-md-6 col-sm-6 product-item" data-delay="{{ forloop.counter0 }}">
+                        <div class="single-product">
+                            <a class="image-wrap" href="{% url 'main:product_detail' product.id %}">
+                                <img src="{{ product.main_image|default:'https://zandokh.com/image/cache/catalog/products/2024-08/5152405078/Sport-Life-T-Shirt-With-Print%20(1)-cr-450x672.jpg' }}" alt="{{ product.name }}">
+                            </a>
                             <div class="product-caption text-center">
                                 <h4><a href="{% url 'main:product_detail' product.id %}">{{ product.name }}</a></h4>
                                 <div class="price">
                                     <span class="current-price">${{ product.price }}</span>
-                                    {% if product.old_price %}
-                                    <span class="old-price">${{ product.old_price }}</span>
+                                    {% if product.compare_price %}
+                                    <span class="old-price">${{ product.compare_price }}</span>
                                     {% endif %}
                                 </div>
-                                <div class="rating">
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="far fa-star"></i>
-                                </div>
+                                <button class="btn btn-primary add-to-cart" 
+                                        data-product-id="{{ product.id }}" 
+                                        data-product-name="{{ product.name }}" 
+                                        data-product-price="{{ product.price }}" 
+                                        data-product-image="{{ product.main_image|default:'https://zandokh.com/image/cache/catalog/products/2024-08/5152405078/Sport-Life-T-Shirt-With-Print%20(1)-cr-450x672.jpg' }}">
+                                    Add to Cart
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -125,35 +501,147 @@
                     {% endfor %}
                 </div>
 
-                <!-- Pagination -->
-                {% if products.has_other_pages %}
-                <div class="pagination-area">
-                    <nav aria-label="Page navigation">
-                        <ul class="pagination justify-content-center">
-                            {% if products.has_previous %}
-                            <li class="page-item">
-                                <a class="page-link" href="?page={{ products.previous_page_number }}">Previous</a>
-                            </li>
-                            {% endif %}
 
-                            {% for num in products.paginator.page_range %}
-                            <li class="page-item {% if products.number == num %}active{% endif %}">
-                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
-                            </li>
-                            {% endfor %}
 
-                            {% if products.has_next %}
-                            <li class="page-item">
-                                <a class="page-link" href="?page={{ products.next_page_number }}">Next</a>
-                            </li>
-                            {% endif %}
-                        </ul>
-                    </nav>
-                </div>
-                {% endif %}
+
+
+
             </div>
         </div>
     </div>
 </section>
+
+<script>
+// Mobile filter toggle
+function toggleFilters() {
+    const sidebar = document.getElementById('shopSidebar');
+    sidebar.classList.toggle('show');
+}
+
+// Price range slider update
+document.getElementById('priceRange').addEventListener('input', function() {
+    document.getElementById('priceValue').textContent = '$' + this.value;
+});
+
+// Product sorting (you can implement this with AJAX or page reload)
+function sortProducts(value) {
+    if (value) {
+        const url = new URL(window.location);
+        url.searchParams.set('sort', value);
+        window.location.href = url.toString();
+    }
+}
+
+// Product Animation Implementation
+document.addEventListener('DOMContentLoaded', function() {
+    const productsGrid = document.getElementById('products-grid');
+    
+    // Initialize with staggered animations for all products
+    const productItems = document.querySelectorAll('.product-item');
+    productItems.forEach((item, index) => {
+        const delay = index * 0.2; // 0.2s delay between each product
+        item.style.animationDelay = `${delay}s`;
+    });
+    
+    // Attach event listeners to products
+    function attachEventListeners() {
+        document.querySelectorAll('.add-to-cart').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const productId = this.getAttribute('data-product-id');
+                const productName = this.getAttribute('data-product-name');
+                const productPrice = parseFloat(this.getAttribute('data-product-price'));
+                const productImage = this.getAttribute('data-product-image');
+                
+                // Add to cart (using localStorage for now)
+                addToCart({
+                    id: productId,
+                    name: productName,
+                    price: productPrice,
+                    quantity: 1,
+                    size: 'Standard',
+                    color: 'Default',
+                    image: productImage
+                });
+                
+                // Show toast notification
+                showToast('Product added to cart!');
+                
+                // Update cart count in header
+                updateCartCount();
+            });
+        });
+    }
+    
+    // Initial event listeners
+    attachEventListeners();
+});
+
+// Add to cart function
+function addToCart(product) {
+    let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    
+    // Check if product already exists in cart
+    const existingItem = cart.find(item => 
+        item.id === product.id && 
+        item.size === product.size && 
+        item.color === product.color
+    );
+    
+    if (existingItem) {
+        existingItem.quantity += product.quantity;
+    } else {
+        cart.push(product);
+    }
+    
+    localStorage.setItem('cart', JSON.stringify(cart));
+}
+
+// Toast notification function
+function showToast(message = 'Added successfully!') {
+    // Create toast element if it doesn't exist
+    let toast = document.getElementById('toast-notification');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'toast-notification';
+        toast.className = 'toast-notification';
+        toast.innerHTML = `
+            <div class="toast-content">
+                <i class="fas fa-check-circle toast-icon"></i>
+                <span class="toast-message">${message}</span>
+            </div>
+        `;
+        document.body.appendChild(toast);
+    } else {
+        const toastMessage = toast.querySelector('.toast-message');
+        toastMessage.textContent = message;
+    }
+    
+    toast.classList.add('show');
+    
+    // Auto-hide after 3 seconds
+    setTimeout(() => {
+        toast.classList.remove('show');
+        // Actually remove the toast element after animation
+        setTimeout(() => {
+            if (toast && toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 300); // Wait for animation to complete
+    }, 3000);
+}
+
+// Update cart count in header
+function updateCartCount() {
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    const cartCount = document.getElementById('cart-count');
+    if (cartCount) {
+        // Count total quantity of all items, not just number of unique items
+        const totalQuantity = cart.reduce((sum, item) => sum + item.quantity, 0);
+        cartCount.textContent = totalQuantity;
+    }
+}
+</script>
 {% endblock %}
 

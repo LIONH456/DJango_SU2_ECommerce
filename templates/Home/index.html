@@ -201,16 +201,17 @@
             </div>
         </div>
         <div class="row">
+            {% for product in new_arrivals %}
             <div class="col-xl-3 col-lg-3 col-md-6 col-sm-6">
-                <div class="single-new-arrival mb-50 text-center wow fadeInUp" data-wow-duration="1s" data-wow-delay=".1s">
+                <div class="single-new-arrival mb-50 text-center wow fadeInUp" data-wow-duration="1s" data-wow-delay=".{{ forloop.counter }}s">
                     <div class="popular-img">
-                        <img src="{% static 'main/img/gallery/arrival1.png' %}" alt="">
+                        <img src="{{ product.main_image|default:'https://zandokh.com/image/cache/catalog/products/2024-08/5152405078/Sport-Life-T-Shirt-With-Print%20(1)-cr-450x672.jpg' }}" alt="{{ product.name }}">
                         <div class="favorit-items">
                             <img src="{% static 'main/img/gallery/favorit-card.png' %}" alt="">
                         </div>
                     </div>
                     <div class="popular-caption">
-                        <h3><a href="#">Fashion Item 1</a></h3>
+                        <h3><a href="{% url 'main:product_detail' product.id %}">{{ product.name }}</a></h3>
                         <div class="rating mb-10">
                             <i class="fas fa-star"></i>
                             <i class="fas fa-star"></i>
@@ -218,73 +219,15 @@
                             <i class="fas fa-star"></i>
                             <i class="fas fa-star"></i>
                         </div>
-                        <span>$ 30.00</span>
+                        <span>$ {{ product.price }}</span>
                     </div>
                 </div>
             </div>
-            <div class="col-xl-3 col-lg-3 col-md-6 col-sm-6">
-                <div class="single-new-arrival mb-50 text-center wow fadeInUp" data-wow-duration="1s" data-wow-delay=".2s">
-                    <div class="popular-img">
-                        <img src="{% static 'main/img/gallery/arrival2.png' %}" alt="">
-                        <div class="favorit-items">
-                            <img src="{% static 'main/img/gallery/favorit-card.png' %}" alt="">
-                        </div>
-                    </div>
-                    <div class="popular-caption">
-                        <h3><a href="#">Fashion Item 2</a></h3>
-                        <div class="rating mb-10">
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                        </div>
-                        <span>$ 35.00</span>
-                    </div>
-                </div>
+            {% empty %}
+            <div class="col-12 text-center">
+                <p class="text-muted">No new arrivals available at the moment.</p>
             </div>
-            <div class="col-xl-3 col-lg-3 col-md-6 col-sm-6">
-                <div class="single-new-arrival mb-50 text-center wow fadeInUp" data-wow-duration="1s" data-wow-delay=".3s">
-                    <div class="popular-img">
-                        <img src="{% static 'main/img/gallery/arrival3.png' %}" alt="">
-                        <div class="favorit-items">
-                            <img src="{% static 'main/img/gallery/favorit-card.png' %}" alt="">
-                        </div>
-                    </div>
-                    <div class="popular-caption">
-                        <h3><a href="#">Fashion Item 3</a></h3>
-                        <div class="rating mb-10">
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                        </div>
-                        <span>$ 40.00</span>
-                    </div>
-                </div>
-            </div>
-            <div class="col-xl-3 col-lg-3 col-md-6 col-sm-6">
-                <div class="single-new-arrival mb-50 text-center wow fadeInUp" data-wow-duration="1s" data-wow-delay=".4s">
-                    <div class="popular-img">
-                        <img src="{% static 'main/img/gallery/arrival4.png' %}" alt="">
-                        <div class="favorit-items">
-                            <img src="{% static 'main/img/gallery/favorit-card.png' %}" alt="">
-                        </div>
-                    </div>
-                    <div class="popular-caption">
-                        <h3><a href="#">Fashion Item 4</a></h3>
-                        <div class="rating mb-10">
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                        </div>
-                        <span>$ 45.00</span>
-                    </div>
-                </div>
-            </div>
+            {% endfor %}
         </div>
         <!-- Button -->
         <div class="row justify-content-center">
@@ -389,5 +332,97 @@
         </div>
     </div>
 </section>
+
+<style>
+/* Enhanced New Arrivals Styling */
+.single-new-arrival {
+    transition: all 0.3s ease;
+    border-radius: 15px;
+    overflow: hidden;
+    background: white;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
+
+.single-new-arrival:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+}
+
+.single-new-arrival .popular-img {
+    position: relative;
+    overflow: hidden;
+}
+
+.single-new-arrival .popular-img img {
+    transition: transform 0.3s ease;
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+}
+
+.single-new-arrival:hover .popular-img img {
+    transform: scale(1.05);
+}
+
+.single-new-arrival .popular-caption {
+    padding: 20px 15px;
+    background: white;
+}
+
+.single-new-arrival .popular-caption h3 {
+    margin-bottom: 10px;
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.single-new-arrival .popular-caption h3 a {
+    color: #333;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.single-new-arrival .popular-caption h3 a:hover {
+    color: #007bff;
+}
+
+.single-new-arrival .rating {
+    color: #ffc107;
+    font-size: 14px;
+}
+
+.single-new-arrival .rating i {
+    margin-right: 2px;
+}
+
+.single-new-arrival span {
+    font-size: 20px;
+    font-weight: 700;
+    color: #dc3545;
+}
+
+/* Responsive adjustments */
+@media (max-width: 767px) {
+    .single-new-arrival .popular-img img {
+        height: 250px;
+    }
+    
+    .single-new-arrival .popular-caption h3 {
+        font-size: 16px;
+    }
+    
+    .single-new-arrival span {
+        font-size: 18px;
+    }
+}
+
+/* Empty state styling */
+.text-muted {
+    color: #6c757d !important;
+    font-size: 18px;
+    font-style: italic;
+}
+</style>
+
 {% endblock %}
 

@@ -18,113 +18,119 @@
             <!-- Product Images -->
             <div class="col-lg-6 col-md-6">
                 <div class="product-images">
-                    <div class="main-image mb-30">
-                        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="img-fluid">
+                    <div class="main-image mb-20">
+                        <img src="{{ product.main_image|default:'https://zandokh.com/image/cache/catalog/products/2024-08/5152405078/Sport-Life-T-Shirt-With-Print%20(1)-cr-450x672.jpg' }}" alt="{{ product.name }}" class="img-fluid">
                     </div>
-                    <div class="thumbnail-images">
-                        <div class="row">
-                            {% for image in product.images.all %}
-                            <div class="col-3">
-                                <img src="{{ image.image.url }}" alt="{{ product.name }}" class="img-fluid thumbnail-img">
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
+                                         <div class="thumbnail-images">
+                         <div class="gallery-instructions mb-2">
+                             <small class="text-muted">
+                                 <i class="fas fa-info-circle"></i> 
+                                 Hover to preview • Click to lock • Click main image to reset
+                             </small>
+                         </div>
+                         <div class="row">
+                             {% for image in product.images %}
+                             <div class="col-3">
+                                 <img src="{{ image }}" alt="{{ product.name }}" class="img-fluid thumbnail-img" data-image="{{ image }}">
+                             </div>
+                             {% endfor %}
+                         </div>
+                     </div>
                 </div>
             </div>
 
             <!-- Product Info -->
             <div class="col-lg-6 col-md-6">
                 <div class="product-info">
-                    <h1 class="product-title">{{ product.name }}</h1>
+                    <!-- Share Button -->
+                    <div class="share-button-wrapper text-end mb-3">
+                        <button class="btn btn-sm btn-outline-secondary share-btn">
+                            <i class="fas fa-external-link-alt"></i>
+                        </button>
+                    </div>
+
+                    <!-- Product Title -->
+                    <h1 class="product-title mb-3">{{ product.name }}</h1>
                     
-                    <div class="product-rating mb-20">
-                        <div class="stars">
-                            {% for i in "12345" %}
-                            <i class="fas fa-star"></i>
+                    <!-- Product Price -->
+                    <div class="product-price mb-4">
+                        <span class="current-price">US ${{ product.price }}</span>
+                        {% if product.compare_price %}
+                        <span class="discount-badge">-{{ product.discount_percentage|default:30 }}%</span>
+                        <span class="old-price">US ${{ product.compare_price }}</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Color Selection -->
+                    {% if product.colors %}
+                    <div class="option-group mb-4">
+                        <label class="option-label">{{ product.colors|length }} Colors available</label>
+                        <div class="color-options">
+                            {% for color in product.colors %}
+                            <div class="color-option {% if forloop.first %}selected{% endif %}" data-color="{{ color }}">
+                                <img src="{{ product.main_image|default:'https://zandokh.com/image/cache/catalog/products/2024-08/5152405078/Sport-Life-T-Shirt-With-Print%20(1)-cr-450x672.jpg' }}" alt="{{ color }}" class="color-thumbnail">
+                                <span class="color-name">{{ color }}</span>
+                            </div>
                             {% endfor %}
                         </div>
-                        <span class="rating-text">({{ product.review_count }} reviews)</span>
-                    </div>
-
-                    <div class="product-price mb-20">
-                        <span class="current-price">${{ product.price }}</span>
-                        {% if product.old_price %}
-                        <span class="old-price">${{ product.old_price }}</span>
-                        <span class="discount-badge">-{{ product.discount_percentage }}%</span>
-                        {% endif %}
-                    </div>
-
-                    <div class="product-description mb-30">
-                        <p>{{ product.description }}</p>
-                    </div>
-
-                    <!-- Product Options -->
-                    {% if product.has_variants %}
-                    <div class="product-options mb-30">
-                        <!-- Size Selection -->
-                        {% if product.sizes.all %}
-                        <div class="option-group mb-20">
-                            <label>Size:</label>
-                            <div class="size-options">
-                                {% for size in product.sizes.all %}
-                                <input type="radio" name="size" id="size_{{ size.id }}" value="{{ size.id }}">
-                                <label for="size_{{ size.id }}">{{ size.name }}</label>
-                                {% endfor %}
-                            </div>
-                        </div>
-                        {% endif %}
-
-                        <!-- Color Selection -->
-                        {% if product.colors.all %}
-                        <div class="option-group mb-20">
-                            <label>Color:</label>
-                            <div class="color-options">
-                                {% for color in product.colors.all %}
-                                <input type="radio" name="color" id="color_{{ color.id }}" value="{{ color.id }}">
-                                <label for="color_{{ color.id }}" style="background-color: {{ color.hex_code }}">{{ color.name }}</label>
-                                {% endfor %}
-                            </div>
-                        </div>
-                        {% endif %}
                     </div>
                     {% endif %}
 
-                    <!-- Quantity and Add to Cart -->
-                    <div class="product-actions mb-30">
-                        <div class="quantity-selector mb-20">
-                            <label>Quantity:</label>
-                            <div class="quantity-controls">
-                                <button type="button" class="qty-btn minus">-</button>
-                                <input type="number" value="1" min="1" max="{{ product.stock }}" class="qty-input">
-                                <button type="button" class="qty-btn plus">+</button>
-                            </div>
+                    <!-- Size Selection -->
+                    {% if product.sizes %}
+                    <div class="option-group mb-4">
+                        <label class="option-label">Size</label>
+                        <div class="size-options">
+                            {% for size in product.sizes %}
+                            <button type="button" class="size-btn" data-size="{{ size }}">{{ size }}</button>
+                            {% endfor %}
                         </div>
+                    </div>
+                    {% endif %}
 
-                        <div class="action-buttons">
-                            <button class="btn btn-primary btn-lg add-to-cart" data-product-id="{{ product.id }}">
-                                <i class="fas fa-shopping-cart"></i> Add to Cart
-                            </button>
-                            <button class="btn btn-outline-primary btn-lg wishlist-btn" data-product-id="{{ product.id }}">
-                                <i class="far fa-heart"></i> Wishlist
-                            </button>
+                    <!-- Quantity Selection -->
+                    <div class="option-group mb-4">
+                        <label class="option-label">Quantity</label>
+                        <div class="quantity-controls">
+                            <button type="button" class="qty-btn minus">-</button>
+                            <input type="number" value="1" min="1" max="{{ product.quantity|default:99 }}" class="qty-input">
+                            <button type="button" class="qty-btn plus">+</button>
                         </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="action-buttons mb-4">
+                        <button class="btn btn-dark btn-lg add-to-cart" data-product-id="{{ product.id }}" style="padding: 20px 20px;">
+                            Add to Cart
+                        </button>
+                        <button class="btn btn-outline-secondary btn-lg wishlist-btn" data-product-id="{{ product.id }}" >
+                            <i class="far fa-heart"></i>
+                        </button>
+                    </div>
+
+                    <!-- Product Description -->
+                    <div class="product-description mb-4">
+                        <p>{{ product.description }}</p>
                     </div>
 
                     <!-- Product Meta -->
                     <div class="product-meta">
+                        {% if product.sku %}
                         <div class="meta-item">
                             <span class="label">SKU:</span>
                             <span class="value">{{ product.sku }}</span>
                         </div>
+                        {% endif %}
+                        {% if product.category_id %}
                         <div class="meta-item">
                             <span class="label">Category:</span>
-                            <span class="value">{{ product.category.name }}</span>
+                            <span class="value">{{ product.category_id }}</span>
                         </div>
+                        {% endif %}
                         <div class="meta-item">
                             <span class="label">Availability:</span>
-                            <span class="value {% if product.in_stock %}in-stock{% else %}out-of-stock{% endif %}">
-                                {% if product.in_stock %}In Stock{% else %}Out of Stock{% endif %}
+                            <span class="value {% if product.is_available %}in-stock{% else %}out-of-stock{% endif %}">
+                                {% if product.is_available %}In Stock{% else %}Out of Stock{% endif %}
                             </span>
                         </div>
                     </div>
@@ -132,95 +138,19 @@
             </div>
         </div>
 
-        <!-- Product Tabs -->
-        <div class="row mt-50">
-            <div class="col-12">
-                <div class="product-tabs">
-                    <ul class="nav nav-tabs" id="productTabs" role="tablist">
-                        <li class="nav-item">
-                            <a class="nav-link active" id="description-tab" data-toggle="tab" href="#description" role="tab">Description</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" id="specifications-tab" data-toggle="tab" href="#specifications" role="tab">Specifications</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" id="reviews-tab" data-toggle="tab" href="#reviews" role="tab">Reviews</a>
-                        </li>
-                    </ul>
-
-                    <div class="tab-content" id="productTabsContent">
-                        <!-- Description Tab -->
-                        <div class="tab-pane fade show active" id="description" role="tabpanel">
-                            <div class="tab-content-body">
-                                {{ product.full_description|safe }}
-                            </div>
-                        </div>
-
-                        <!-- Specifications Tab -->
-                        <div class="tab-pane fade" id="specifications" role="tabpanel">
-                            <div class="tab-content-body">
-                                <table class="table specifications-table">
-                                    <tbody>
-                                        {% for spec in product.specifications.all %}
-                                        <tr>
-                                            <td class="spec-label">{{ spec.name }}</td>
-                                            <td class="spec-value">{{ spec.value }}</td>
-                                        </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        <!-- Reviews Tab -->
-                        <div class="tab-pane fade" id="reviews" role="tabpanel">
-                            <div class="tab-content-body">
-                                <div class="reviews-section">
-                                    {% for review in product.reviews.all %}
-                                    <div class="review-item mb-30">
-                                        <div class="review-header">
-                                            <div class="reviewer-info">
-                                                <h5>{{ review.user.get_full_name|default:review.user.username }}</h5>
-                                                <div class="review-rating">
-                                                    {% for i in "12345" %}
-                                                    <i class="fas fa-star {% if forloop.counter <= review.rating %}filled{% endif %}"></i>
-                                                    {% endfor %}
-                                                </div>
-                                            </div>
-                                            <div class="review-date">{{ review.created_at|date:"M d, Y" }}</div>
-                                        </div>
-                                        <div class="review-content">
-                                            <p>{{ review.comment }}</p>
-                                        </div>
-                                    </div>
-                                    {% empty %}
-                                    <p>No reviews yet. Be the first to review this product!</p>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Related Products -->
-        <div class="row mt-50">
+        {% if related_products %}
+        <div class="row mt-5">
             <div class="col-12">
-                <div class="section-tittle text-center mb-50">
+                <div class="section-title text-center mb-4">
                     <h2>Related Products</h2>
                 </div>
                 <div class="row">
                     {% for related_product in related_products %}
                     <div class="col-lg-3 col-md-6 col-sm-6">
-                        <div class="single-product mb-30">
+                        <div class="single-product mb-4">
                             <div class="product-img">
-                                <img src="{{ related_product.image.url }}" alt="{{ related_product.name }}">
-                                <div class="product-overlay">
-                                    <div class="overlay-content">
-                                        <a href="{% url 'main:product_detail' related_product.id %}" class="btn btn-primary">View Details</a>
-                                    </div>
-                                </div>
+                                <img src="{{ related_product.main_image|default:'https://zandokh.com/image/cache/catalog/products/2024-08/5152405078/Sport-Life-T-Shirt-With-Print%20(1)-cr-450x672.jpg' }}" alt="{{ related_product.name }}" class="img-fluid">
                             </div>
                             <div class="product-caption text-center">
                                 <h4><a href="{% url 'main:product_detail' related_product.id %}">{{ related_product.name }}</a></h4>
@@ -234,7 +164,666 @@
                 </div>
             </div>
         </div>
+        {% endif %}
     </div>
 </section>
+
+<style>
+/* Product Detail Styling */
+.product-detail-area {
+    padding: 40px 0;
+}
+
+.product-images .main-image img {
+    width: 100%;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.product-images .main-image img:hover {
+    transform: scale(1.02);
+    box-shadow: 0 6px 25px rgba(0,0,0,0.15);
+}
+
+.product-images .main-image img.locked {
+    border: 3px solid #28a745;
+    box-shadow: 0 4px 20px rgba(40, 167, 69, 0.2);
+}
+
+.thumbnail-images .thumbnail-img {
+    width: 100%;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    opacity: 0.7;
+}
+
+.thumbnail-images .thumbnail-img:hover {
+    opacity: 1;
+    transform: scale(1.05);
+    border-color: #007bff;
+}
+
+.thumbnail-images .thumbnail-img.active-thumbnail {
+    opacity: 1;
+    border-color: #28a745;
+    transform: scale(1.1);
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+.gallery-instructions {
+    text-align: center;
+    padding: 8px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
+.gallery-instructions small {
+    font-size: 12px;
+    color: #6c757d;
+}
+
+/* Product Info Styling */
+.product-info {
+    padding: 20px;
+}
+
+.share-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.product-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #333;
+    line-height: 1.3;
+}
+
+/* Price Styling */
+.product-price {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.current-price {
+    font-size: 24px;
+    font-weight: 700;
+    color: #dc3545;
+}
+
+.discount-badge {
+    background: #dc3545;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.old-price {
+    font-size: 18px;
+    color: #6c757d;
+    text-decoration: line-through;
+}
+
+/* Option Groups */
+.option-group {
+    margin-bottom: 24px;
+}
+
+.option-label {
+    display: block;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 12px;
+    font-size: 16px;
+}
+
+/* Color Options */
+.color-options {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.color-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.color-option.selected {
+    border: 3px solid #000;
+    border-radius: 8px;
+    padding: 4px;
+}
+
+.color-thumbnail {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 2px solid #e9ecef;
+}
+
+.color-name {
+    margin-top: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+}
+
+/* Size Options */
+.size-options {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.size-btn {
+    padding: 12px 20px;
+    border: 1px solid #e9ecef;
+    background: #f8f9fa;
+    color: #495057;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 50px;
+}
+
+.size-btn:hover, .size-btn.selected {
+    background: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+/* Quantity Controls */
+.quantity-controls {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.qty-btn {
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: #f8f9fa;
+    color: #495057;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.qty-btn:hover {
+    background: #e9ecef;
+}
+
+.qty-input {
+    width: 60px;
+    height: 40px;
+    border: none;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 500;
+    color: #333;
+    -webkit-appearance: none;
+    -moz-appearance: textfield;
+}
+
+.qty-input::-webkit-outer-spin-button,
+.qty-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.qty-input:focus {
+    outline: none;
+    background: #fff;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 12px;
+    align-items: stretch;
+}
+
+.add-to-cart {
+    flex: 1;
+    padding: 20px 24px;
+    font-size: 18px;
+    font-weight: 600;
+    border-radius: 8px;
+    text-transform: none;
+    height: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.wishlist-btn {
+    width: auto;
+    min-width: 60px;
+    padding: 20px 20px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    height: auto;
+}
+
+/* Product Meta */
+.product-meta {
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid #e9ecef;
+}
+
+.meta-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    padding: 8px 0;
+}
+
+.meta-item .label {
+    font-weight: 600;
+    color: #6c757d;
+}
+
+.meta-item .value {
+    color: #333;
+}
+
+.in-stock {
+    color: #28a745;
+    font-weight: 600;
+}
+
+.out-of-stock {
+    color: #dc3545;
+    font-weight: 600;
+}
+
+/* Related Products */
+.section-title h2 {
+    font-size: 32px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 0;
+}
+
+.single-product {
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.single-product:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+
+.single-product .product-img img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.single-product .product-caption {
+    padding: 16px;
+}
+
+.single-product .product-caption h4 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.single-product .product-caption h4 a {
+    color: #333;
+    text-decoration: none;
+}
+
+.single-product .price {
+    font-size: 18px;
+    font-weight: 700;
+    color: #dc3545;
+}
+
+/* Responsive Design */
+@media (max-width: 767px) {
+    .product-info {
+        padding: 15px 0;
+    }
+    
+    .product-title {
+        font-size: 24px;
+    }
+    
+    .current-price {
+        font-size: 20px;
+    }
+    
+    .color-options {
+        gap: 8px;
+    }
+    
+    .color-thumbnail {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .size-btn {
+        padding: 10px 16px;
+        min-width: 45px;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .add-to-cart {
+        width: 100%;
+    }
+}
+
+/* Toast Notification */
+.toast-notification {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    background: #28a745;
+    color: white;
+    padding: 12px 16px;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 9999;
+    transform: translateY(-100px);
+    transition: transform 0.3s ease-in-out;
+    max-width: 250px;
+    border-left: 3px solid #fff;
+    font-size: 14px;
+}
+
+.toast-notification.show {
+    transform: translateY(0);
+}
+
+.toast-notification::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    right: 15px;
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-bottom: 6px solid var(--arrow-color, #28a745);
+}
+
+.toast-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.toast-icon {
+    font-size: 20px;
+    color: #fff;
+}
+
+.toast-message {
+    font-size: 16px;
+    font-weight: 600;
+}
+</style>
+
+<script>
+// Image Gallery Functionality
+let isImageClicked = false;
+
+// Main image element
+const mainImage = document.querySelector('.main-image img');
+
+// Thumbnail images
+const thumbnailImages = document.querySelectorAll('.thumbnail-img');
+
+// Hover functionality for thumbnails
+thumbnailImages.forEach(thumbnail => {
+    // Hover effect - only if no image is currently clicked
+    thumbnail.addEventListener('mouseenter', function() {
+        if (!isImageClicked) {
+            const imageSrc = this.getAttribute('data-image');
+            mainImage.style.opacity = '0.7';
+            mainImage.src = imageSrc;
+            mainImage.style.transition = 'opacity 0.3s ease';
+            
+            // Restore opacity after image loads
+            mainImage.onload = function() {
+                mainImage.style.opacity = '1';
+            };
+        }
+    });
+    
+    // Click functionality
+    thumbnail.addEventListener('click', function() {
+        const imageSrc = this.getAttribute('data-image');
+        mainImage.style.opacity = '0.7';
+        mainImage.src = imageSrc;
+        
+        // Restore opacity after image loads
+        mainImage.onload = function() {
+            mainImage.style.opacity = '1';
+        };
+        
+        // Toggle clicked state
+        isImageClicked = !isImageClicked;
+        
+        // Update visual feedback
+        thumbnailImages.forEach(thumb => thumb.classList.remove('active-thumbnail'));
+        if (isImageClicked) {
+            this.classList.add('active-thumbnail');
+            mainImage.classList.add('locked');
+        } else {
+            mainImage.classList.remove('locked');
+        }
+        
+        // No notification for hover/lock actions
+    });
+});
+
+// Reset image to main image when clicking main image
+mainImage.addEventListener('click', function() {
+    if (isImageClicked) {
+        // Reset to main image
+        const originalImage = '{{ product.main_image|default:"https://zandokh.com/image/cache/catalog/products/2024-08/5152405078/Sport-Life-T-Shirt-With-Print%20(1)-cr-450x672.jpg" }}';
+        mainImage.src = originalImage;
+        isImageClicked = false;
+        
+        // Remove active state from thumbnails
+        thumbnailImages.forEach(thumb => thumb.classList.remove('active-thumbnail'));
+        mainImage.classList.remove('locked');
+        
+        // No notification for reset
+    }
+});
+
+// Color selection
+document.querySelectorAll('.color-option').forEach(option => {
+    option.addEventListener('click', function() {
+        // Remove selected class from all options
+        document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('selected'));
+        // Add selected class to clicked option
+        this.classList.add('selected');
+    });
+});
+
+// Size selection
+document.querySelectorAll('.size-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        // Remove selected class from all buttons
+        document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('selected'));
+        // Add selected class to clicked button
+        this.classList.add('selected');
+    });
+});
+
+// Quantity controls
+document.querySelector('.qty-btn.minus').addEventListener('click', function() {
+    const input = document.querySelector('.qty-input');
+    const currentValue = parseInt(input.value);
+    if (currentValue > 1) {
+        input.value = currentValue - 1;
+    }
+});
+
+document.querySelector('.qty-btn.plus').addEventListener('click', function() {
+    const input = document.querySelector('.qty-input');
+    const currentValue = parseInt(input.value);
+    const maxValue = parseInt(input.getAttribute('max'));
+    if (currentValue < maxValue) {
+        input.value = currentValue + 1;
+    }
+});
+
+// Add to cart functionality
+document.querySelector('.add-to-cart').addEventListener('click', function() {
+    const productId = this.getAttribute('data-product-id');
+    const quantity = parseInt(document.querySelector('.qty-input').value);
+    const selectedSize = document.querySelector('.size-btn.selected')?.getAttribute('data-size');
+    const selectedColor = document.querySelector('.color-option.selected')?.getAttribute('data-color');
+    
+    // Get product details
+    const productName = document.querySelector('.product-title').textContent;
+    const productPrice = parseFloat(document.querySelector('.current-price').textContent.replace('US $', ''));
+    const productImage = document.querySelector('.main-image img').src;
+    
+    // Add to cart (using localStorage for now)
+    addToCart({
+        id: productId,
+        name: productName,
+        price: productPrice,
+        quantity: quantity,
+        size: selectedSize || 'Standard',
+        color: selectedColor || 'Default',
+        image: productImage
+    });
+    
+    // Show toast notification
+    showToast('Product added to cart!');
+    
+    // Update cart count in header
+    updateCartCount();
+});
+
+// Add to cart function
+function addToCart(product) {
+    let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    
+    // Check if product already exists in cart
+    const existingItem = cart.find(item => 
+        item.id === product.id && 
+        item.size === product.size && 
+        item.color === product.color
+    );
+    
+            if (existingItem) {
+            existingItem.quantity += product.quantity;
+        } else {
+            cart.push(product);
+        }
+        
+        localStorage.setItem('cart', JSON.stringify(cart));
+}
+
+// Toast notification function
+function showToast(message = 'Added successfully!') {
+    // Create toast element if it doesn't exist
+    let toast = document.getElementById('toast-notification');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'toast-notification';
+        toast.className = 'toast-notification';
+        toast.innerHTML = `
+            <div class="toast-content">
+                <i class="fas fa-check-circle toast-icon"></i>
+                <span class="toast-message">${message}</span>
+            </div>
+        `;
+        document.body.appendChild(toast);
+    } else {
+        const toastMessage = toast.querySelector('.toast-message');
+        toastMessage.textContent = message;
+    }
+    
+    toast.classList.add('show');
+    
+    // Auto-hide after 3 seconds
+    setTimeout(() => {
+        toast.classList.remove('show');
+        // Actually remove the toast element after animation
+        setTimeout(() => {
+            if (toast && toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 300); // Wait for animation to complete
+    }, 3000);
+}
+
+// Update cart count in header
+function updateCartCount() {
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    const cartCount = document.getElementById('cart-count');
+    if (cartCount) {
+        // Count total quantity of all items, not just number of unique items
+        const totalQuantity = cart.reduce((sum, item) => sum + item.quantity, 0);
+        cartCount.textContent = totalQuantity;
+    }
+}
+
+// Wishlist functionality
+document.querySelector('.wishlist-btn').addEventListener('click', function() {
+    const productId = this.getAttribute('data-product-id');
+    
+    // Toggle wishlist state
+    this.classList.toggle('active');
+    const icon = this.querySelector('i');
+    
+    if (this.classList.contains('active')) {
+        icon.className = 'fas fa-heart';
+        this.style.background = '#dc3545';
+        this.style.color = 'white';
+        alert('Added to wishlist!');
+    } else {
+        icon.className = 'far fa-heart';
+        this.style.background = '';
+        this.style.color = '';
+        alert('Removed from wishlist!');
+    }
+});
+</script>
 {% endblock %}
 

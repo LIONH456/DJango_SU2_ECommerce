@@ -16,6 +16,8 @@ class MongoDBManager:
             )
         self.db = self.client[settings.MONGODB_CONFIG['database']]
         self.users_collection = self.db[settings.MONGODB_CONFIG['collection']]
+        # Products collection (assumes 'products' collection name)
+        self.products_collection = self.db.get_collection('products')
     
     def create_user(self, user_data):
         """Create a new user in MongoDB"""
@@ -92,6 +94,95 @@ class MongoDBManager:
             {'username': username},
             {'$set': {'last_login': datetime.utcnow()}}
         )
+
+    # --------------------
+    # Product helpers
+    # --------------------
+    @staticmethod
+    def _format_product_doc(product_doc):
+        """Map a MongoDB product document to a template-friendly dict."""
+        if not product_doc:
+            return None
+        images = [img for img in (product_doc.get('images') or []) if isinstance(img, str) and img.strip()]
+        # Prefer first image without spaces; otherwise URL-encode spaces
+        main_image = ''
+        if images:
+            for img in images:
+                if ' ' not in img:
+                    main_image = img
+                    break
+            if not main_image:
+                main_image = images[0].replace(' ', '%20')
+        return {
+            'id': str(product_doc.get('_id')),
+            'name': product_doc.get('name', ''),
+            'slug': product_doc.get('slug', ''),
+            'description': product_doc.get('description', ''),
+            'price': product_doc.get('price', 0),
+            'compare_price': product_doc.get('compare_price'),
+            'sku': product_doc.get('sku', ''),
+            'quantity': product_doc.get('quantity', 0),
+            'is_available': product_doc.get('is_available', True),
+            'category_id': product_doc.get('category_id'),
+            'tags': product_doc.get('tags') or [],
+            'images': images,
+            'main_image': main_image,
+            'created_at': product_doc.get('created_at'),
+            'updated_at': product_doc.get('updated_at'),
+        }
+
+    def list_products(self, *, category: str | None = None, search: str | None = None, max_price: str | None = None, sort_by: str | None = None, page: int | None = None, page_size: int = 12):
+        """Return a list of products with optional filtering and basic pagination."""
+        query = {}
+        
+        # Category filter
+        if category:
+            query['category'] = category
+            
+        # Search filter
+        if search:
+            query['name'] = { '$regex': search, '$options': 'i' }
+            
+        # Price filter
+        if max_price and max_price.isdigit():
+            query['price'] = { '$lte': float(max_price) }
+
+        cursor = self.products_collection.find(query)
+        
+        # Sorting
+        if sort_by == 'price_low':
+            cursor = cursor.sort('price', 1)
+        elif sort_by == 'price_high':
+            cursor = cursor.sort('price', -1)
+        elif sort_by == 'newest':
+            cursor = cursor.sort('created_at', -1)
+        else:
+            cursor = cursor.sort('created_at', -1)  # Default: newest first
+            
+        total = cursor.count() if hasattr(cursor, 'count') else self.products_collection.count_documents(query)
+
+        if page:
+            skip = max(page - 1, 0) * page_size
+            cursor = cursor.skip(skip).limit(page_size)
+
+        products = [self._format_product_doc(doc) for doc in cursor]
+        return {
+            'items': products,
+            'total': total,
+            'page': page or 1,
+            'page_size': page_size,
+        }
+
+    def get_product_by_id(self, product_id: str):
+        try:
+            doc = self.products_collection.find_one({'_id': ObjectId(product_id)})
+        except Exception:
+            doc = None
+        return self._format_product_doc(doc)
+
+    def get_product_by_slug(self, slug: str):
+        doc = self.products_collection.find_one({'slug': slug})
+        return self._format_product_doc(doc)
 
 # Global MongoDB manager instance
 mongodb_manager = MongoDBManager()

@@ -99,6 +99,114 @@
                 font-size: 16px;
             }
         }
+
+        /* Navbar readability overrides */
+        .header-area .main-menu ul li a {
+            font-size: 20px !important;
+            font-weight: 700 !important;
+            letter-spacing: .3px;
+        }
+        .header-area .main-header { padding-top: 10px; padding-bottom: 10px; }
+        
+        /* Reduce page margins and spacing */
+        .section-padding30 { padding: 20px 0; }
+        .section-padding50 { padding: 30px 0; }
+        .section-padding80 { padding: 50px 0; }
+        .section-padding100 { padding: 60px 0; }
+        
+        /* Reduce container margins */
+        .container { padding-left: 15px; padding-right: 15px; }
+        
+        /* Reduce margins between elements */
+        .mb-20 { margin-bottom: 15px !important; }
+        .mb-30 { margin-bottom: 20px !important; }
+        .mb-40 { margin-bottom: 25px !important; }
+        .mb-50 { margin-bottom: 30px !important; }
+        .mb-90 { margin-bottom: 50px !important; }
+        
+        /* Reduce top margins */
+        .mt-50 { margin-top: 30px !important; }
+        
+        /* Make product grid more compact */
+        .product-grid .single-product { margin-bottom: 20px; }
+        .product-grid .product-caption { padding: 15px 15px 20px; }
+        
+        /* Increase all font sizes by 2px */
+        body { font-size: 18px; font-family: Arial, sans-serif; }
+        h1 { font-size: 40px; font-family: Arial, sans-serif; }
+        h2 { font-size: 36px; font-family: Arial, sans-serif; }
+        h3 { font-size: 30px; font-family: Arial, sans-serif; }
+        h4 { font-size: 24px; font-family: Arial, sans-serif; }
+        h5 { font-size: 20px; font-family: Arial, sans-serif; }
+        h6 { font-size: 18px; font-family: Arial, sans-serif; }
+        p { font-size: 18px; font-family: Arial, sans-serif; }
+        .btn { font-size: 18px; font-family: Arial, sans-serif; }
+        .form-control { font-size: 18px; font-family: Arial, sans-serif; }
+        .nav-link { font-size: 20px; font-family: Arial, sans-serif; }
+        .navbar-brand { font-size: 22px; font-family: Arial, sans-serif; }
+        .dropdown-menu { font-size: 18px; font-family: Arial, sans-serif; }
+        .card-title { font-size: 22px; font-family: Arial, sans-serif; }
+        .card-text { font-size: 18px; font-family: Arial, sans-serif; }
+        .list-group-item { font-size: 18px; font-family: Arial, sans-serif; }
+        .table { font-size: 18px; font-family: Arial, sans-serif; }
+        .alert { font-size: 18px; font-family: Arial, sans-serif; }
+        .badge { font-size: 16px; font-family: Arial, sans-serif; }
+        .small { font-size: 16px; font-family: Arial, sans-serif; }
+        .lead { font-size: 20px; font-family: Arial, sans-serif; }
+        
+        /* Toast Notification */
+        .toast-notification {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 9999;
+            transform: translateY(-100px);
+            transition: all 0.3s ease-in-out;
+            max-width: 250px;
+            min-width: 200px;
+            border-left: 3px solid #fff;
+            font-size: 14px;
+            --arrow-color: #28a745;
+            opacity: 0;
+        }
+
+        .toast-notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast-notification::before {
+            content: '';
+            position: absolute;
+            top: -6px;
+            right: 15px;
+            width: 0;
+            height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-bottom: 6px solid var(--arrow-color, #28a745);
+        }
+
+        .toast-content {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toast-icon {
+            font-size: 16px;
+            color: #fff;
+        }
+
+        .toast-message {
+            font-size: 14px;
+            font-weight: 500;
+        }
     </style>
     
     {% block extra_css %}{% endblock %}
@@ -141,5 +249,111 @@
 
     {% include 'Home/includes/scripts.html' %}
     {% block extra_js %}{% endblock %}
+    
+    <script>
+    // Initialize cart count on all pages
+    document.addEventListener('DOMContentLoaded', function() {
+        updateCartCount();
+        setupCartNavigation();
+    });
+    
+    function updateCartCount() {
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        const cartCount = document.getElementById('cart-count');
+        if (cartCount) {
+            // Count total quantity of all items, not just number of unique items
+            const totalQuantity = cart.reduce((sum, item) => sum + item.quantity, 0);
+            cartCount.textContent = totalQuantity;
+        }
+        
+        // Also update any other cart count elements
+        const allCartCounts = document.querySelectorAll('.cart-count, #cart-count');
+        allCartCounts.forEach(countElement => {
+            const totalQuantity = cart.reduce((sum, item) => sum + item.quantity, 0);
+            countElement.textContent = totalQuantity;
+        });
+    }
+    
+    // Handle cart navigation
+    function setupCartNavigation() {
+        const cartLinks = document.querySelectorAll('a[href*="cart"], .card-stor');
+        const currentPath = window.location.pathname;
+        
+        cartLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                // If we're already on the cart page, prevent navigation and show message
+                if (currentPath.includes('/cart/') || currentPath === '/cart') {
+                    e.preventDefault();
+                    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+                    if (cart.length === 0) {
+                        showToast('Your cart is empty! Add some items first.');
+                    } else {
+                        showToast('You are already on the cart page!');
+                    }
+                }
+            });
+        });
+    }
+    
+    // Global toast function for cart navigation
+    function showToast(message = 'Added successfully!') {
+        // Create toast element if it doesn't exist
+        let toast = document.getElementById('toast-notification');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'toast-notification';
+            toast.className = 'toast-notification';
+            toast.innerHTML = `
+                <div class="toast-content">
+                    <i class="fas fa-check-circle toast-icon"></i>
+                    <span class="toast-message">${message}</span>
+                </div>
+            `;
+            document.body.appendChild(toast);
+        } else {
+            const toastMessage = toast.querySelector('.toast-message');
+            toastMessage.textContent = message;
+        }
+        
+        // Position toast relative to cart icon if possible
+        const cartIcon = document.querySelector('.card-stor');
+        if (cartIcon) {
+            const cartRect = cartIcon.getBoundingClientRect();
+            const windowWidth = window.innerWidth;
+            
+            // Position toast right below the cart icon
+            let rightPosition = windowWidth - cartRect.right + 10;
+            if (rightPosition < 20) rightPosition = 20;
+            if (rightPosition > windowWidth - 270) rightPosition = windowWidth - 270;
+            
+            toast.style.right = rightPosition + 'px';
+            toast.style.top = (cartRect.bottom + 10) + 'px';
+        }
+        
+        // Change toast color based on message type
+        if (message.toLowerCase().includes('removed') || message.toLowerCase().includes('remove')) {
+            toast.style.background = '#dc3545'; // Red for removal
+            toast.style.borderLeftColor = '#fff';
+            toast.style.setProperty('--arrow-color', '#dc3545');
+        } else {
+            toast.style.background = '#28a745'; // Green for additions
+            toast.style.borderLeftColor = '#fff';
+            toast.style.setProperty('--arrow-color', '#28a745');
+        }
+        
+        toast.classList.add('show');
+        
+        // Auto-hide after 3 seconds
+        setTimeout(() => {
+            toast.classList.remove('show');
+            // Actually remove the toast element after animation
+            setTimeout(() => {
+                if (toast && toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 300); // Wait for animation to complete
+        }, 3000);
+    }
+    </script>
 </body>
 </html>

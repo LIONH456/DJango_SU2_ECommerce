@@ -14,8 +14,11 @@ urlpatterns = [
     
     # Store pages
     path('shop/', views.shop, name='shop'),
-    path('product/<int:product_id>/', views.product_detail, name='product_detail'),
+    path('product/<str:product_id>/', views.product_detail, name='product_detail'),
     path('cart/', views.cart, name='cart'),
+    path('checkout/', views.checkout, name='checkout'),
+
+
     
     # Authentication pages
     path('auth/login/', views.login_view, name='login'),

@@ -19,7 +19,7 @@ services:
       - key: MONGODB_COLLECTION
         value: "users"
       - key: MONGODB_ATLAS_URI
-        sync: false
+        value: "mongodb+srv://lionh456:LVixKN2699pd2wpO@ecommercesu2.xcvh6ig.mongodb.net/?retryWrites=true&w=majority&appName=EcommerceSU2"
 
 databases:
   - name: ecommerce-postgres
