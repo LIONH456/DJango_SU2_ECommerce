@@ -21,8 +21,10 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('main.urls')),
-    path('ecadmin/', include('dashboard.urls'))
+    path('api/', include('main.api_urls')),  # Main app API endpoints (removed v1)
+    path('api/dashboard/', include('dashboard.api_urls')),  # Dashboard API endpoints (removed v1)
+    path('', include('main.urls')),  # Main app views (for SSR)
+    path('ecadmin/', include('dashboard.urls'))  # Dashboard views (for SSR)
 ]
 
 # Add media files support during development

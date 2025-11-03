@@ -40,31 +40,21 @@
 						Products Management
 					</li>
 
-                    <li class="sidebar-item">
-                        <a class="sidebar-link" data-bs-toggle="collapse" href="#productsCollapse" role="button" aria-expanded="false" aria-controls="productsCollapse">
+                    <li class="sidebar-item {% if active_page == 'products' or active_page == 'categories' %}active{% endif %}">
+                        <a class="sidebar-link" data-bs-toggle="collapse" href="#productsCollapse" role="button" aria-expanded="{% if active_page == 'products' or active_page == 'categories' %}true{% else %}false{% endif %}" aria-controls="productsCollapse">
                             <i class="align-middle" data-feather="package"></i> <span class="align-middle">Products</span>
                             <i class="align-middle ms-auto" data-feather="chevron-down"></i>
                         </a>
-                        <div class="collapse" id="productsCollapse">
+                        <div class="collapse {% if active_page == 'products' or active_page == 'categories' %}show{% endif %}" id="productsCollapse">
                             <ul class="sidebar-dropdown list-unstyled small">
-                                <li class="sidebar-item">
-                                    <a class="sidebar-link" href="{% url 'dashboard:dashboard' %}">
+                                <li class="sidebar-item {% if request.resolver_match.url_name == 'products_list' %}active{% endif %}">
+                                    <a class="sidebar-link" href="{% url 'dashboard:products_list' %}">
                                         <i class="align-middle" data-feather="list"></i> <span class="align-middle">All Products</span>
                                     </a>
                                 </li>
-                                <li class="sidebar-item">
-                                    <a class="sidebar-link" href="{% url 'dashboard:dashboard' %}">
-                                        <i class="align-middle" data-feather="plus"></i> <span class="align-middle">Add Product</span>
-                                    </a>
-                                </li>
-                                <li class="sidebar-item">
-                                    <a class="sidebar-link" href="{% url 'dashboard:dashboard' %}">
+                                <li class="sidebar-item {% if request.resolver_match.url_name == 'categories_list' %}active{% endif %}">
+                                    <a class="sidebar-link" href="{% url 'dashboard:categories_list' %}">
                                         <i class="align-middle" data-feather="tag"></i> <span class="align-middle">Categories</span>
-                                    </a>
-                                </li>
-                                <li class="sidebar-item">
-                                    <a class="sidebar-link" href="{% url 'dashboard:dashboard' %}">
-                                        <i class="align-middle" data-feather="archive"></i> <span class="align-middle">Inventory</span>
                                     </a>
                                 </li>
                             </ul>
@@ -75,35 +65,35 @@
 						Orders Management
 					</li>
 
-                    <li class="sidebar-item">
-                        <a class="sidebar-link" data-bs-toggle="collapse" href="#ordersCollapse" role="button" aria-expanded="false" aria-controls="ordersCollapse">
+                    <li class="sidebar-item {% if active_page == 'orders' %}active{% endif %}">
+                        <a class="sidebar-link" data-bs-toggle="collapse" href="#ordersCollapse" role="button" aria-expanded="{% if active_page == 'orders' %}true{% else %}false{% endif %}" aria-controls="ordersCollapse">
                             <i class="align-middle" data-feather="shopping-cart"></i> <span class="align-middle">Orders</span>
                             <i class="align-middle ms-auto" data-feather="chevron-down"></i>
                         </a>
-                        <div class="collapse" id="ordersCollapse">
+                        <div class="collapse {% if active_page == 'orders' %}show{% endif %}" id="ordersCollapse">
                             <ul class="sidebar-dropdown list-unstyled small">
-                                <li class="sidebar-item">
-                                    <a class="sidebar-link" href="{% url 'dashboard:dashboard' %}">
+                                <li class="sidebar-item {% if active_page == 'orders' and not request.GET.status %}active{% endif %}">
+                                    <a class="sidebar-link" href="{% url 'dashboard:orders_list' %}">
                                         <i class="align-middle" data-feather="list"></i> <span class="align-middle">All Orders</span>
                                     </a>
                                 </li>
-                                <li class="sidebar-item">
-                                    <a class="sidebar-link" href="{% url 'dashboard:dashboard' %}">
+                                <li class="sidebar-item {% if active_page == 'orders' and request.GET.status == 'pending' %}active{% endif %}">
+                                    <a class="sidebar-link" href="{% url 'dashboard:orders_list' %}?status=pending">
                                         <i class="align-middle" data-feather="clock"></i> <span class="align-middle">Pending</span>
                                     </a>
                                 </li>
-                                <li class="sidebar-item">
-                                    <a class="sidebar-link" href="{% url 'dashboard:dashboard' %}">
+                                <li class="sidebar-item {% if active_page == 'orders' and request.GET.status == 'shipped' %}active{% endif %}">
+                                    <a class="sidebar-link" href="{% url 'dashboard:orders_list' %}?status=shipped">
                                         <i class="align-middle" data-feather="truck"></i> <span class="align-middle">Shipped</span>
                                     </a>
                                 </li>
-                                <li class="sidebar-item">
-                                    <a class="sidebar-link" href="{% url 'dashboard:dashboard' %}">
+                                <li class="sidebar-item {% if active_page == 'orders' and request.GET.status == 'delivered' %}active{% endif %}">
+                                    <a class="sidebar-link" href="{% url 'dashboard:orders_list' %}?status=delivered">
                                         <i class="align-middle" data-feather="check-circle"></i> <span class="align-middle">Delivered</span>
                                     </a>
                                 </li>
-                                <li class="sidebar-item">
-                                    <a class="sidebar-link" href="{% url 'dashboard:dashboard' %}">
+                                <li class="sidebar-item {% if active_page == 'orders' and request.GET.status == 'cancelled' %}active{% endif %}">
+                                    <a class="sidebar-link" href="{% url 'dashboard:orders_list' %}?status=cancelled">
                                         <i class="align-middle" data-feather="x-circle"></i> <span class="align-middle">Cancelled</span>
                                     </a>
                                 </li>
@@ -111,30 +101,30 @@
                         </div>
 					</li>
 
-                    <li class="sidebar-item">
-                        <a class="sidebar-link" data-bs-toggle="collapse" href="#paymentsCollapse" role="button" aria-expanded="false" aria-controls="paymentsCollapse">
+                    <li class="sidebar-item {% if active_page == 'payments' %}active{% endif %}">
+                        <a class="sidebar-link" data-bs-toggle="collapse" href="#paymentsCollapse" role="button" aria-expanded="{% if active_page == 'payments' %}true{% else %}false{% endif %}" aria-controls="paymentsCollapse">
                             <i class="align-middle" data-feather="credit-card"></i> <span class="align-middle">Payments</span>
                             <i class="align-middle ms-auto" data-feather="chevron-down"></i>
                         </a>
-                        <div class="collapse" id="paymentsCollapse">
+                        <div class="collapse {% if active_page == 'payments' %}show{% endif %}" id="paymentsCollapse">
                             <ul class="sidebar-dropdown list-unstyled small">
-                                <li class="sidebar-item">
-                                    <a class="sidebar-link" href="{% url 'dashboard:dashboard' %}">
+                                <li class="sidebar-item {% if active_page == 'payments' and not request.GET.status %}active{% endif %}">
+                                    <a class="sidebar-link" href="{% url 'dashboard:payments_list' %}">
                                         <i class="align-middle" data-feather="list"></i> <span class="align-middle">All Payments</span>
                                     </a>
                                 </li>
-                                <li class="sidebar-item">
-                                    <a class="sidebar-link" href="{% url 'dashboard:dashboard' %}">
+                                <li class="sidebar-item {% if active_page == 'payments' and request.GET.status == 'completed' %}active{% endif %}">
+                                    <a class="sidebar-link" href="{% url 'dashboard:payments_list' %}?status=completed">
                                         <i class="align-middle" data-feather="check"></i> <span class="align-middle">Successful</span>
                                     </a>
                                 </li>
-                                <li class="sidebar-item">
-                                    <a class="sidebar-link" href="{% url 'dashboard:dashboard' %}">
+                                <li class="sidebar-item {% if active_page == 'payments' and request.GET.status == 'failed' %}active{% endif %}">
+                                    <a class="sidebar-link" href="{% url 'dashboard:payments_list' %}?status=failed">
                                         <i class="align-middle" data-feather="x"></i> <span class="align-middle">Failed</span>
                                     </a>
                                 </li>
-                                <li class="sidebar-item">
-                                    <a class="sidebar-link" href="{% url 'dashboard:dashboard' %}">
+                                <li class="sidebar-item {% if active_page == 'payments' and request.GET.status == 'refunded' %}active{% endif %}">
+                                    <a class="sidebar-link" href="{% url 'dashboard:payments_list' %}?status=refunded">
                                         <i class="align-middle" data-feather="refresh-cw"></i> <span class="align-middle">Refunds</span>
                                     </a>
                                 </li>
@@ -152,48 +142,27 @@
 						Users Management
 					</li>
 
-                    <li class="sidebar-item">
-                        <a class="sidebar-link" data-bs-toggle="collapse" href="#usersCollapse" role="button" aria-expanded="false" aria-controls="usersCollapse">
+                    <li class="sidebar-item {% if active_page == 'users' %}active{% endif %}">
+                        <a class="sidebar-link" data-bs-toggle="collapse" href="#usersCollapse" role="button" aria-expanded="{% if active_page == 'users' %}true{% else %}false{% endif %}" aria-controls="usersCollapse">
                             <i class="align-middle" data-feather="users"></i> <span class="align-middle">Users</span>
                             <i class="align-middle ms-auto" data-feather="chevron-down"></i>
                         </a>
-                        <div class="collapse" id="usersCollapse">
+                        <div class="collapse {% if active_page == 'users' %}show{% endif %}" id="usersCollapse">
                             <ul class="sidebar-dropdown list-unstyled small">
-                                <li class="sidebar-item">
-                                    <a class="sidebar-link" href="{% url 'dashboard:dashboard' %}">
+                                <li class="sidebar-item {% if request.resolver_match.url_name == 'users_list' %}active{% endif %}">
+                                    <a class="sidebar-link" href="{% url 'dashboard:users_list' %}">
                                         <i class="align-middle" data-feather="list"></i> <span class="align-middle">All Users</span>
                                     </a>
                                 </li>
-                                <li class="sidebar-item">
-                                    <a class="sidebar-link" href="{% url 'dashboard:dashboard' %}">
+                                <li class="sidebar-item {% if request.resolver_match.url_name == 'user_create' %}active{% endif %}">
+                                    <a class="sidebar-link" href="{% url 'dashboard:user_create' %}">
                                         <i class="align-middle" data-feather="user-plus"></i> <span class="align-middle">Add User</span>
-                                    </a>
-                                </li>
-                                <li class="sidebar-item">
-                                    <a class="sidebar-link" href="{% url 'dashboard:dashboard' %}">
-                                        <i class="align-middle" data-feather="shield"></i> <span class="align-middle">Roles</span>
-                                    </a>
-                                </li>
-                                <li class="sidebar-item">
-                                    <a class="sidebar-link" href="{% url 'dashboard:dashboard' %}">
-                                        <i class="align-middle" data-feather="activity"></i> <span class="align-middle">Activity</span>
                                     </a>
                                 </li>
                             </ul>
                         </div>
 					</li>
 
-                    <li class="sidebar-item">
-                        <a class="sidebar-link" href="{% url 'dashboard:dashboard' %}">
-                            <i class="align-middle" data-feather="user"></i> <span class="align-middle">User Profiles</span>
-                        </a>
-					</li>
-
-                    <li class="sidebar-item">
-                        <a class="sidebar-link" href="{% url 'dashboard:dashboard' %}">
-                            <i class="align-middle" data-feather="map-pin"></i> <span class="align-middle">Addresses</span>
-                        </a>
-					</li>
 
                     <li class="sidebar-header">
 						Content Management
@@ -214,13 +183,13 @@
                                 <li class="sidebar-item">
                                     <a class="sidebar-link" href="{% url 'dashboard:dashboard' %}">
                                         <i class="align-middle" data-feather="file-text"></i> <span class="align-middle">Blog Posts</span>
-                                    </a>
-                                </li>
+                        </a>
+					</li>
                                 <li class="sidebar-item">
                                     <a class="sidebar-link" href="{% url 'dashboard:dashboard' %}">
                                         <i class="align-middle" data-feather="file"></i> <span class="align-middle">Pages</span>
-                                    </a>
-                                </li>
+                        </a>
+					</li>
                                 <li class="sidebar-item">
                                     <a class="sidebar-link" href="{% url 'dashboard:dashboard' %}">
                                         <i class="align-middle" data-feather="image"></i> <span class="align-middle">Media</span>
@@ -249,8 +218,8 @@
                                 <li class="sidebar-item">
                                     <a class="sidebar-link" href="{% url 'dashboard:dashboard' %}">
                                         <i class="align-middle" data-feather="book"></i> <span class="align-middle">Knowledge Base</span>
-                                    </a>
-                                </li>
+                        </a>
+					</li>
                                 <li class="sidebar-item">
                                     <a class="sidebar-link" href="{% url 'dashboard:dashboard' %}">
                                         <i class="align-middle" data-feather="settings"></i> <span class="align-middle">AI Settings</span>
@@ -289,13 +258,13 @@
                                 <li class="sidebar-item">
                                     <a class="sidebar-link" href="{% url 'dashboard:dashboard' %}">
                                         <i class="align-middle" data-feather="database"></i> <span class="align-middle">Backup</span>
-                                    </a>
-                                </li>
+                        </a>
+					</li>
                                 <li class="sidebar-item">
                                     <a class="sidebar-link" href="{% url 'dashboard:dashboard' %}">
                                         <i class="align-middle" data-feather="alert-triangle"></i> <span class="align-middle">Error Logs</span>
-                                    </a>
-                                </li>
+                        </a>
+					</li>
                             </ul>
                         </div>
 					</li>
@@ -458,7 +427,7 @@
 								<a class="dropdown-item" href="#"><i class="align-middle me-1" data-feather="settings"></i> Settings & Privacy</a>
 								<a class="dropdown-item" href="#"><i class="align-middle me-1" data-feather="help-circle"></i> Help Center</a>
 								<div class="dropdown-divider"></div>
-								<a class="dropdown-item" href="{% url 'main:logout' %}"><i class="align-middle me-1" data-feather="log-out"></i> Log out</a>
+								<a class="dropdown-item" href="{% url 'main:logout' %}" onclick="saveCartBeforeLogout(event)"><i class="align-middle me-1" data-feather="log-out"></i> Log out</a>
 							</div>
 						</li>
 					</ul>
@@ -582,224 +551,295 @@
 
 	<script>
 		document.addEventListener("DOMContentLoaded", function() {
-			var ctx = document.getElementById("chartjs-dashboard-line").getContext("2d");
-			var gradient = ctx.createLinearGradient(0, 0, 0, 225);
-			gradient.addColorStop(0, "rgba(215, 227, 244, 1)");
-			gradient.addColorStop(1, "rgba(215, 227, 244, 0)");
-			// Line chart
-			new Chart(document.getElementById("chartjs-dashboard-line"), {
-				type: "line",
-				data: {
-					labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
-					datasets: [{
-						label: "Sales ($)",
-						fill: true,
-						backgroundColor: gradient,
-						borderColor: window.theme.primary,
-						data: [
-							2115,
-							1562,
-							1584,
-							1892,
-							1587,
-							1923,
-							2566,
-							2448,
-							2805,
-							3438,
-							2917,
-							3327
-						]
-					}]
-				},
-				options: {
-					maintainAspectRatio: false,
-					legend: {
-						display: false
-					},
-					tooltips: {
-						intersect: false
-					},
-					hover: {
-						intersect: true
-					},
-					plugins: {
-						filler: {
-							propagate: false
-						}
-					},
-					scales: {
-						xAxes: [{
-							reverse: true,
-							gridLines: {
-								color: "rgba(0,0,0,0.0)"
-							}
-						}],
-						yAxes: [{
-							ticks: {
-								stepSize: 1000
-							},
-							display: true,
-							borderDash: [3, 3],
-							gridLines: {
-								color: "rgba(0,0,0,0.0)"
-							}
+			var chartLine = document.getElementById("chartjs-dashboard-line");
+			if (chartLine) {
+				var ctx = chartLine.getContext("2d");
+				var gradient = ctx.createLinearGradient(0, 0, 0, 225);
+				gradient.addColorStop(0, "rgba(215, 227, 244, 1)");
+				gradient.addColorStop(1, "rgba(215, 227, 244, 0)");
+				// Line chart
+				new Chart(chartLine, {
+					type: "line",
+					data: {
+						labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+						datasets: [{
+							label: "Sales ($)",
+							fill: true,
+							backgroundColor: gradient,
+							borderColor: window.theme ? window.theme.primary : '#007bff',
+							data: [
+								2115,
+								1562,
+								1584,
+								1892,
+								1587,
+								1923,
+								2566,
+								2448,
+								2805,
+								3438,
+								2917,
+								3327
+							]
 						}]
+					},
+					options: {
+						maintainAspectRatio: false,
+						legend: {
+							display: false
+						},
+						tooltips: {
+							intersect: false
+						},
+						hover: {
+							intersect: true
+						},
+						plugins: {
+							filler: {
+								propagate: false
+							}
+						},
+						scales: {
+							xAxes: [{
+								reverse: true,
+								gridLines: {
+									color: "rgba(0,0,0,0.0)"
+								}
+							}],
+							yAxes: [{
+								ticks: {
+									stepSize: 1000
+								},
+								display: true,
+								borderDash: [3, 3],
+								gridLines: {
+									color: "rgba(0,0,0,0.0)"
+								}
+							}]
+						}
 					}
-				}
-			});
+				});
+			}
 		});
 	</script>
 	<script>
 		document.addEventListener("DOMContentLoaded", function() {
 			// Pie chart
-			new Chart(document.getElementById("chartjs-dashboard-pie"), {
-				type: "pie",
-				data: {
-					labels: ["Chrome", "Firefox", "IE"],
-					datasets: [{
-						data: [4306, 3801, 1689],
-						backgroundColor: [
-							window.theme.primary,
-							window.theme.warning,
-							window.theme.danger
-						],
-						borderWidth: 5
-					}]
-				},
-				options: {
-					responsive: !window.MSInputMethodContext,
-					maintainAspectRatio: false,
-					legend: {
-						display: false
+			var chartPie = document.getElementById("chartjs-dashboard-pie");
+			if (chartPie) {
+				new Chart(chartPie, {
+					type: "pie",
+					data: {
+						labels: ["Chrome", "Firefox", "IE"],
+						datasets: [{
+							data: [4306, 3801, 1689],
+							backgroundColor: [
+								window.theme ? window.theme.primary : '#007bff',
+								window.theme ? window.theme.warning : '#ffc107',
+								window.theme ? window.theme.danger : '#dc3545'
+							],
+							borderWidth: 5
+						}]
 					},
-					cutoutPercentage: 75
-				}
-			});
+					options: {
+						responsive: !window.MSInputMethodContext,
+						maintainAspectRatio: false,
+						legend: {
+							display: false
+						},
+						cutoutPercentage: 75
+					}
+				});
+			}
 		});
 	</script>
 	<script>
 		document.addEventListener("DOMContentLoaded", function() {
 			// Bar chart
-			new Chart(document.getElementById("chartjs-dashboard-bar"), {
-				type: "bar",
-				data: {
-					labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
-					datasets: [{
-						label: "This year",
-						backgroundColor: window.theme.primary,
-						borderColor: window.theme.primary,
-						hoverBackgroundColor: window.theme.primary,
-						hoverBorderColor: window.theme.primary,
-						data: [54, 67, 41, 55, 62, 45, 55, 73, 60, 76, 48, 79],
-						barPercentage: .75,
-						categoryPercentage: .5
-					}]
-				},
-				options: {
-					maintainAspectRatio: false,
-					legend: {
-						display: false
-					},
-					scales: {
-						yAxes: [{
-							gridLines: {
-								display: false
-							},
-							stacked: false,
-							ticks: {
-								stepSize: 20
-							}
-						}],
-						xAxes: [{
-							stacked: false,
-							gridLines: {
-								color: "transparent"
-							}
+			var chartBar = document.getElementById("chartjs-dashboard-bar");
+			if (chartBar) {
+				new Chart(chartBar, {
+					type: "bar",
+					data: {
+						labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+						datasets: [{
+							label: "This year",
+							backgroundColor: window.theme ? window.theme.primary : '#007bff',
+							borderColor: window.theme ? window.theme.primary : '#007bff',
+							hoverBackgroundColor: window.theme ? window.theme.primary : '#007bff',
+							hoverBorderColor: window.theme ? window.theme.primary : '#007bff',
+							data: [54, 67, 41, 55, 62, 45, 55, 73, 60, 76, 48, 79],
+							barPercentage: .75,
+							categoryPercentage: .5
 						}]
+					},
+					options: {
+						maintainAspectRatio: false,
+						legend: {
+							display: false
+						},
+						scales: {
+							yAxes: [{
+								gridLines: {
+									display: false
+								},
+								stacked: false,
+								ticks: {
+									stepSize: 20
+								}
+							}],
+							xAxes: [{
+								stacked: false,
+								gridLines: {
+									color: "transparent"
+								}
+							}]
+						}
 					}
-				}
-			});
+				});
+			}
 		});
 	</script>
 	<script>
 		document.addEventListener("DOMContentLoaded", function() {
-			var markers = [{
-					coords: [31.230391, 121.473701],
-					name: "Shanghai"
-				},
-				{
-					coords: [28.704060, 77.102493],
-					name: "Delhi"
-				},
-				{
-					coords: [6.524379, 3.379206],
-					name: "Lagos"
-				},
-				{
-					coords: [35.689487, 139.691711],
-					name: "Tokyo"
-				},
-				{
-					coords: [23.129110, 113.264381],
-					name: "Guangzhou"
-				},
-				{
-					coords: [40.7127837, -74.0059413],
-					name: "New York"
-				},
-				{
-					coords: [34.052235, -118.243683],
-					name: "Los Angeles"
-				},
-				{
-					coords: [41.878113, -87.629799],
-					name: "Chicago"
-				},
-				{
-					coords: [51.507351, -0.127758],
-					name: "London"
-				},
-				{
-					coords: [40.416775, -3.703790],
-					name: "Madrid "
-				}
-			];
-			var map = new jsVectorMap({
-				map: "world",
-				selector: "#world_map",
-				zoomButtons: true,
-				markers: markers,
-				markerStyle: {
+			var worldMap = document.getElementById("world_map");
+			if (worldMap) {
+				var markers = [{
+						coords: [31.230391, 121.473701],
+						name: "Shanghai"
+					},
+					{
+						coords: [28.704060, 77.102493],
+						name: "Delhi"
+					},
+					{
+						coords: [6.524379, 3.379206],
+						name: "Lagos"
+					},
+					{
+						coords: [35.689487, 139.691711],
+						name: "Tokyo"
+					},
+					{
+						coords: [23.129110, 113.264381],
+						name: "Guangzhou"
+					},
+					{
+						coords: [40.7127837, -74.0059413],
+						name: "New York"
+					},
+					{
+						coords: [34.052235, -118.243683],
+						name: "Los Angeles"
+					},
+					{
+						coords: [41.878113, -87.629799],
+						name: "Chicago"
+					},
+					{
+						coords: [51.507351, -0.127758],
+						name: "London"
+					},
+					{
+						coords: [40.416775, -3.703790],
+						name: "Madrid "
+					}
+				];
+				var map = new jsVectorMap({
+					map: "world",
+					selector: "#world_map",
+					zoomButtons: true,
+					markers: markers,
+					markerStyle: {
 					initial: {
 						r: 9,
 						strokeWidth: 7,
 						stokeOpacity: .4,
-						fill: window.theme.primary
+						fill: window.theme ? window.theme.primary : '#007bff'
 					},
 					hover: {
-						fill: window.theme.primary,
-						stroke: window.theme.primary
+						fill: window.theme ? window.theme.primary : '#007bff',
+						stroke: window.theme ? window.theme.primary : '#007bff'
 					}
-				},
-				zoomOnScroll: false
-			});
-			window.addEventListener("resize", () => {
-				map.updateSize();
-			});
+					},
+					zoomOnScroll: false
+				});
+				window.addEventListener("resize", () => {
+					map.updateSize();
+				});
+			}
 		});
 	</script>
 	<script>
 		document.addEventListener("DOMContentLoaded", function() {
-			var date = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
-			var defaultDate = date.getUTCFullYear() + "-" + (date.getUTCMonth() + 1) + "-" + date.getUTCDate();
-			document.getElementById("datetimepicker-dashboard").flatpickr({
-				inline: true,
-				prevArrow: "<span title=\"Previous month\">&laquo;</span>",
-				nextArrow: "<span title=\"Next month\">&raquo;</span>",
-				defaultDate: defaultDate
-			});
+			var datePicker = document.getElementById("datetimepicker-dashboard");
+			if (datePicker && typeof flatpickr !== 'undefined') {
+				var date = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
+				var defaultDate = date.getUTCFullYear() + "-" + (date.getUTCMonth() + 1) + "-" + date.getUTCDate();
+				datePicker.flatpickr({
+					inline: true,
+					prevArrow: "<span title=\"Previous month\">&laquo;</span>",
+					nextArrow: "<span title=\"Next month\">&raquo;</span>",
+					defaultDate: defaultDate
+				});
+			}
 		});
+	</script>
+
+	<script>
+		// Save cart before logout
+		async function saveCartBeforeLogout(event) {
+			event.preventDefault();
+			
+			// Get cart from localStorage if available
+			let cart = [];
+			try {
+				const cartStr = localStorage.getItem('cart');
+				if (cartStr) {
+					cart = JSON.parse(cartStr);
+				}
+			} catch (e) {
+				console.error('Error reading cart from localStorage:', e);
+			}
+			
+			// Save current cart to MongoDB before logout
+			if (cart.length > 0) {
+				try {
+					// Get CSRF token
+					function getCookie(name) {
+						let cookieValue = null;
+						if (document.cookie && document.cookie !== '') {
+							const cookies = document.cookie.split(';');
+							for (let i = 0; i < cookies.length; i++) {
+								const cookie = cookies[i].trim();
+								if (cookie.substring(0, name.length + 1) === (name + '=')) {
+									cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+									break;
+								}
+							}
+						}
+						return cookieValue;
+					}
+					
+					await fetch('{% url "main:save_cart" %}', {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+							'X-CSRFToken': getCookie('csrftoken')
+						},
+						body: JSON.stringify({ cart: cart })
+					});
+				} catch (error) {
+					console.error('Error saving cart before logout:', error);
+				}
+			}
+			
+			// Clear localStorage cart
+			localStorage.removeItem('cart');
+			
+			// Proceed with logout
+			window.location.href = '{% url "main:logout" %}';
+		}
 	</script>
 
 </body>

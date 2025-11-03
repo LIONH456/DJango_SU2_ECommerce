@@ -205,7 +205,15 @@
             <div class="col-xl-3 col-lg-3 col-md-6 col-sm-6">
                 <div class="single-new-arrival mb-50 text-center wow fadeInUp" data-wow-duration="1s" data-wow-delay=".{{ forloop.counter }}s">
                     <div class="popular-img">
-                        <img src="{{ product.main_image|default:'https://zandokh.com/image/cache/catalog/products/2024-08/5152405078/Sport-Life-T-Shirt-With-Print%20(1)-cr-450x672.jpg' }}" alt="{{ product.name }}">
+                        {% if product.main_image %}
+                            {% if product.main_image|slice:":4" == "http" %}
+                                <img src="{{ product.main_image }}" alt="{{ product.name }}">
+                            {% else %}
+                                <img src="{% static product.main_image %}" alt="{{ product.name }}">
+                            {% endif %}
+                        {% else %}
+                            <img src="https://zandokh.com/image/cache/catalog/products/2024-08/5152405078/Sport-Life-T-Shirt-With-Print%20(1)-cr-450x672.jpg" alt="{{ product.name }}">
+                        {% endif %}
                         <div class="favorit-items">
                             <img src="{% static 'main/img/gallery/favorit-card.png' %}" alt="">
                         </div>

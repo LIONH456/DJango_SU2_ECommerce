@@ -1,0 +1,144 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block content %}
+<main class="content">
+    <div class="container-fluid p-0">
+
+        <h1 class="h3 mb-3">{% if user.id %}Edit User{% else %}Add New User{% endif %}</h1>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">{% if user.id %}Edit User{% else %}Create User{% endif %}</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }} alert-dismissible" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                            <script>
+                                // Auto-scroll to top if there's an error
+                                if (document.querySelector('.alert-danger')) {
+                                    window.scrollTo(0, 0);
+                                }
+                            </script>
+                        {% endif %}
+
+                        <form method="POST" action="{% if user.id %}{% url 'dashboard:user_edit' user.id %}{% else %}{% url 'dashboard:user_create' %}{% endif %}">
+                            {% csrf_token %}
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="username" class="form-label">Username <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="username" name="username" 
+                                               value="{{ user.username|default:'' }}" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                                        <input type="email" class="form-control" id="email" name="email" 
+                                               value="{{ user.email|default:'' }}" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="first_name" class="form-label">First Name</label>
+                                        <input type="text" class="form-control" id="first_name" name="first_name" 
+                                               value="{% if user %}{{ user.first_name|default:'' }}{% endif %}">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="last_name" class="form-label">Last Name</label>
+                                        <input type="text" class="form-control" id="last_name" name="last_name" 
+                                               value="{% if user %}{{ user.last_name|default:'' }}{% endif %}">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="password" class="form-label">Password {% if not user or not user.id %}<span class="text-danger">*</span>{% else %}(leave blank to keep current){% endif %}</label>
+                                        <input type="password" class="form-control" id="password" name="password" 
+                                               {% if not user or not user.id %}required{% endif %}>
+                                        {% if not user or not user.id %}
+                                        <small class="form-text text-muted">Password must be at least 8 characters long</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="phone" class="form-label">Phone</label>
+                                        <input type="tel" class="form-control" id="phone" name="phone" 
+                                               value="{% if user %}{{ user.phone|default:'' }}{% endif %}">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="is_active" name="is_active" value="true"
+                                                   {% if user and user.is_active or not user or not user.id %}checked{% endif %}>
+                                            <input type="hidden" name="is_active" value="false">
+                                            <label class="form-check-label" for="is_active">
+                                                Active
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="is_staff" name="is_staff" value="true"
+                                                   {% if user and user.is_staff %}checked{% endif %}>
+                                            <input type="hidden" name="is_staff" value="false">
+                                            <label class="form-check-label" for="is_staff">
+                                                Admin (Staff)
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="is_superuser" name="is_superuser" value="true"
+                                                   {% if user and user.is_superuser %}checked{% endif %}>
+                                            <input type="hidden" name="is_superuser" value="false">
+                                            <label class="form-check-label" for="is_superuser">
+                                                Super Admin
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="align-middle" data-feather="save"></i> {% if user and user.id %}Update User{% else %}Create User{% endif %}
+                                </button>
+                                <a href="{% url 'dashboard:users_list' %}" class="btn btn-secondary">
+                                    <i class="align-middle" data-feather="x"></i> Cancel
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
+

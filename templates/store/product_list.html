@@ -471,7 +471,15 @@
                     <div class="col-xl-4 col-lg-4 col-md-6 col-sm-6 product-item" data-delay="{{ forloop.counter0 }}">
                         <div class="single-product">
                             <a class="image-wrap" href="{% url 'main:product_detail' product.id %}">
-                                <img src="{{ product.main_image|default:'https://zandokh.com/image/cache/catalog/products/2024-08/5152405078/Sport-Life-T-Shirt-With-Print%20(1)-cr-450x672.jpg' }}" alt="{{ product.name }}">
+                                {% if product.main_image %}
+                                    {% if product.main_image|slice:':4' == 'http' %}
+                                        <img src="{{ product.main_image }}" alt="{{ product.name }}">
+                                    {% else %}
+                                        <img src="{% get_static_prefix %}{{ product.main_image }}" alt="{{ product.name }}">
+                                    {% endif %}
+                                {% else %}
+                                    <img src="https://zandokh.com/image/cache/catalog/products/2024-08/5152405078/Sport-Life-T-Shirt-With-Print%20(1)-cr-450x672.jpg" alt="{{ product.name }}">
+                                {% endif %}
                             </a>
                             <div class="product-caption text-center">
                                 <h4><a href="{% url 'main:product_detail' product.id %}">{{ product.name }}</a></h4>
@@ -485,7 +493,7 @@
                                         data-product-id="{{ product.id }}" 
                                         data-product-name="{{ product.name }}" 
                                         data-product-price="{{ product.price }}" 
-                                        data-product-image="{{ product.main_image|default:'https://zandokh.com/image/cache/catalog/products/2024-08/5152405078/Sport-Life-T-Shirt-With-Print%20(1)-cr-450x672.jpg' }}">
+                                        data-product-image="{% if product.main_image %}{% if product.main_image|slice:':4' == 'http' %}{{ product.main_image }}{% else %}{% get_static_prefix %}{{ product.main_image }}{% endif %}{% else %}https://zandokh.com/image/cache/catalog/products/2024-08/5152405078/Sport-Life-T-Shirt-With-Print%20(1)-cr-450x672.jpg{% endif %}">
                                     Add to Cart
                                 </button>
                             </div>
@@ -579,7 +587,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Add to cart function
-function addToCart(product) {
+async function addToCart(product) {
     let cart = JSON.parse(localStorage.getItem('cart') || '[]');
     
     // Check if product already exists in cart
@@ -596,6 +604,49 @@ function addToCart(product) {
     }
     
     localStorage.setItem('cart', JSON.stringify(cart));
+    
+    // Save to server if logged in
+    {% if user.is_authenticated %}
+    try {
+        const response = await fetch('{% url "main:save_cart" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ cart: cart })
+        });
+        const result = await response.json();
+        if (result.success) {
+            console.log('Cart saved to MongoDB successfully');
+        } else {
+            console.error('Failed to save cart:', result.message);
+        }
+    } catch (error) {
+        console.error('Error saving cart to server:', error);
+    }
+    {% endif %}
+    
+    // Also call global save function if available
+    if (typeof window.saveCartToMongoDB === 'function') {
+        await window.saveCartToMongoDB();
+    }
+}
+
+// Helper function to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
 }
 
 // Toast notification function

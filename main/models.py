@@ -52,6 +52,9 @@ class UserAddress(models.Model):
         ('both', 'Both')
     ], default='shipping')
     
+    # Address label/name for easy identification
+    address_name = models.CharField(max_length=100, blank=True, null=True, help_text="Name/label for this address (e.g., 'Home', 'Work', 'Office')")
+    
     # Address details
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
@@ -89,6 +92,9 @@ class UserProfile(models.Model):
     bio = models.TextField(blank=True, null=True)
     website = models.URLField(blank=True, null=True)
     social_links = models.JSONField(default=dict, blank=True)
+    avatar = models.CharField(max_length=255, blank=True, null=True)  # Store path to avatar image
+    date_of_birth = models.DateField(blank=True, null=True)
+    phone = models.CharField(max_length=20, blank=True, null=True)
     
     # Preferences
     language = models.CharField(max_length=10, default='en')
@@ -169,3 +175,20 @@ class UserActivity(models.Model):
     
     def __str__(self):
         return f"{self.user.username} - {self.activity_type} at {self.created_at}"
+
+class UserCart(models.Model):
+    """User shopping cart stored in database"""
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='carts')
+    cart_data = models.JSONField(default=list)  # Store cart items as JSON
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'user_carts'
+        verbose_name = 'User Cart'
+        verbose_name_plural = 'User Carts'
+        # One cart per user (get_or_create pattern)
+    
+    def __str__(self):
+        return f"Cart for {self.user.username}"

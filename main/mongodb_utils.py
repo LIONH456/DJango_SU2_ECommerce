@@ -18,6 +18,21 @@ class MongoDBManager:
         self.users_collection = self.db[settings.MONGODB_CONFIG['collection']]
         # Products collection (assumes 'products' collection name)
         self.products_collection = self.db.get_collection('products')
+        # Categories collection
+        self.categories_collection = self.db.get_collection('categories')
+        # Orders collection
+        self.orders_collection = self.db.get_collection('orders')
+        # Payments collection (try both 'payment' and 'payments' to support different naming)
+        try:
+            self.payments_collection = self.db.get_collection('payments')
+        except:
+            self.payments_collection = self.db.get_collection('payment')
+        # Carts collection
+        self.carts_collection = self.db.get_collection('carts')
+        # Wishlists collection
+        self.wishlists_collection = self.db.get_collection('wishlists')
+        # Addresses collection
+        self.addresses_collection = self.db.get_collection('addresses')
     
     def create_user(self, user_data):
         """Create a new user in MongoDB"""
@@ -58,6 +73,12 @@ class MongoDBManager:
     def update_user(self, user_id, update_data):
         """Update user data"""
         try:
+            # Hash password if it's being updated
+            if 'password' in update_data:
+                password = update_data['password'].encode('utf-8')
+                hashed_password = bcrypt.hashpw(password, bcrypt.gensalt())
+                update_data['password'] = hashed_password.decode('utf-8')
+            
             object_id = ObjectId(user_id)
             result = self.users_collection.update_one(
                 {'_id': object_id},
@@ -104,15 +125,13 @@ class MongoDBManager:
         if not product_doc:
             return None
         images = [img for img in (product_doc.get('images') or []) if isinstance(img, str) and img.strip()]
-        # Prefer first image without spaces; otherwise URL-encode spaces
+        # First image is the main image
         main_image = ''
         if images:
-            for img in images:
-                if ' ' not in img:
-                    main_image = img
-                    break
-            if not main_image:
-                main_image = images[0].replace(' ', '%20')
+            main_image = images[0]
+            # URL-encode spaces in local file paths if needed
+            if not main_image.startswith('http://') and not main_image.startswith('https://'):
+                main_image = main_image.replace(' ', '%20') if ' ' in main_image else main_image
         return {
             'id': str(product_doc.get('_id')),
             'name': product_doc.get('name', ''),
@@ -131,21 +150,112 @@ class MongoDBManager:
             'updated_at': product_doc.get('updated_at'),
         }
 
-    def list_products(self, *, category: str | None = None, search: str | None = None, max_price: str | None = None, sort_by: str | None = None, page: int | None = None, page_size: int = 12):
+    def list_products(self, *, category: str | None = None, search: str | None = None, max_price: str | None = None, sort_by: str | None = None, date_from: str | None = None, date_to: str | None = None, page: int | None = None, page_size: int = 12):
         """Return a list of products with optional filtering and basic pagination."""
+        from datetime import datetime
+        
         query = {}
         
-        # Category filter
-        if category:
-            query['category'] = category
+        # Category filter - supports hierarchical filtering (parent includes children)
+        category_ids_list = []
+        if category and category.strip():
+            try:
+                category_id_obj = ObjectId(category.strip())
+                # Get all child categories (recursively) for hierarchical filtering
+                all_category_ids = [category_id_obj]
+                
+                # Recursive function to get all child categories
+                def get_child_categories(parent_obj_id):
+                    child_categories = self.categories_collection.find({'parent_id': parent_obj_id})
+                    child_ids = []
+                    for child in child_categories:
+                        child_id = child.get('_id')
+                        if child_id:
+                            child_ids.append(child_id)
+                            # Recursively get grandchildren
+                            child_ids.extend(get_child_categories(child_id))
+                    return child_ids
+                
+                # Get all child categories
+                child_ids = get_child_categories(category_id_obj)
+                if child_ids:
+                    all_category_ids.extend(child_ids)
+                
+                # Store category IDs for later use in query building
+                category_ids_list = all_category_ids
+            except Exception:
+                # If ObjectId conversion fails, skip category filter
+                pass
+        
+        # Search filter (only if search is provided and not empty)
+        search_pattern = None
+        if search and search.strip():
+            search_pattern = search.strip()
             
-        # Search filter
-        if search:
-            query['name'] = { '$regex': search, '$options': 'i' }
+        # Price filter (only if max_price is provided and not empty)
+        max_price_val = None
+        if max_price and max_price.strip() and max_price.strip().isdigit():
+            max_price_val = float(max_price.strip())
+        
+        # Date filters (work independently - can use date_from alone, date_to alone, or both)
+        date_query = {}
+        if date_from and date_from.strip():
+            try:
+                date_from_obj = datetime.strptime(date_from.strip(), '%Y-%m-%d')
+                date_query['$gte'] = date_from_obj
+            except (ValueError, TypeError):
+                pass
+        if date_to and date_to.strip():
+            try:
+                date_to_obj = datetime.strptime(date_to.strip(), '%Y-%m-%d')
+                # Add 23:59:59 to include the entire day
+                date_to_obj = date_to_obj.replace(hour=23, minute=59, second=59)
+                date_query['$lte'] = date_to_obj
+            except (ValueError, TypeError):
+                pass
+        
+        # Build MongoDB query - combine all filters properly
+        # If we have category filter with hierarchical support, we need to use $or for category matching
+        # and combine it with other filters using $and
+        if category_ids_list:
+            # Build category match conditions (support ObjectId, string ObjectId, and legacy category field)
+            category_conditions = [
+                {'category_id': {'$in': category_ids_list}},  # ObjectId format
+            ]
+            # Also add string versions for compatibility
+            category_str_ids = [str(cid) for cid in category_ids_list]
+            category_conditions.append({'category_id': {'$in': category_str_ids}})  # String ObjectId format
+            category_conditions.append({'category': {'$in': category_str_ids}})  # Legacy category field
             
-        # Price filter
-        if max_price and max_price.isdigit():
-            query['price'] = { '$lte': float(max_price) }
+            # Combine category conditions
+            category_filter = {'$or': category_conditions}
+            
+            # Combine with other filters using $and if we have multiple conditions
+            and_conditions = [category_filter]
+            
+            if search_pattern:
+                and_conditions.append({'name': {'$regex': search_pattern, '$options': 'i'}})
+            
+            if max_price_val is not None:
+                and_conditions.append({'price': {'$lte': max_price_val}})
+            
+            if date_query:
+                and_conditions.append({'created_at': date_query})
+            
+            if len(and_conditions) > 1:
+                query = {'$and': and_conditions}
+            else:
+                query = and_conditions[0]
+        else:
+            # No category filter, build simple query
+            if search_pattern:
+                query['name'] = {'$regex': search_pattern, '$options': 'i'}
+            
+            if max_price_val is not None:
+                query['price'] = {'$lte': max_price_val}
+            
+            if date_query:
+                query['created_at'] = date_query
 
         cursor = self.products_collection.find(query)
         
@@ -183,6 +293,913 @@ class MongoDBManager:
     def get_product_by_slug(self, slug: str):
         doc = self.products_collection.find_one({'slug': slug})
         return self._format_product_doc(doc)
+    
+    # --------------------
+    # Product Management (CRUD)
+    # --------------------
+    def create_product(self, product_data):
+        """Create a new product in MongoDB"""
+        # Add timestamps
+        product_data['created_at'] = datetime.utcnow()
+        product_data['updated_at'] = datetime.utcnow()
+        
+        # Convert category_id to ObjectId if it's provided as string
+        if 'category_id' in product_data and product_data['category_id']:
+            if isinstance(product_data['category_id'], str):
+                try:
+                    product_data['category_id'] = ObjectId(product_data['category_id'])
+                except:
+                    product_data['category_id'] = None
+            elif product_data['category_id'] is None or product_data['category_id'] == '':
+                product_data['category_id'] = None
+        else:
+            product_data['category_id'] = None
+        
+        # Set default values
+        product_data.setdefault('is_available', True)
+        product_data.setdefault('quantity', 0)
+        product_data.setdefault('tags', [])
+        product_data.setdefault('images', [])
+        
+        result = self.products_collection.insert_one(product_data)
+        return str(result.inserted_id)
+    
+    def update_product(self, product_id: str, update_data):
+        """Update product in MongoDB"""
+        try:
+            update_data['updated_at'] = datetime.utcnow()
+            
+            # Convert category_id to ObjectId if it's provided as string
+            if 'category_id' in update_data:
+                if isinstance(update_data['category_id'], str) and update_data['category_id'].strip():
+                    try:
+                        update_data['category_id'] = ObjectId(update_data['category_id'].strip())
+                    except:
+                        update_data['category_id'] = None
+                elif not update_data['category_id'] or update_data['category_id'] == '':
+                    update_data['category_id'] = None
+            
+            object_id = ObjectId(product_id)
+            result = self.products_collection.update_one(
+                {'_id': object_id},
+                {'$set': update_data}
+            )
+            return result.modified_count > 0
+        except Exception:
+            return False
+    
+    def delete_product(self, product_id: str):
+        """Delete product from MongoDB"""
+        try:
+            object_id = ObjectId(product_id)
+            result = self.products_collection.delete_one({'_id': object_id})
+            return result.deleted_count > 0
+        except Exception:
+            return False
+    
+    # --------------------
+    # Category helpers
+    # --------------------
+    @staticmethod
+    def _format_category_doc(category_doc):
+        """Map a MongoDB category document to a template-friendly dict."""
+        if not category_doc:
+            return None
+        return {
+            'id': str(category_doc.get('_id')),
+            'name': category_doc.get('name', ''),
+            'slug': category_doc.get('slug', ''),
+            'description': category_doc.get('description', ''),
+            'image': category_doc.get('image', ''),
+            'parent_id': str(category_doc.get('parent_id')) if category_doc.get('parent_id') else None,
+            'is_active': category_doc.get('is_active', True),
+            'sort_order': category_doc.get('sort_order', 0),
+            'created_at': category_doc.get('created_at'),
+            'updated_at': category_doc.get('updated_at'),
+        }
+    
+    def list_categories(self, parent_id: str | None = None, is_active: bool | None = None, top_level_only: bool = False):
+        """List all categories with optional filtering"""
+        query = {}
+        
+        # Handle parent_id filtering
+        if parent_id is not None and parent_id != '':
+            try:
+                query['parent_id'] = ObjectId(parent_id)
+            except:
+                pass
+        elif top_level_only:
+            query['parent_id'] = None  # Top-level categories only
+        
+        # Handle is_active filtering
+        if is_active is not None:
+            query['is_active'] = is_active
+        
+        cursor = self.categories_collection.find(query).sort('sort_order', 1)
+        return [self._format_category_doc(doc) for doc in cursor]
+    
+    def get_category_by_id(self, category_id: str):
+        """Get category by ID"""
+        try:
+            doc = self.categories_collection.find_one({'_id': ObjectId(category_id)})
+        except Exception:
+            doc = None
+        return self._format_category_doc(doc)
+    
+    def get_category_by_slug(self, slug: str):
+        """Get category by slug"""
+        doc = self.categories_collection.find_one({'slug': slug})
+        return self._format_category_doc(doc)
+    
+    # --------------------
+    # Category Management (CRUD)
+    # --------------------
+    def create_category(self, category_data):
+        """Create a new category in MongoDB"""
+        # Add timestamps
+        category_data['created_at'] = datetime.utcnow()
+        category_data['updated_at'] = datetime.utcnow()
+        
+        # Handle parent_id conversion
+        if category_data.get('parent_id'):
+            try:
+                category_data['parent_id'] = ObjectId(category_data['parent_id'])
+            except:
+                category_data['parent_id'] = None
+        else:
+            category_data['parent_id'] = None
+        
+        # Set default values
+        category_data.setdefault('is_active', True)
+        category_data.setdefault('sort_order', 0)
+        category_data.setdefault('image', '')
+        category_data.setdefault('description', '')
+        
+        result = self.categories_collection.insert_one(category_data)
+        return str(result.inserted_id)
+    
+    def update_category(self, category_id: str, update_data):
+        """Update category in MongoDB"""
+        try:
+            update_data['updated_at'] = datetime.utcnow()
+            
+            # Handle parent_id conversion
+            if 'parent_id' in update_data:
+                if update_data['parent_id']:
+                    try:
+                        update_data['parent_id'] = ObjectId(update_data['parent_id'])
+                    except:
+                        update_data['parent_id'] = None
+                else:
+                    update_data['parent_id'] = None
+            
+            object_id = ObjectId(category_id)
+            result = self.categories_collection.update_one(
+                {'_id': object_id},
+                {'$set': update_data}
+            )
+            return result.modified_count > 0
+        except Exception:
+            return False
+    
+    def delete_category(self, category_id: str):
+        """Delete category from MongoDB"""
+        try:
+            object_id = ObjectId(category_id)
+            result = self.categories_collection.delete_one({'_id': object_id})
+            return result.deleted_count > 0
+        except Exception:
+            return False
+
+    # --------------------
+    # Cart helpers
+    # --------------------
+    def get_user_cart(self, user_id: str):
+        """Get user's cart from MongoDB"""
+        try:
+            # Convert user_id to ObjectId if it's a string
+            if isinstance(user_id, str):
+                try:
+                    user_id = ObjectId(user_id)
+                except:
+                    # If it's not a valid ObjectId, try to find by username
+                    user = self.get_user_by_username(user_id)
+                    if user:
+                        user_id = user.get('_id')
+                    else:
+                        return None
+            
+            cart = self.carts_collection.find_one({'user_id': user_id})
+            return cart
+        except Exception as e:
+            print(f"Error getting user cart: {e}")
+            return None
+    
+    def save_user_cart(self, user_id: str, cart_data: list):
+        """Save or update user's cart in MongoDB"""
+        try:
+            # Convert user_id to ObjectId if it's a string
+            if isinstance(user_id, str):
+                try:
+                    user_id = ObjectId(user_id)
+                except:
+                    # If it's not a valid ObjectId, try to find by username
+                    user = self.get_user_by_username(user_id)
+                    if user:
+                        user_id = user.get('_id')
+                    else:
+                        return False
+            
+            # Upsert cart (update if exists, create if not)
+            result = self.carts_collection.update_one(
+                {'user_id': user_id},
+                {
+                    '$set': {
+                        'cart_data': cart_data,
+                        'updated_at': datetime.utcnow()
+                    },
+                    '$setOnInsert': {
+                        'created_at': datetime.utcnow()
+                    }
+                },
+                upsert=True
+            )
+            return True
+        except Exception as e:
+            print(f"Error saving user cart: {e}")
+            return False
+    
+    def clear_user_cart(self, user_id: str):
+        """Clear user's cart in MongoDB"""
+        try:
+            # Convert user_id to ObjectId if it's a string
+            if isinstance(user_id, str):
+                try:
+                    user_id = ObjectId(user_id)
+                except:
+                    # If it's not a valid ObjectId, try to find by username
+                    user = self.get_user_by_username(user_id)
+                    if user:
+                        user_id = user.get('_id')
+                    else:
+                        return False
+            
+            result = self.carts_collection.update_one(
+                {'user_id': user_id},
+                {
+                    '$set': {
+                        'cart_data': [],
+                        'updated_at': datetime.utcnow()
+                    }
+                }
+            )
+            return result.modified_count > 0 or result.matched_count > 0
+        except Exception as e:
+            print(f"Error clearing user cart: {e}")
+            return False
+
+    # --------------------
+    # Wishlist helpers
+    # --------------------
+    def get_user_wishlist(self, user_id: str):
+        """Get user's wishlist from MongoDB"""
+        try:
+            # Convert user_id to ObjectId if it's a string
+            if isinstance(user_id, str):
+                try:
+                    user_id = ObjectId(user_id)
+                except:
+                    # If it's not a valid ObjectId, try to find by username
+                    user = self.get_user_by_username(user_id)
+                    if user:
+                        user_id = user.get('_id')
+                    else:
+                        return []
+            
+            wishlist = self.wishlists_collection.find_one({'user_id': user_id})
+            if wishlist and wishlist.get('items'):
+                return wishlist.get('items', [])
+            return []
+        except Exception as e:
+            print(f"Error getting user wishlist: {e}")
+            return []
+    
+    def add_to_wishlist(self, user_id: str, product_id: str):
+        """Add product to user's wishlist"""
+        try:
+            # Convert user_id to ObjectId
+            if isinstance(user_id, str):
+                try:
+                    user_id = ObjectId(user_id)
+                except:
+                    user = self.get_user_by_username(user_id)
+                    if user:
+                        user_id = user.get('_id')
+                    else:
+                        return False
+            
+            # Convert product_id to ObjectId
+            if isinstance(product_id, str):
+                try:
+                    product_id = ObjectId(product_id)
+                except:
+                    return False
+            
+            # Get current wishlist
+            wishlist = self.wishlists_collection.find_one({'user_id': user_id})
+            
+            if wishlist:
+                items = wishlist.get('items', [])
+                # Check if product already in wishlist
+                if product_id not in items:
+                    items.append(product_id)
+                    self.wishlists_collection.update_one(
+                        {'user_id': user_id},
+                        {
+                            '$set': {
+                                'items': items,
+                                'updated_at': datetime.utcnow()
+                            }
+                        }
+                    )
+                    return True
+                return False  # Already in wishlist
+            else:
+                # Create new wishlist
+                self.wishlists_collection.insert_one({
+                    'user_id': user_id,
+                    'items': [product_id],
+                    'created_at': datetime.utcnow(),
+                    'updated_at': datetime.utcnow()
+                })
+                return True
+        except Exception as e:
+            print(f"Error adding to wishlist: {e}")
+            return False
+    
+    def remove_from_wishlist(self, user_id: str, product_id: str):
+        """Remove product from user's wishlist"""
+        try:
+            # Convert user_id to ObjectId
+            if isinstance(user_id, str):
+                try:
+                    user_id = ObjectId(user_id)
+                except:
+                    user = self.get_user_by_username(user_id)
+                    if user:
+                        user_id = user.get('_id')
+                    else:
+                        return False
+            
+            # Convert product_id to ObjectId
+            if isinstance(product_id, str):
+                try:
+                    product_id = ObjectId(product_id)
+                except:
+                    return False
+            
+            wishlist = self.wishlists_collection.find_one({'user_id': user_id})
+            if wishlist:
+                items = wishlist.get('items', [])
+                if product_id in items:
+                    items.remove(product_id)
+                    self.wishlists_collection.update_one(
+                        {'user_id': user_id},
+                        {
+                            '$set': {
+                                'items': items,
+                                'updated_at': datetime.utcnow()
+                            }
+                        }
+                    )
+                    return True
+            return False
+        except Exception as e:
+            print(f"Error removing from wishlist: {e}")
+            return False
+    
+    def is_in_wishlist(self, user_id: str, product_id: str):
+        """Check if product is in user's wishlist"""
+        try:
+            # Convert user_id to ObjectId
+            if isinstance(user_id, str):
+                try:
+                    user_id = ObjectId(user_id)
+                except:
+                    user = self.get_user_by_username(user_id)
+                    if user:
+                        user_id = user.get('_id')
+                    else:
+                        return False
+            
+            # Convert product_id to ObjectId
+            if isinstance(product_id, str):
+                try:
+                    product_id = ObjectId(product_id)
+                except:
+                    return False
+            
+            wishlist = self.wishlists_collection.find_one({'user_id': user_id})
+            if wishlist:
+                items = wishlist.get('items', [])
+                return product_id in items
+            return False
+        except Exception as e:
+            print(f"Error checking wishlist: {e}")
+            return False
+
+    # --------------------
+    # Order helpers
+    # --------------------
+    def create_order(self, order_data):
+        """Create a new order in MongoDB"""
+        try:
+            # Convert user_id to ObjectId if provided
+            if 'user_id' in order_data and order_data['user_id']:
+                if isinstance(order_data['user_id'], str):
+                    try:
+                        order_data['user_id'] = ObjectId(order_data['user_id'])
+                    except:
+                        user = self.get_user_by_username(order_data['user_id'])
+                        if user:
+                            order_data['user_id'] = user.get('_id')
+                        else:
+                            return None
+            
+            # Generate order number if not provided
+            if 'order_number' not in order_data or not order_data.get('order_number'):
+                # Generate unique order number (e.g., ORD-YYYYMMDD-HHMMSS-XXXX)
+                timestamp = datetime.utcnow()
+                order_data['order_number'] = f"ORD-{timestamp.strftime('%Y%m%d')}-{timestamp.strftime('%H%M%S')}-{str(timestamp.microsecond)[:4]}"
+            
+            # Set default values
+            order_data.setdefault('status', 'pending')
+            order_data.setdefault('payment_status', 'pending')
+            order_data['created_at'] = datetime.utcnow()
+            order_data['updated_at'] = datetime.utcnow()
+            
+            result = self.orders_collection.insert_one(order_data)
+            return str(result.inserted_id)
+        except Exception as e:
+            print(f"Error creating order: {e}")
+            return None
+    
+    def get_user_orders(self, user_id: str, limit: int = None):
+        """Get orders for a specific user"""
+        try:
+            # Convert user_id to ObjectId
+            if isinstance(user_id, str):
+                try:
+                    user_id = ObjectId(user_id)
+                except:
+                    user = self.get_user_by_username(user_id)
+                    if user:
+                        user_id = user.get('_id')
+                    else:
+                        return []
+            
+            query = {'user_id': user_id}
+            cursor = self.orders_collection.find(query).sort('created_at', -1)
+            
+            if limit:
+                cursor = cursor.limit(limit)
+            
+            orders = []
+            for doc in cursor:
+                order = {
+                    'id': str(doc.get('_id')),
+                    'order_number': doc.get('order_number', ''),
+                    'user_id': str(doc.get('user_id')) if doc.get('user_id') else None,
+                    'items': doc.get('items', []),
+                    'subtotal': float(doc.get('subtotal', 0)),
+                    'shipping_cost': float(doc.get('shipping_cost', 0)),
+                    'tax_amount': float(doc.get('tax_amount', 0)),
+                    'total_amount': float(doc.get('total_amount', 0)),
+                    'status': doc.get('status', 'pending'),
+                    'payment_status': doc.get('payment_status', 'pending'),
+                    'shipping_address': doc.get('shipping_address', {}),
+                    'payment_method': doc.get('payment_method', ''),
+                    'notes': doc.get('notes', ''),
+                    'created_at': doc.get('created_at'),
+                    'updated_at': doc.get('updated_at'),
+                }
+                orders.append(order)
+            
+            return orders
+        except Exception as e:
+            print(f"Error getting user orders: {e}")
+            return []
+    
+    def list_orders(self, page=1, page_size=10, status=None, date_from=None, date_to=None, user_id=None):
+        """List all orders with pagination and filters"""
+        try:
+            query = {}
+            
+            # Apply status filter
+            if status:
+                query['status'] = status
+            
+            # Filter by user
+            if user_id:
+                query['user_id'] = user_id
+
+            # Apply date filters
+            if date_from or date_to:
+                date_query = {}
+                if date_from:
+                    try:
+                        from datetime import datetime
+                        date_from_obj = datetime.strptime(date_from, '%Y-%m-%d')
+                        date_query['$gte'] = date_from_obj
+                    except:
+                        pass
+                if date_to:
+                    try:
+                        from datetime import datetime
+                        date_to_obj = datetime.strptime(date_to, '%Y-%m-%d')
+                        # Include the entire day
+                        from datetime import timedelta
+                        date_to_obj = date_to_obj + timedelta(days=1)
+                        date_query['$lt'] = date_to_obj
+                    except:
+                        pass
+                if date_query:
+                    query['created_at'] = date_query
+            
+            # Get total count
+            total = self.orders_collection.count_documents(query)
+            
+            # Apply pagination
+            skip = (page - 1) * page_size
+            cursor = self.orders_collection.find(query).sort('created_at', -1).skip(skip).limit(page_size)
+            
+            orders = []
+            for doc in cursor:
+                order = {
+                    'id': str(doc.get('_id')),
+                    'order_number': doc.get('order_number', ''),
+                    'user_id': str(doc.get('user_id')) if doc.get('user_id') else None,
+                    'items': doc.get('items', []),
+                    'subtotal': float(doc.get('subtotal', 0)),
+                    'shipping_cost': float(doc.get('shipping_cost', 0)),
+                    'tax_amount': float(doc.get('tax_amount', 0)),
+                    'total_amount': float(doc.get('total_amount', 0)),
+                    'status': doc.get('status', 'pending'),
+                    'payment_status': doc.get('payment_status', 'pending'),
+                    'shipping_address': doc.get('shipping_address', {}),
+                    'payment_method': doc.get('payment_method', ''),
+                    'notes': doc.get('notes', ''),
+                    'created_at': doc.get('created_at'),
+                    'updated_at': doc.get('updated_at'),
+                }
+                orders.append(order)
+            
+            return {
+                'items': orders,
+                'total': total,
+                'page': page,
+                'page_size': page_size
+            }
+        except Exception as e:
+            print(f"Error listing orders: {e}")
+            import traceback
+            print(traceback.format_exc())
+            return {
+                'items': [],
+                'total': 0,
+                'page': page,
+                'page_size': page_size
+            }
+    
+    def list_payments(self, page=1, page_size=10, status=None, date_from=None, date_to=None, order_id=None, user_id=None):
+        """List all payments with pagination and filters"""
+        try:
+            query = {}
+            
+            # Apply status filter
+            if status:
+                query['status'] = status
+            
+            # Filter by order and user
+            if order_id:
+                query['order_id'] = order_id
+            if user_id:
+                query['user_id'] = user_id
+
+            # Apply date filters
+            if date_from or date_to:
+                date_query = {}
+                if date_from:
+                    try:
+                        from datetime import datetime
+                        date_from_obj = datetime.strptime(date_from, '%Y-%m-%d')
+                        date_query['$gte'] = date_from_obj
+                    except:
+                        pass
+                if date_to:
+                    try:
+                        from datetime import datetime
+                        date_to_obj = datetime.strptime(date_to, '%Y-%m-%d')
+                        # Include the entire day
+                        from datetime import timedelta
+                        date_to_obj = date_to_obj + timedelta(days=1)
+                        date_query['$lt'] = date_to_obj
+                    except:
+                        pass
+                if date_query:
+                    query['created_at'] = date_query
+            
+            # Get total count
+            total = self.payments_collection.count_documents(query)
+            
+            # Apply pagination
+            skip = (page - 1) * page_size
+            cursor = self.payments_collection.find(query).sort('created_at', -1).skip(skip).limit(page_size)
+            
+            payments = []
+            for doc in cursor:
+                payment = {
+                    'id': str(doc.get('_id')),
+                    'transaction_id': doc.get('transaction_id', ''),
+                    'order_id': str(doc.get('order_id')) if doc.get('order_id') else None,
+                    'user_id': str(doc.get('user_id')) if doc.get('user_id') else None,
+                    'amount': float(doc.get('amount', 0)),
+                    'currency': doc.get('currency', 'USD'),
+                    'payment_method': doc.get('payment_method', ''),
+                    'status': doc.get('status', 'pending'),
+                    'payment_details': doc.get('payment_details', {}),
+                    'created_at': doc.get('created_at'),
+                    'updated_at': doc.get('updated_at'),
+                }
+                payments.append(payment)
+            
+            return {
+                'items': payments,
+                'total': total,
+                'page': page,
+                'page_size': page_size
+            }
+        except Exception as e:
+            print(f"Error listing payments: {e}")
+            import traceback
+            print(traceback.format_exc())
+            return {
+                'items': [],
+                'total': 0,
+                'page': page,
+                'page_size': page_size
+            }
+    
+    # --------------------
+    # Payment helpers
+    # --------------------
+    def create_payment(self, payment_data):
+        """Create a new payment record in MongoDB"""
+        try:
+            # Convert order_id and user_id to ObjectId if provided
+            if 'order_id' in payment_data and payment_data['order_id']:
+                if isinstance(payment_data['order_id'], str):
+                    try:
+                        payment_data['order_id'] = ObjectId(payment_data['order_id'])
+                    except:
+                        return None
+            
+            if 'user_id' in payment_data and payment_data['user_id']:
+                if isinstance(payment_data['user_id'], str):
+                    try:
+                        payment_data['user_id'] = ObjectId(payment_data['user_id'])
+                    except:
+                        user = self.get_user_by_username(payment_data['user_id'])
+                        if user:
+                            payment_data['user_id'] = user.get('_id')
+                        else:
+                            return None
+            
+            # Generate transaction ID if not provided
+            if 'transaction_id' not in payment_data or not payment_data.get('transaction_id'):
+                timestamp = datetime.utcnow()
+                payment_data['transaction_id'] = f"TXN-{timestamp.strftime('%Y%m%d%H%M%S')}-{str(timestamp.microsecond)[:4]}"
+            
+            # Set default values
+            payment_data.setdefault('status', 'pending')
+            payment_data['created_at'] = datetime.utcnow()
+            payment_data['updated_at'] = datetime.utcnow()
+            
+            print(f"DEBUG: Creating payment with data: order_id={payment_data.get('order_id')}, user_id={payment_data.get('user_id')}, amount={payment_data.get('amount')}")
+            
+            result = self.payments_collection.insert_one(payment_data)
+            payment_inserted_id = str(result.inserted_id)
+            print(f"DEBUG: Payment created successfully with ID: {payment_inserted_id}")
+            return payment_inserted_id
+        except Exception as e:
+            print(f"Error creating payment: {e}")
+            import traceback
+            print(traceback.format_exc())
+            return None
+    
+    def update_payment_status(self, payment_id: str, status: str, transaction_details: dict = None):
+        """Update payment status"""
+        try:
+            payment_id_obj = ObjectId(payment_id)
+            update_data = {
+                'status': status,
+                'updated_at': datetime.utcnow()
+            }
+            
+            if transaction_details:
+                # Merge transaction_details into payment_details field
+                payment_doc = self.payments_collection.find_one({'_id': payment_id_obj})
+                if payment_doc:
+                    payment_details = payment_doc.get('payment_details', {})
+                    payment_details.update(transaction_details)
+                    update_data['payment_details'] = payment_details
+                else:
+                    update_data['payment_details'] = transaction_details
+            
+            result = self.payments_collection.update_one(
+                {'_id': payment_id_obj},
+                {'$set': update_data}
+            )
+            return result.modified_count > 0
+        except Exception as e:
+            print(f"Error updating payment status: {e}")
+            return False
+    
+    def update_order_status(self, order_id: str, status: str, payment_status: str = None):
+        """Update order status and optionally payment_status"""
+        try:
+            order_id_obj = ObjectId(order_id)
+            update_data = {
+                'status': status,
+                'updated_at': datetime.utcnow()
+            }
+            
+            # If payment_status is provided, update it as well
+            if payment_status is not None:
+                update_data['payment_status'] = payment_status
+            
+            result = self.orders_collection.update_one(
+                {'_id': order_id_obj},
+                {'$set': update_data}
+            )
+            return result.modified_count > 0
+        except Exception as e:
+            print(f"Error updating order status: {e}")
+            return False
+    
+    def update_order(self, order_id: str, update_data: dict):
+        """Update order fields"""
+        try:
+            order_id_obj = ObjectId(order_id)
+            update_data['updated_at'] = datetime.utcnow()
+            result = self.orders_collection.update_one(
+                {'_id': order_id_obj},
+                {'$set': update_data}
+            )
+            return result.modified_count > 0
+        except Exception as e:
+            print(f"Error updating order: {e}")
+            return False
+    
+    def get_order_by_id(self, order_id: str):
+        """Get order by ID"""
+        try:
+            order_id_obj = ObjectId(order_id)
+            doc = self.orders_collection.find_one({'_id': order_id_obj})
+            if doc:
+                return {
+                    'id': str(doc.get('_id')),
+                    'order_number': doc.get('order_number', ''),
+                    'user_id': str(doc.get('user_id')) if doc.get('user_id') else None,
+                    'items': doc.get('items', []),
+                    'subtotal': float(doc.get('subtotal', 0)),
+                    'shipping_cost': float(doc.get('shipping_cost', 0)),
+                    'tax_amount': float(doc.get('tax_amount', 0)),
+                    'total_amount': float(doc.get('total_amount', 0)),
+                    'status': doc.get('status', 'pending'),
+                    'payment_status': doc.get('payment_status', 'pending'),
+                    'shipping_address': doc.get('shipping_address', {}),
+                    'payment_method': doc.get('payment_method', ''),
+                    'notes': doc.get('notes', ''),
+                    'created_at': doc.get('created_at'),
+                    'updated_at': doc.get('updated_at'),
+                }
+            return None
+        except Exception as e:
+            print(f"Error getting order: {e}")
+            return None
+    
+    # --------------------
+    # Address Management Methods
+    # --------------------
+    def create_address(self, address_data):
+        """Create a new address in MongoDB addresses collection"""
+        try:
+            # Convert user_id to ObjectId if provided as string
+            if 'user_id' in address_data and address_data['user_id']:
+                if isinstance(address_data['user_id'], str):
+                    try:
+                        address_data['user_id'] = ObjectId(address_data['user_id'])
+                    except:
+                        return None
+            
+            # Add timestamps
+            address_data['created_at'] = datetime.utcnow()
+            address_data['updated_at'] = datetime.utcnow()
+            
+            # If setting as default, unset other defaults for this user
+            if address_data.get('is_default', False):
+                self.addresses_collection.update_many(
+                    {'user_id': address_data.get('user_id'), 'is_default': True},
+                    {'$set': {'is_default': False}}
+                )
+            
+            result = self.addresses_collection.insert_one(address_data)
+            return str(result.inserted_id)
+        except Exception as e:
+            print(f"Error creating address: {e}")
+            import traceback
+            print(traceback.format_exc())
+            return None
+    
+    def get_user_addresses(self, user_id: str):
+        """Get all addresses for a user"""
+        try:
+            user_id_obj = ObjectId(user_id) if isinstance(user_id, str) else user_id
+            addresses = list(self.addresses_collection.find(
+                {'user_id': user_id_obj},
+                sort=[('is_default', -1), ('created_at', -1)]
+            ))
+            
+            # Convert ObjectId to string and remove _id to avoid template access issues
+            for addr in addresses:
+                addr['id'] = str(addr['_id'])
+                # Remove _id from dict to prevent Django template from accessing it
+                if '_id' in addr:
+                    del addr['_id']
+                # Convert user_id to string if it's ObjectId
+                if isinstance(addr.get('user_id'), ObjectId):
+                    addr['user_id'] = str(addr['user_id'])
+            
+            return addresses
+        except Exception as e:
+            print(f"Error getting user addresses: {e}")
+            import traceback
+            print(traceback.format_exc())
+            return []
+    
+    def get_address_by_id(self, address_id: str):
+        """Get address by ID"""
+        try:
+            address_id_obj = ObjectId(address_id)
+            doc = self.addresses_collection.find_one({'_id': address_id_obj})
+            if doc:
+                doc['id'] = str(doc['_id'])
+                # Remove _id from dict to prevent Django template from accessing it
+                if '_id' in doc:
+                    del doc['_id']
+                # Convert user_id to string if it's ObjectId
+                if isinstance(doc.get('user_id'), ObjectId):
+                    doc['user_id'] = str(doc['user_id'])
+            return doc
+        except Exception as e:
+            print(f"Error getting address: {e}")
+            return None
+    
+    def update_address(self, address_id: str, update_data: dict):
+        """Update address"""
+        try:
+            address_id_obj = ObjectId(address_id)
+            update_data['updated_at'] = datetime.utcnow()
+            
+            # If setting as default, unset other defaults for this user
+            if update_data.get('is_default', False):
+                # Get the address first to find user_id
+                address = self.addresses_collection.find_one({'_id': address_id_obj})
+                if address and address.get('user_id'):
+                    self.addresses_collection.update_many(
+                        {'user_id': address.get('user_id'), '_id': {'$ne': address_id_obj}, 'is_default': True},
+                        {'$set': {'is_default': False}}
+                    )
+            
+            result = self.addresses_collection.update_one(
+                {'_id': address_id_obj},
+                {'$set': update_data}
+            )
+            return result.modified_count > 0
+        except Exception as e:
+            print(f"Error updating address: {e}")
+            return False
+    
+    def delete_address(self, address_id: str):
+        """Delete address"""
+        try:
+            address_id_obj = ObjectId(address_id)
+            result = self.addresses_collection.delete_one({'_id': address_id_obj})
+            return result.deleted_count > 0
+        except Exception as e:
+            print(f"Error deleting address: {e}")
+            return False
 
 # Global MongoDB manager instance
 mongodb_manager = MongoDBManager()

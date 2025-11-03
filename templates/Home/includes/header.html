@@ -53,6 +53,29 @@
                                 </li>
                             </ul>
                         </div>
+                        <!-- Login/User Menu (Moved to far right) -->
+                        <div class="user-menu d-none d-md-block ml-15">
+                            {% if user.is_authenticated %}
+                                <div class="dropdown">
+                                    <a class="user-link dropdown-toggle" href="#" role="button" id="userDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <i class="fas fa-user"></i> 
+                                        <span class="user-name">{{ user.username|truncatechars:15 }}</span>
+                                    </a>
+                                    <ul class="dropdown-menu dropdown-menu-right" aria-labelledby="userDropdown">
+                                        {% if user.is_superuser %}
+                                        <li><a class="dropdown-item" href="{% url 'dashboard:dashboard' %}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                                        {% endif %}
+                                        <li><a class="dropdown-item" href="{% url 'main:profile' %}"><i class="fas fa-user-circle"></i> Profile</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item" href="{% url 'main:logout' %}" onclick="saveCartBeforeLogout(event)"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                                    </ul>
+                                </div>
+                            {% else %}
+                                <a href="{% url 'main:login' %}" class="login-btn">
+                                    <i class="fas fa-sign-in-alt"></i> Login
+                                </a>
+                            {% endif %}
+                        </div>
                     </div>
                     <!-- Mobile Menu -->
                     <div class="col-12">
@@ -103,6 +126,163 @@
     font-weight: 600;
     min-width: 18px;
     text-align: center;
+}
+
+/* Login Button Styles */
+.login-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: #007bff;
+    color: white;
+    border-radius: 20px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    font-size: 16px;
+}
+
+.login-btn:hover {
+    background: #0056b3;
+    color: white;
+    text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+}
+
+.login-btn i {
+    font-size: 14px;
+}
+
+/* User Menu Styles */
+.user-menu {
+    position: relative;
+}
+
+.user-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: #f8f9fa;
+    color: #333;
+    border-radius: 20px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    font-size: 16px;
+    border: 1px solid #dee2e6;
+}
+
+.user-link:hover {
+    background: #e9ecef;
+    color: #333;
+    text-decoration: none;
+}
+
+.user-link i {
+    font-size: 16px;
+    color: #007bff;
+}
+
+.user-name {
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.user-menu .dropdown-menu {
+    min-width: 200px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border: none;
+    padding: 8px 0;
+    margin-top: 8px;
+}
+
+.user-menu .dropdown-item {
+    padding: 10px 20px;
+    font-size: 16px;
+    transition: all 0.2s ease;
+}
+
+.user-menu .dropdown-item:hover {
+    background: #f8f9fa;
+    color: #007bff;
+}
+
+.user-menu .dropdown-item i {
+    margin-right: 10px;
+    width: 18px;
+    color: #6c757d;
+}
+
+.user-menu .dropdown-item:hover i {
+    color: #007bff;
+}
+
+/* Mobile login button */
+@media (max-width: 767px) {
+    .user-menu {
+        margin-right: 10px;
+    }
+    
+    .login-btn, .user-link {
+        padding: 6px 12px;
+        font-size: 14px;
+    }
+    
+    .user-name {
+        display: none;
+    }
+}
+
+/* Save cart before logout */
+async function saveCartBeforeLogout(event) {
+    {% if user.is_authenticated %}
+    event.preventDefault();
+    
+    // Save current cart to MongoDB before logout
+    try {
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        // Always save cart to MongoDB, even if empty (to preserve user's cart state)
+        await fetch('{% url "main:save_cart" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ cart: cart })
+        }).catch(err => console.error('Error saving cart before logout:', err));
+    } catch (error) {
+        console.error('Error saving cart before logout:', error);
+    }
+    
+    // Clear localStorage cart (cart is stored in MongoDB per user)
+    localStorage.removeItem('cart');
+    localStorage.removeItem('checkoutItems');
+    
+    // Proceed with logout
+    window.location.href = '{% url "main:logout" %}';
+    {% endif %}
+}
+
+// Helper function to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
 }
 </style>
 

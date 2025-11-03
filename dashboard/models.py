@@ -1,6 +1,7 @@
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.conf import settings
+from decouple import config
 import pymongo
 from bson import ObjectId
 

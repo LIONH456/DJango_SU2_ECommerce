@@ -1,0 +1,213 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block title %}Thank You - Order Confirmed{% endblock %}
+
+{% block content %}
+<section class="thanks-area">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="thanks-container text-center">
+                    <div class="success-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h1 class="thanks-title">Thank You for Your Order!</h1>
+                    <p class="thanks-subtitle">Your order has been confirmed</p>
+                    
+                    <div class="order-info-box">
+                        <p class="order-number">
+                            <strong>Order Number:</strong>
+                            <span>{{ order_number|default:order_id }}</span>
+                        </p>
+                        {% if pay_later %}
+                        <p class="order-message">
+                            Your order has been placed successfully! Payment is pending.
+                            {% if user.is_authenticated %}
+                            You can pay for this order later from your <a href="{% url 'main:profile' %}#orders">profile</a>.
+                            {% endif %}
+                        </p>
+                        {% else %}
+                        <p class="order-message">
+                            We've received your order and will send you a confirmation email shortly.
+                            {% if user.is_authenticated %}
+                            You can track your order status in your <a href="{% url 'main:profile' %}#orders">profile</a>.
+                            {% endif %}
+                        </p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="thanks-actions">
+                        <a href="{% url 'main:shop' %}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-shopping-bag"></i>
+                            Continue Shopping
+                        </a>
+                        {% if user.is_authenticated %}
+                        <a href="{% url 'main:profile' %}#orders" class="btn btn-outline-primary btn-lg">
+                            <i class="fas fa-user"></i>
+                            View My Orders
+                        </a>
+                        {% if pay_later %}
+                        <a href="{% url 'main:order_detail' order.id %}" class="btn btn-success btn-lg">
+                            <i class="fas fa-credit-card"></i>
+                            Pay Now
+                        </a>
+                        {% endif %}
+                        {% endif %}
+                        <a href="{% url 'main:home' %}" class="btn btn-outline-secondary btn-lg">
+                            <i class="fas fa-home"></i>
+                            Back to Home
+                        </a>
+                    </div>
+                    
+                    {% if pay_later %}
+                    <script>
+                    // Do NOT remove cart items for pay_later orders
+                    // Items will be removed only after successful payment
+                    </script>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+.thanks-area {
+    padding: 80px 0;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.thanks-container {
+    background: white;
+    border-radius: 20px;
+    padding: 60px 40px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+}
+
+.success-icon {
+    margin-bottom: 30px;
+}
+
+.success-icon i {
+    font-size: 120px;
+    color: #28a745;
+    animation: scaleIn 0.5s ease-out;
+}
+
+@keyframes scaleIn {
+    from {
+        transform: scale(0);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.thanks-title {
+    font-size: 48px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.thanks-subtitle {
+    font-size: 24px;
+    color: #6c757d;
+    margin-bottom: 40px;
+}
+
+.order-info-box {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 30px;
+    margin: 40px 0;
+    border-left: 4px solid #28a745;
+}
+
+.order-number {
+    font-size: 22px;
+    margin-bottom: 20px;
+}
+
+.order-number strong {
+    color: #333;
+    margin-right: 10px;
+}
+
+.order-number span {
+    color: #007bff;
+    font-weight: 600;
+}
+
+.order-message {
+    font-size: 18px;
+    color: #495057;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.order-message a {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.order-message a:hover {
+    text-decoration: underline;
+}
+
+.thanks-actions {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 40px;
+}
+
+.thanks-actions .btn {
+    padding: 15px 30px;
+    font-size: 18px;
+    font-weight: 600;
+    border-radius: 10px;
+    min-width: 200px;
+}
+
+.thanks-actions .btn i {
+    margin-right: 8px;
+}
+
+@media (max-width: 767px) {
+    .thanks-container {
+        padding: 40px 20px;
+    }
+    
+    .thanks-title {
+        font-size: 32px;
+    }
+    
+    .thanks-subtitle {
+        font-size: 18px;
+    }
+    
+    .success-icon i {
+        font-size: 80px;
+    }
+    
+    .thanks-actions {
+        flex-direction: column;
+    }
+    
+    .thanks-actions .btn {
+        width: 100%;
+    }
+}
+</style>
+{% endblock %}
+

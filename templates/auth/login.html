@@ -55,6 +55,33 @@
                                 </label>
                             </div>
                         </div>
+                        
+                        <script>
+                        // Remember me functionality - load last username from localStorage
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const usernameInput = document.getElementById('username');
+                            const rememberCheckbox = document.getElementById('remember');
+                            const savedUsername = localStorage.getItem('last_username');
+                            
+                            // Load saved username if exists
+                            if (savedUsername) {
+                                usernameInput.value = savedUsername;
+                                rememberCheckbox.checked = true;
+                            }
+                            
+                            // Save username to localStorage when form is submitted with remember me checked
+                            const loginForm = document.querySelector('.login-form form');
+                            if (loginForm) {
+                                loginForm.addEventListener('submit', function(e) {
+                                    if (rememberCheckbox.checked) {
+                                        localStorage.setItem('last_username', usernameInput.value);
+                                    } else {
+                                        localStorage.removeItem('last_username');
+                                    }
+                                });
+                            }
+                        });
+                        </script>
 
                         <div class="form-group mb-30">
                             <button type="submit" class="btn btn-primary btn-block btn-lg">

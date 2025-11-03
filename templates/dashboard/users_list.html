@@ -1,0 +1,214 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% load pagination_tags %}
+
+{% block content %}
+<main class="content">
+    <div class="container-fluid p-0">
+
+        <h1 class="h3 mb-3">User Management</h1>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Users</h5>
+                        <div class="card-actions">
+                            <a href="{% url 'dashboard:user_create' %}" class="btn btn-primary">
+                                <i class="align-middle" data-feather="plus"></i> Add New User
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }} alert-dismissible" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+
+                        <!-- Search and Filter Form -->
+                        <div class="mb-3">
+                            <form method="GET" action="{% url 'dashboard:users_list' %}" class="row g-2">
+                                <div class="col-md-4">
+                                    <input type="text" class="form-control" name="q" value="{{ search_query }}" 
+                                           placeholder="Search by username, email, name...">
+                                </div>
+                                <div class="col-md-3">
+                                    <select class="form-select" name="role">
+                                        <option value="">All Roles</option>
+                                        <option value="admin" {% if role_filter == 'admin' %}selected{% endif %}>Admin</option>
+                                        <option value="normal" {% if role_filter == 'normal' %}selected{% endif %}>Normal User</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-1">
+                                    <button type="submit" class="btn btn-primary w-100" title="Search">
+                                        <i class="align-middle" data-feather="search"></i>
+                                    </button>
+                                </div>
+                                {% if search_query or role_filter %}
+                                <div class="col-12">
+                                    <a href="{% url 'dashboard:users_list' %}" class="btn btn-sm btn-outline-secondary">
+                                        <i class="align-middle" data-feather="x"></i> Clear Filters
+                                    </a>
+                                </div>
+                                {% endif %}
+                            </form>
+                        </div>
+
+                        <!-- Results Info -->
+                        <div class="mb-3">
+                            <p class="text-muted mb-0">
+                                Showing {{ users|length }} of {{ total }} user{{ total|pluralize }}
+                                {% if search_query or role_filter %}(filtered){% endif %}
+                            </p>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Username</th>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Role</th>
+                                        <th>Status</th>
+                                        <th>Joined</th>
+                                        <th>Last Login</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for user in users %}
+                                    <tr>
+                                        <td><strong>{{ user.username }}</strong></td>
+                                        <td>{{ user.first_name }} {{ user.last_name|default:"" }}</td>
+                                        <td>{{ user.email }}</td>
+                                        <td>
+                                            {% if user.is_superuser %}
+                                                <span class="badge bg-danger">Super Admin</span>
+                                            {% elif user.is_staff %}
+                                                <span class="badge bg-warning">Admin</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Normal User</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if user.is_active %}
+                                                <span class="badge bg-success">Active</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Inactive</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ user.date_joined|date:"Y-m-d"|default:"-" }}</td>
+                                        <td>{{ user.last_login|date:"Y-m-d H:i"|default:"Never" }}</td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{% url 'dashboard:user_edit' user.id %}" class="btn btn-sm btn-outline-primary" title="Edit">
+                                                    <i class="align-middle" data-feather="edit"></i>
+                                                </a>
+                                                {% if user.is_active %}
+                                                <a href="{% url 'dashboard:user_toggle_status' user.id %}" class="btn btn-sm btn-outline-warning" title="Disable User" 
+                                                   onclick="return confirm('Are you sure you want to disable this user?');">
+                                                    <i class="align-middle" data-feather="x-circle"></i>
+                                                </a>
+                                                {% else %}
+                                                <a href="{% url 'dashboard:user_toggle_status' user.id %}" class="btn btn-sm btn-outline-success" title="Enable User" 
+                                                   onclick="return confirm('Are you sure you want to enable this user?');">
+                                                    <i class="align-middle" data-feather="check-circle"></i>
+                                                </a>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="8" class="text-center">No users found.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        {% if total_pages > 1 %}
+                        <nav aria-label="Users pagination" class="mt-4">
+                            <div class="pagination-wrapper">
+                                <ul class="pagination-modern">
+                                    {% if has_prev %}
+                                    <li class="page-item-modern">
+                                        <a class="page-link-modern prev-link" href="?page={{ current_page|add:'-1' }}{% if search_query %}&q={{ search_query }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}">
+                                            <i class="align-middle" data-feather="chevron-left"></i> Previous
+                                        </a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item-modern disabled">
+                                        <span class="page-link-modern prev-link">
+                                            <i class="align-middle" data-feather="chevron-left"></i> Previous
+                                        </span>
+                                    </li>
+                                    {% endif %}
+
+                                    {% if current_page > 3 %}
+                                    <li class="page-item-modern">
+                                        <a class="page-link-modern" href="?page=1{% if search_query %}&q={{ search_query }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}">1</a>
+                                    </li>
+                                    {% if current_page > 4 %}
+                                    <li class="page-item-modern">
+                                        <span class="page-link-modern">...</span>
+                                    </li>
+                                    {% endif %}
+                                    {% endif %}
+
+                                    {% for page_num in total_pages|make_range %}
+                                        {% if page_num >= current_page|add:'-2' and page_num <= current_page|add:'2' %}
+                                            {% if page_num == current_page %}
+                                            <li class="page-item-modern active">
+                                                <span class="page-link-modern">{{ page_num }}</span>
+                                            </li>
+                                            {% else %}
+                                            <li class="page-item-modern">
+                                                <a class="page-link-modern" href="?page={{ page_num }}{% if search_query %}&q={{ search_query }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}">{{ page_num }}</a>
+                                            </li>
+                                            {% endif %}
+                                        {% endif %}
+                                    {% endfor %}
+
+                                    {% if current_page < total_pages|add:'-2' %}
+                                    {% if current_page < total_pages|add:'-3' %}
+                                    <li class="page-item-modern">
+                                        <span class="page-link-modern">...</span>
+                                    </li>
+                                    {% endif %}
+                                    <li class="page-item-modern">
+                                        <a class="page-link-modern" href="?page={{ total_pages }}{% if search_query %}&q={{ search_query }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}">{{ total_pages }}</a>
+                                    </li>
+                                    {% endif %}
+
+                                    {% if has_next %}
+                                    <li class="page-item-modern">
+                                        <a class="page-link-modern next-link" href="?page={{ current_page|add:'1' }}{% if search_query %}&q={{ search_query }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}">
+                                            Next <i class="align-middle" data-feather="chevron-right"></i>
+                                        </a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item-modern disabled">
+                                        <span class="page-link-modern next-link">
+                                            Next <i class="align-middle" data-feather="chevron-right"></i>
+                                        </span>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        </nav>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
+

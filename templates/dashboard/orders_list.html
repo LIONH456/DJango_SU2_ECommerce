@@ -1,0 +1,269 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% load pagination_tags %}
+
+{% block content %}
+<main class="content">
+    <div class="container-fluid p-0">
+
+        <h1 class="h3 mb-3">Order Management</h1>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-2">Orders</h5>
+                        <ul class="nav nav-pills status-tabs">
+                            {% with current=request.GET.status|default:'' %}
+                            <li class="nav-item"><a class="nav-link {% if not current %}active{% endif %}" href="{% url 'dashboard:orders_list' %}">All</a></li>
+                            <li class="nav-item"><a class="nav-link {% if current == 'pending' %}active{% endif %}" href="{% url 'dashboard:orders_list' %}?status=pending">Pending</a></li>
+                            <li class="nav-item"><a class="nav-link {% if current == 'processing' %}active{% endif %}" href="{% url 'dashboard:orders_list' %}?status=processing">Processing</a></li>
+                            <li class="nav-item"><a class="nav-link {% if current == 'shipped' %}active{% endif %}" href="{% url 'dashboard:orders_list' %}?status=shipped">Shipped</a></li>
+                            <li class="nav-item"><a class="nav-link {% if current == 'delivered' %}active{% endif %}" href="{% url 'dashboard:orders_list' %}?status=delivered">Delivered</a></li>
+                            <li class="nav-item"><a class="nav-link {% if current == 'cancelled' %}active{% endif %}" href="{% url 'dashboard:orders_list' %}?status=cancelled">Cancelled</a></li>
+                            {% endwith %}
+                        </ul>
+                    </div>
+                    <div class="card-body">
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }} alert-dismissible" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+
+                        <!-- Search and Filter Form -->
+                        <div class="mb-3">
+                            <form method="GET" action="{% url 'dashboard:orders_list' %}" class="row g-2">
+                                <div class="col-md-4">
+                                    <select class="form-select" name="status">
+                                        <option value="">All Statuses</option>
+                                        {% for value, label in status_options %}
+                                            <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>
+                                                {{ label }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="date" class="form-control" name="date_from" value="{{ date_from }}" 
+                                           placeholder="From Date">
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="date" class="form-control" name="date_to" value="{{ date_to }}" 
+                                           placeholder="To Date">
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="submit" class="btn btn-primary w-100" title="Search">
+                                        <i class="align-middle" data-feather="search"></i>
+                                    </button>
+                                </div>
+                                {% if status_filter or date_from or date_to %}
+                                <div class="col-12">
+                                    <a href="{% url 'dashboard:orders_list' %}" class="btn btn-sm btn-outline-secondary">
+                                        <i class="align-middle" data-feather="x"></i> Clear Filters
+                                    </a>
+                                </div>
+                                {% endif %}
+                            </form>
+                        </div>
+
+                        <!-- Results Info -->
+                        <div class="mb-3">
+                            <p class="text-muted mb-0">
+                                Showing {{ orders|length }} of {{ total }} order{{ total|pluralize }}
+                                {% if status_filter or date_from or date_to %}(filtered){% endif %}
+                            </p>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Order #</th>
+                                        <th>Date</th>
+                                        <th>Customer</th>
+                                        <th>Items</th>
+                                        <th>Total</th>
+                                        <th>Status</th>
+                                        <th>Payment</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for order in orders %}
+                                    <tr>
+                                        <td><strong>#{{ order.order_number|default:order.id|slice:":8" }}</strong></td>
+                                        <td>
+                                            {% if order.created_at %}
+                                                {{ order.created_at|date:"M d, Y" }}
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if order.user_id %}
+                                                User ID: {{ order.user_id|slice:":8" }}
+                                            {% else %}
+                                                Guest
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ order.items|length }} item{{ order.items|length|pluralize }}</td>
+                                        <td>${{ order.total_amount|default:"0.00" }}</td>
+                                        <td>
+                                            <span class="badge bg-{% if order.status == 'delivered' %}success{% elif order.status == 'cancelled' %}danger{% elif order.status == 'pending' %}warning{% else %}info{% endif %}">
+                                                {{ order.status|default:"pending"|capfirst }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{% if order.payment_status == 'completed' %}success{% elif order.payment_status == 'pending' %}warning{% else %}danger{% endif %}">
+                                                {{ order.payment_status|default:"pending"|capfirst }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="7" class="text-center">No orders found.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        {% if total_pages > 1 %}
+                        <nav aria-label="Orders pagination" class="mt-4">
+                            <div class="pagination-wrapper">
+                                <ul class="pagination-modern">
+                                    {% if has_prev %}
+                                    <li class="page-item-modern">
+                                        <a class="page-link-modern prev-link" href="?page={{ current_page|add:'-1' }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">
+                                            <i class="align-middle" data-feather="chevron-left"></i> Previous
+                                        </a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item-modern disabled">
+                                        <span class="page-link-modern prev-link">
+                                            <i class="align-middle" data-feather="chevron-left"></i> Previous
+                                        </span>
+                                    </li>
+                                    {% endif %}
+
+                                    {% for page_num in total_pages|make_range %}
+                                        {% if page_num >= current_page|add:'-2' and page_num <= current_page|add:'2' %}
+                                            {% if page_num == current_page %}
+                                            <li class="page-item-modern active">
+                                                <span class="page-link-modern">{{ page_num }}</span>
+                                            </li>
+                                            {% else %}
+                                            <li class="page-item-modern">
+                                                <a class="page-link-modern" href="?page={{ page_num }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">{{ page_num }}</a>
+                                            </li>
+                                            {% endif %}
+                                        {% endif %}
+                                    {% endfor %}
+
+                                    {% if has_next %}
+                                    <li class="page-item-modern">
+                                        <a class="page-link-modern next-link" href="?page={{ current_page|add:'1' }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">
+                                            Next <i class="align-middle" data-feather="chevron-right"></i>
+                                        </a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item-modern disabled">
+                                        <span class="page-link-modern next-link">
+                                            Next <i class="align-middle" data-feather="chevron-right"></i>
+                                        </span>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        </nav>
+                        {% endif %}
+
+                        <style>
+                        .status-tabs { gap: .25rem; }
+                        .status-tabs .nav-link { border-radius: 999px; padding: .25rem .75rem; }
+                        .status-tabs .nav-link.active { background: #0d6efd; color: #fff; box-shadow: 0 2px 8px rgba(13,110,253,.25); }
+                        </style>
+
+                        <style>
+                        .pagination-wrapper {
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            margin-top: 2rem;
+                        }
+
+                        .pagination-modern {
+                            display: flex;
+                            list-style: none;
+                            padding: 0;
+                            margin: 0;
+                            gap: 0.5rem;
+                            align-items: center;
+                            flex-wrap: wrap;
+                        }
+
+                        .page-item-modern {
+                            margin: 0;
+                        }
+
+                        .page-link-modern {
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            padding: 0.625rem 1rem;
+                            min-width: 40px;
+                            height: 40px;
+                            color: #495057;
+                            background: #ffffff;
+                            border: 1.5px solid #e9ecef;
+                            border-radius: 8px;
+                            text-decoration: none;
+                            font-weight: 500;
+                            font-size: 0.875rem;
+                            transition: all 0.3s ease;
+                            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+                        }
+
+                        .page-link-modern:hover:not(.disabled):not(.active) {
+                            background: #007bff;
+                            color: #ffffff;
+                            border-color: #007bff;
+                            transform: translateY(-2px);
+                            box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
+                        }
+
+                        .page-link-modern.prev-link,
+                        .page-link-modern.next-link {
+                            gap: 0.375rem;
+                            font-weight: 600;
+                            padding: 0.625rem 1.25rem;
+                        }
+
+                        .page-item-modern.active .page-link-modern {
+                            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+                            color: #ffffff;
+                            border-color: #007bff;
+                            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+                            transform: scale(1.05);
+                        }
+
+                        .page-item-modern.disabled .page-link-modern {
+                            opacity: 0.5;
+                            cursor: not-allowed;
+                            background: #f8f9fa;
+                            color: #adb5bd;
+                        }
+                        </style>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</main>
+{% endblock %}
+

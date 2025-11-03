@@ -1,0 +1,247 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block title %}Order Detail | Fashion{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'main:home' %}">Home</a></li>
+<li class="breadcrumb-item"><a href="{% url 'main:profile' %}#orders">Profile</a></li>
+<li class="breadcrumb-item active" aria-current="page">Order Detail</li>
+{% endblock %}
+
+{% block content %}
+<section class="order-detail-area section-padding30">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <div class="order-detail-header mb-4">
+                    <h2>Order #{{ order.order_number|default:order.id }}</h2>
+                    <div class="order-status-badge">
+                        {% if order.status == 'pending' %}
+                            <span class="badge badge-warning badge-lg">Pending</span>
+                        {% elif order.status == 'processing' %}
+                            <span class="badge badge-info badge-lg">Processing</span>
+                        {% elif order.status == 'completed' %}
+                            <span class="badge badge-success badge-lg">Completed</span>
+                        {% elif order.status == 'cancelled' %}
+                            <span class="badge badge-danger badge-lg">Cancelled</span>
+                        {% else %}
+                            <span class="badge badge-secondary badge-lg">{{ order.status|title }}</span>
+                        {% endif %}
+                        {% if order.payment_status == 'pending' %}
+                            <span class="badge badge-warning badge-lg">Payment Pending</span>
+                        {% elif order.payment_status == 'completed' %}
+                            <span class="badge badge-success badge-lg">Paid</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="order-detail-card mb-4">
+                    <h4 class="mb-3">Order Items</h4>
+                    <div class="order-items-list">
+                        {% for item in order.items %}
+                        <div class="order-item-row mb-3 pb-3 border-bottom">
+                            <div class="row align-items-center">
+                                <div class="col-md-2">
+                                    {% if item.image %}
+                                        {% if item.image|slice:":4" == "http" or item.image|slice:":5" == "https" %}
+                                            <img src="{{ item.image }}" alt="{{ item.name }}" class="img-fluid" style="max-width: 80px; height: auto; border-radius: 8px;">
+                                        {% else %}
+                                            <img src="{% static item.image %}" alt="{{ item.name }}" class="img-fluid" style="max-width: 80px; height: auto; border-radius: 8px;">
+                                        {% endif %}
+                                    {% else %}
+                                        <img src="{% static 'main/img/post/post_1.png' %}" alt="{{ item.name }}" class="img-fluid" style="max-width: 80px; height: auto; border-radius: 8px;">
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <h5>{{ item.name }}</h5>
+                                    {% if item.size or item.color %}
+                                    <p class="text-muted mb-0">
+                                        {% if item.size %}Size: {{ item.size }}{% endif %}
+                                        {% if item.color %} {% if item.size %} • {% endif %}Color: {{ item.color }}{% endif %}
+                                    </p>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-2 text-center">
+                                    <p class="mb-0">Qty: {{ item.quantity }}</p>
+                                </div>
+                                <div class="col-md-2 text-right">
+                                    <p class="mb-0 font-weight-bold">${{ item.price|floatformat:2 }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div class="order-detail-card mb-4">
+                    <h4 class="mb-3">Shipping Address</h4>
+                    <div class="shipping-address">
+                        {% if order.shipping_address %}
+                            <p><strong>{{ order.shipping_address.first_name }} {{ order.shipping_address.last_name }}</strong></p>
+                            <p>{{ order.shipping_address.address }}</p>
+                            <p>{{ order.shipping_address.city }}, {{ order.shipping_address.province }} {{ order.shipping_address.postal_code }}</p>
+                            <p>{{ order.shipping_address.country }}</p>
+                            <p><strong>Phone:</strong> {{ order.shipping_address.phone }}</p>
+                            {% if order.shipping_address.email %}
+                            <p><strong>Email:</strong> {{ order.shipping_address.email }}</p>
+                            {% endif %}
+                        {% else %}
+                            <p class="text-muted">No shipping address provided</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                {% if order.notes %}
+                <div class="order-detail-card mb-4">
+                    <h4 class="mb-3">Order Notes</h4>
+                    <p>{{ order.notes }}</p>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="order-summary-card sticky-top" style="top: 100px;">
+                    <h4 class="mb-3">Order Summary</h4>
+                    <div class="summary-row mb-2">
+                        <span>Subtotal:</span>
+                        <span>${{ order.subtotal|floatformat:2 }}</span>
+                    </div>
+                    <div class="summary-row mb-2">
+                        <span>Shipping:</span>
+                        <span>${{ order.shipping_cost|floatformat:2 }}</span>
+                    </div>
+                    <div class="summary-row mb-2">
+                        <span>Tax:</span>
+                        <span>${{ order.tax_amount|floatformat:2 }}</span>
+                    </div>
+                    <div class="summary-row total-row mb-3 pt-3 border-top">
+                        <span><strong>Total:</strong></span>
+                        <span><strong>${{ order.total_amount|floatformat:2 }}</strong></span>
+                    </div>
+                    
+                    <div class="order-info mb-3">
+                        <p class="mb-1"><strong>Payment Method:</strong> {{ order.payment_method|capfirst }}</p>
+                        <p class="mb-1"><strong>Order Date:</strong> {{ order.created_at|date:"M d, Y H:i" }}</p>
+                    </div>
+                    
+                    <div class="order-actions">
+                        {% if order.status != 'cancelled' and order.status != 'completed' %}
+                            {% if order.payment_status == 'pending' %}
+                                <a href="{% url 'main:payment' %}?order_id={{ order.id }}&order_number={{ order.order_number }}&payment_method={{ order.payment_method|default:'paypal' }}" class="btn btn-primary btn-block mb-2">
+                                    <i class="fas fa-credit-card"></i> Pay Now
+                                </a>
+                            {% endif %}
+                            <button onclick="cancelOrder('{{ order.id }}')" class="btn btn-danger btn-block" {% if order.status == 'cancelled' %}disabled{% endif %}>
+                                <i class="fas fa-times-circle"></i> Cancel Order
+                            </button>
+                        {% endif %}
+                        <a href="{% url 'main:profile' %}#orders" class="btn btn-outline-secondary btn-block mt-2">
+                            <i class="fas fa-arrow-left"></i> Back to Orders
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+.order-detail-area {
+    padding: 40px 0;
+}
+
+.order-detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.order-detail-card {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.order-summary-card {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+}
+
+.total-row {
+    font-size: 1.2em;
+}
+
+.badge-lg {
+    padding: 8px 16px;
+    font-size: 14px;
+    margin-right: 10px;
+}
+
+.order-item-row img {
+    max-width: 80px;
+    height: auto;
+    border-radius: 8px;
+}
+</style>
+
+<script>
+function cancelOrder(orderId) {
+    if (!confirm('Are you sure you want to cancel this order? This action cannot be undone.')) {
+        return;
+    }
+    
+    fetch(`{% url 'main:cancel_order' %}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({ order_id: orderId, cancel_payment: true })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Order cancelled successfully');
+            location.reload();
+        } else {
+            alert(data.message || 'Error cancelling order');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error cancelling order');
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}
+

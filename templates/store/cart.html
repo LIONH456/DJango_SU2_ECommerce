@@ -69,10 +69,6 @@
                                     <span class="label">Subtotal:</span>
                                     <span class="value" id="subtotal">$0.00</span>
                                 </div>
-                                <div class="total-row">
-                                    <span class="label">Delivery Fee:</span>
-                                    <span class="value" id="shipping">$0.00</span>
-                                </div>
                                 <div class="total-row total-final">
                                     <span class="label">Total:</span>
                                     <span class="value" id="total">$0.00</span>
@@ -513,24 +509,103 @@
 // Cart functionality
 let cartItems = [];
 
-// Load cart from localStorage
-function loadCartFromStorage() {
+// Load cart from localStorage or server
+async function loadCartFromStorage() {
+    {% if user.is_authenticated %}
+    // Load from server for logged-in users
+    try {
+        const response = await fetch('{% url "main:load_cart" %}');
+        const data = await response.json();
+        if (data.success && data.cart && data.cart.length > 0) {
+            cartItems = data.cart;
+            // Merge with localStorage cart if exists
+            const localCart = JSON.parse(localStorage.getItem('cart') || '[]');
+            localCart.forEach(localItem => {
+                const existingItem = cartItems.find(item => 
+                    item.id === localItem.id && 
+                    item.size === localItem.size && 
+                    item.color === localItem.color
+                );
+                if (!existingItem) {
+                    cartItems.push(localItem);
+                }
+            });
+            // Save merged cart back to server
+            await saveCartToServer();
+        } else {
+            // Fallback to localStorage
+            const storedCart = localStorage.getItem('cart');
+            if (storedCart) {
+                cartItems = JSON.parse(storedCart);
+            }
+        }
+    } catch (error) {
+        console.error('Error loading cart from server:', error);
+        // Fallback to localStorage
+        const storedCart = localStorage.getItem('cart');
+        if (storedCart) {
+            cartItems = JSON.parse(storedCart);
+        }
+    }
+    {% else %}
+    // Use localStorage for guests
     const storedCart = localStorage.getItem('cart');
     if (storedCart) {
         cartItems = JSON.parse(storedCart);
-        // Preserve selected property from localStorage
-        cartItems.forEach(item => {
-            if (item.selected === undefined) {
-                item.selected = false;
-            }
-        });
-
     }
+    {% endif %}
+    
+    // Preserve selected property
+    cartItems.forEach(item => {
+        if (item.selected === undefined) {
+            item.selected = false;
+        }
+    });
+}
+
+// Save cart to server
+async function saveCartToServer() {
+    {% if user.is_authenticated %}
+    try {
+        const response = await fetch('{% url "main:save_cart" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ cart: cartItems })
+        });
+        const result = await response.json();
+        if (result.success) {
+            console.log('Cart saved to MongoDB successfully');
+        } else {
+            console.error('Failed to save cart:', result.message);
+        }
+    } catch (error) {
+        console.error('Error saving cart to server:', error);
+    }
+                        {% endif %}
+}
+
+// Helper function to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
 }
 
 // Initialize cart
-document.addEventListener('DOMContentLoaded', function() {
-    loadCartFromStorage();
+document.addEventListener('DOMContentLoaded', async function() {
+    await loadCartFromStorage();
     renderCartItems();
     updateCartDisplay();
     updateTotals();
@@ -610,6 +685,8 @@ function renderCartItems() {
                 item.selected = this.checked;
                 // Save selection state to localStorage
                 localStorage.setItem('cart', JSON.stringify(cartItems));
+                // Save to server if logged in
+                saveCartToServer();
                 updateTotals();
             }
         });
@@ -689,6 +766,8 @@ function updateQuantity(productId, change, newValue = null) {
         
         // Update localStorage
         localStorage.setItem('cart', JSON.stringify(cartItems));
+        // Save to server if logged in
+        saveCartToServer();
         
         // Update cart count in header
         updateCartCount();
@@ -726,11 +805,9 @@ function updateTotals() {
         }
     });
     
-    const shipping = selectedCount > 0 ? 2.00 : 0;
-    const total = subtotal + shipping;
+    const total = subtotal;
     
     document.getElementById('subtotal').textContent = `$${subtotal.toFixed(2)}`;
-    document.getElementById('shipping').textContent = `$${shipping.toFixed(2)}`;
     document.getElementById('total').textContent = `$${total.toFixed(2)}`;
     
     // Update order summary title based on cart state
@@ -787,6 +864,8 @@ function removeAllItems() {
         cartItems = [];
         // Update localStorage
         localStorage.setItem('cart', JSON.stringify(cartItems));
+        // Save to server if logged in
+        saveCartToServer();
         renderCartItems(); // Re-render the cart items
         updateCartDisplay();
         updateTotals();
@@ -813,6 +892,8 @@ function removeSelected() {
         });
         // Update localStorage
         localStorage.setItem('cart', JSON.stringify(cartItems));
+        // Save to server if logged in
+        saveCartToServer();
         renderCartItems(); // Re-render the cart items
         updateCartDisplay();
         updateTotals();
@@ -838,6 +919,8 @@ function removeItem(productId) {
         
         // Update localStorage
         localStorage.setItem('cart', JSON.stringify(cartItems));
+        // Save to server if logged in
+        saveCartToServer();
         renderCartItems(); // Re-render the cart items
         updateCartDisplay();
         updateTotals();

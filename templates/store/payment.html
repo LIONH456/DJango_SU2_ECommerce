@@ -1,0 +1,691 @@
+{% extends 'Home/base.html' %}
+{% load static %}
+
+{% block title %}Payment - {{ block.super }}{% endblock %}
+
+{% block content %}
+<section class="payment-area">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="payment-container">
+                    <div class="payment-header">
+                        <h2 class="payment-title">
+                            <i class="fas fa-credit-card"></i>
+                            Complete Your Payment
+                        </h2>
+                        <p class="payment-subtitle">Order #{{ order_number }}</p>
+                    </div>
+                    
+                    <div class="payment-content">
+                        {% if order.payment_status == 'pending' %}
+                            <!-- Payment Method Selection (always show if payment is pending) -->
+                            <div class="payment-method-selection mb-4">
+                                <h4>Select Payment Method</h4>
+                                <div class="payment-methods">
+                                    <div class="payment-method">
+                                        <input type="radio" id="paypal-select" name="payment_method_select" value="paypal" {% if payment_method == 'paypal' %}checked{% endif %}>
+                                        <label for="paypal-select">
+                                            <i class="fab fa-paypal"></i>
+                                            PayPal
+                                        </label>
+                                    </div>
+                                    <div class="payment-method">
+                                        <input type="radio" id="bakong-select" name="payment_method_select" value="bakong" {% if payment_method != 'paypal' %}checked{% endif %}>
+                                        <label for="bakong-select">
+                                            <i class="fas fa-qrcode"></i>
+                                            Bakong (KHQR)
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        <div id="payment-content-display">
+                            <!-- PayPal Payment -->
+                            <div id="paypal-section" class="paypal-payment" style="display:none;">
+                                <div class="payment-info-box">
+                                    <h3>PayPal Payment</h3>
+                                    <p>You will be redirected to PayPal to complete your payment.</p>
+                                    <div class="order-summary-box">
+                                        <h4>Order Summary</h4>
+                                        <div class="summary-row">
+                                            <span>Subtotal:</span>
+                                            <span>${{ order.subtotal|floatformat:2 }}</span>
+                                        </div>
+                                        <div class="summary-row">
+                                            <span>Tax:</span>
+                                            <span>${{ order.tax_amount|floatformat:2 }}</span>
+                                        </div>
+                                        <div class="summary-row total">
+                                            <span>Total:</span>
+                                            <span>${{ total_amount|floatformat:2 }}</span>
+                                        </div>
+                                    </div>
+                                    <div id="paypal-button-container" class="mt-3"></div>
+                                    <button class="btn btn-primary btn-lg mt-3" id="paypal-redirect-btn">
+                                        <i class="fab fa-paypal"></i> Pay on PayPal (redirect)
+                                    </button>
+                                    <p class="text-muted mt-3 small">
+                                        <i class="fas fa-info-circle"></i>
+                                        Using PayPal Sandbox for testing.
+                                    </p>
+                                </div>
+                            </div>
+                            <!-- Bakong Payment -->
+                            <div id="bakong-section" class="bakong-payment" style="display:none;">
+                                <div class="payment-info-box">
+                                    <h3>Bakong Payment (KHQR)</h3>
+                                    <p>Scan the QR code below with any Cambodian bank app (Bakong) to complete your payment.</p>
+                                    
+                                    <div class="qr-code-container" id="qr-code-container">
+                                        <div class="loading-spinner">
+                                            <i class="fas fa-spinner fa-spin"></i>
+                                            <p>Generating QR Code...</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="order-summary-box">
+                                        <h4>Order Summary</h4>
+                                        <div class="summary-row">
+                                            <span>Subtotal:</span>
+                                            <span>${{ order.subtotal|floatformat:2 }}</span>
+                                        </div>
+                                        <div class="summary-row">
+                                            <span>Tax:</span>
+                                            <span>${{ order.tax_amount|floatformat:2 }}</span>
+                                        </div>
+                                        <div class="summary-row total">
+                                            <span>Total:</span>
+                                            <span>${{ total_amount|floatformat:2 }}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="payment-instructions">
+                                        <h5>How to Pay:</h5>
+                                        <ol>
+                                            <li>Open your Bakong app or any Cambodian bank app</li>
+                                            <li>Scan the QR code above</li>
+                                            <li>Confirm the payment amount</li>
+                                            <li>Complete the transaction</li>
+                                        </ol>
+                                    </div>
+                                    
+                                    <div class="payment-status" id="payment-status" style="display: none;">
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle"></i>
+                                            <span id="payment-status-message">Checking payment status...</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="payment-actions mt-4">
+                                        <button class="btn btn-secondary" id="check-payment-btn">
+                                            <i class="fas fa-sync"></i>
+                                            Check Payment Status
+                                        </button>
+                                        <a href="{% url 'main:profile' %}" class="btn btn-outline-secondary">
+                                            <i class="fas fa-arrow-left"></i>
+                                            Back to Profile
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+.payment-area {
+    padding: 60px 0;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    min-height: 80vh;
+}
+
+.payment-container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    padding: 40px;
+}
+
+.payment-header {
+    text-align: center;
+    margin-bottom: 40px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.payment-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.payment-subtitle {
+    font-size: 18px;
+    color: #666;
+    margin: 0;
+}
+
+.payment-info-box {
+    text-align: center;
+}
+
+.payment-info-box h3 {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.payment-info-box p {
+    font-size: 16px;
+    color: #666;
+    margin-bottom: 30px;
+}
+
+.order-summary-box {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 30px 0;
+    text-align: left;
+}
+
+.order-summary-box h4 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    font-size: 16px;
+}
+
+.summary-row.total {
+    font-weight: 700;
+    font-size: 20px;
+    padding-top: 15px;
+    border-top: 2px solid #dee2e6;
+    margin-top: 10px;
+}
+
+.qr-code-container {
+    margin: 30px auto;
+    max-width: 400px;
+    min-height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    border: 2px dashed #dee2e6;
+    border-radius: 12px;
+}
+
+.qr-code-container img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+}
+
+.loading-spinner {
+    text-align: center;
+}
+
+.loading-spinner i {
+    font-size: 48px;
+    color: #007bff;
+    margin-bottom: 15px;
+}
+
+.loading-spinner p {
+    font-size: 16px;
+    color: #666;
+}
+
+.payment-instructions {
+    background: #e7f3ff;
+    border-left: 4px solid #007bff;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 30px 0;
+    text-align: left;
+}
+
+.payment-instructions h5 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: #0056b3;
+}
+
+.payment-instructions ol {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.payment-instructions li {
+    margin-bottom: 10px;
+    font-size: 16px;
+    color: #333;
+}
+
+.payment-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.btn-lg {
+    padding: 15px 40px;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+#payment-status {
+    margin-top: 20px;
+}
+
+.payment-method-selection {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 30px;
+}
+
+.payment-method-selection h4 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.payment-methods {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+}
+
+.payment-method {
+    position: relative;
+}
+
+.payment-method input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.payment-method label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 17px 22px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #fff;
+    font-weight: 600;
+    font-size: 18px;
+    min-width: 180px;
+    justify-content: center;
+}
+
+.payment-method input[type="radio"]:checked + label {
+    border-color: #007bff;
+    background: #e7f3ff;
+    color: #007bff;
+}
+
+.payment-method label:hover {
+    border-color: #007bff;
+    background: #f0f8ff;
+}
+
+.payment-method i {
+    font-size: 20px;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let currentPaymentMethod = '{{ payment_method }}' || '{{ order.payment_method }}' || 'bakong';
+    const orderId = '{{ order_id }}';
+    const orderNumber = '{{ order_number }}';
+    
+    // Handle payment method selection - dynamically show/hide payment sections
+    const paymentMethodSelects = document.querySelectorAll('input[name="payment_method_select"]');
+    const paymentContentDisplay = document.getElementById('payment-content-display');
+    
+    function toggleSections(method) {
+        const paypalSec = document.getElementById('paypal-section');
+        const bakongSec = document.getElementById('bakong-section');
+        if (!paypalSec || !bakongSec) return;
+        if (method === 'paypal') {
+            paypalSec.style.display = 'block';
+            bakongSec.style.display = 'none';
+            ensurePayPalLoaded();
+        } else {
+            paypalSec.style.display = 'none';
+            bakongSec.style.display = 'block';
+            if (!window.__bakongQRInitialized) {
+                generateBakongQR();
+                window.__bakongQRInitialized = true;
+            }
+        }
+    }
+
+    if (paymentMethodSelects.length > 0) {
+        paymentMethodSelects.forEach(radio => {
+            radio.addEventListener('change', function() {
+                currentPaymentMethod = this.value;
+                // Update URL without reload
+                const url = new URL(window.location.href);
+                url.searchParams.set('payment_method', currentPaymentMethod);
+                window.history.replaceState({}, '', url);
+                toggleSections(currentPaymentMethod);
+            });
+        });
+        // Set initial selection based on URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlMethod = urlParams.get('payment_method');
+        if (urlMethod) {
+            currentPaymentMethod = urlMethod;
+        }
+        const selectedRadio = document.querySelector(`input[name="payment_method_select"][value="${currentPaymentMethod}"]`);
+        if (selectedRadio) {
+            selectedRadio.checked = true;
+        }
+        toggleSections(currentPaymentMethod);
+    } else {
+        // No radio controls visible (e.g., payment already pending/completed). Still show the correct section.
+        toggleSections(currentPaymentMethod);
+    }
+    
+    // Show Bakong QR code if payment method is not PayPal
+    let paymentCheckInterval = null;
+    let isPaymentCompleted = false;
+    let md5Hash = '';
+    
+    // Stop checking if payment is completed
+    function stopPaymentCheck() {
+        if (paymentCheckInterval) {
+            clearInterval(paymentCheckInterval);
+            paymentCheckInterval = null;
+        }
+    }
+    
+    // Generate Bakong QR Code
+    async function generateBakongQR() {
+        try {
+            const paymentId = '{{ payment_id|default:"" }}';
+            const url = `{% url 'main:generate_bakong_qr' %}?order_id=${orderId}${paymentId ? '&payment_id=' + paymentId : ''}`;
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                // Store MD5 hash for payment status checking
+                if (result.md5_hash) {
+                    md5Hash = result.md5_hash;
+                }
+                
+                // Display QR code
+                const qrContainer = document.getElementById('qr-code-container');
+                const qrImageSrc = result.qr_image_url || (result.qr_image_base64 ? 'data:image/png;base64,' + result.qr_image_base64 : '');
+                
+                if (qrImageSrc) {
+                    qrContainer.innerHTML = `
+                        <img src="${qrImageSrc}" alt="Bakong QR Code" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 8px; padding: 10px;" />
+                    `;
+                    
+                    // Start auto-checking payment status every 3 seconds
+                    if (!paymentCheckInterval && !isPaymentCompleted) {
+                        paymentCheckInterval = setInterval(function() {
+                            if (!isPaymentCompleted) {
+                                checkPaymentStatus();
+                            } else {
+                                stopPaymentCheck();
+                            }
+                        }, 3000);
+                    }
+                } else {
+                    qrContainer.innerHTML = `
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            QR code data received but image generation failed. Please try again.
+                        </div>
+                    `;
+                }
+            } else {
+                document.getElementById('qr-code-container').innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle"></i>
+                        ${result.message || 'Error generating QR code. Please try again.'}
+                    </div>
+                `;
+            }
+        } catch (error) {
+            console.error('Error generating QR code:', error);
+            document.getElementById('qr-code-container').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle"></i>
+                    Error generating QR code. Please refresh the page.
+                </div>
+            `;
+        }
+    }
+    
+    // QR will be generated when Bakong section is first shown
+    
+    // Check payment status button
+    document.getElementById('check-payment-btn').addEventListener('click', function() {
+        if (!isPaymentCompleted) {
+            checkPaymentStatus();
+        }
+    });
+    
+    async function checkPaymentStatus() {
+        if (isPaymentCompleted) {
+            return; // Don't check if already completed
+        }
+        
+        try {
+            const response = await fetch(`{% url 'main:check_payment_status' %}?order_id=${orderId}`, {
+                method: 'GET',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            });
+            
+            const result = await response.json();
+            
+            const statusDiv = document.getElementById('payment-status');
+            const statusMessage = document.getElementById('payment-status-message');
+            
+            if (result.paid === true) {
+                isPaymentCompleted = true;
+                statusDiv.className = 'payment-status alert alert-success';
+                statusMessage.innerHTML = '<i class="fas fa-check-circle"></i> Payment completed! Redirecting...';
+                statusDiv.style.display = 'block';
+                stopPaymentCheck();
+                
+                // Clear only selected items from cart (checkoutItems) from localStorage and server
+                // Only after successful payment
+                const checkoutItems = JSON.parse(localStorage.getItem('checkoutItems') || '[]');
+                const allCartItems = JSON.parse(localStorage.getItem('cart') || '[]');
+                
+                // Remove only the items that were in checkout
+                const checkoutItemIds = checkoutItems.map(item => (item.id || '') + (item.size || '') + (item.color || ''));
+                const remainingCartItems = allCartItems.filter(item => {
+                    const itemId = (item.id || '') + (item.size || '') + (item.color || '');
+                    return !checkoutItemIds.includes(itemId);
+                });
+                
+                // Update localStorage with remaining items (only after payment confirmed)
+                localStorage.setItem('cart', JSON.stringify(remainingCartItems));
+                localStorage.removeItem('checkoutItems');
+                
+                {% if user.is_authenticated %}
+                // Update server cart with remaining items (only after payment confirmed)
+                fetch('{% url "main:save_cart" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ cart: remainingCartItems })
+                }).catch(err => console.error('Error updating cart:', err));
+                {% endif %}
+                
+                // Redirect to thank you page after 2 seconds
+                setTimeout(() => {
+                    const orderNumber = '{{ order_number }}';
+                    window.location.href = `{% url 'main:order_thanks' %}?order_id=${orderId}&order_number=${orderNumber}`;
+                }, 2000);
+            } else {
+                // Show pending status
+                if (result.message) {
+                    statusDiv.style.display = 'block';
+                    statusDiv.className = 'payment-status alert alert-info';
+                    statusMessage.innerHTML = `<i class="fas fa-clock"></i> ${result.message}`;
+                } else {
+                    statusDiv.style.display = 'none';
+                }
+            }
+        } catch (error) {
+            console.error('Error checking payment status:', error);
+            const statusDiv = document.getElementById('payment-status');
+            if (statusDiv) {
+                statusDiv.style.display = 'block';
+                statusDiv.className = 'payment-status alert alert-warning';
+                statusDiv.querySelector('#payment-status-message').innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error checking payment status. Please try again.';
+            }
+        }
+    }
+    // Load PayPal SDK on demand
+    function ensurePayPalLoaded(){
+        if (window.__paypalLoaded) return;
+        const script = document.createElement('script');
+        const clientId = '{{ paypal_client_id|default:"" }}';
+        if (!clientId) {
+            console.error('Missing PAYPAL_CLIENT_ID. Please set it in .env and restart the server.');
+            return;
+        }
+        script.src = 'https://www.paypal.com/sdk/js?client-id=' + encodeURIComponent(clientId) + '&currency=USD';
+        script.async = true;
+        script.onload = function(){ window.__paypalLoaded = true; initPayPalButtons(); };
+        document.body.appendChild(script);
+    }
+
+    function initPayPalButtons() {
+        if (!window.paypal) {
+            console.error('PayPal SDK failed to load');
+            return;
+        }
+        paypal.Buttons({
+            createOrder: function(data, actions) {
+                return fetch('{% url "main:paypal_create_order" %}?order_id=' + orderId, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+                    body: JSON.stringify({})
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.success) { throw new Error(data.message || 'Failed to create PayPal order'); }
+                    return data.paypal_order_id;
+                });
+            },
+            onApprove: function(data, actions) {
+                const paypalOrderId = data.orderID;
+                return fetch('{% url "main:paypal_capture_order" %}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+                    body: JSON.stringify({ paypal_order_id: paypalOrderId, order_id: orderId })
+                })
+                .then(res => res.json())
+                .then(result => {
+                    if (result.success) {
+                        // Clear purchased items similar to Bakong success
+                        const checkoutItems = JSON.parse(localStorage.getItem('checkoutItems') || '[]');
+                        const allCartItems = JSON.parse(localStorage.getItem('cart') || '[]');
+                        const checkoutItemIds = checkoutItems.map(item => (item.id || '') + (item.size || '') + (item.color || ''));
+                        const remainingCartItems = allCartItems.filter(item => !checkoutItemIds.includes((item.id || '') + (item.size || '') + (item.color || '')));
+                        localStorage.setItem('cart', JSON.stringify(remainingCartItems));
+                        localStorage.removeItem('checkoutItems');
+                        {% if user.is_authenticated %}
+                        fetch('{% url "main:save_cart" %}', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') }, body: JSON.stringify({ cart: remainingCartItems }) }).catch(()=>{});
+                        {% endif %}
+                        window.location.href = `{% url 'main:order_thanks' %}?order_id=${result.order_id}&order_number=${result.order_number}`;
+                    } else {
+                        alert('Payment failed: ' + (result.message || 'Unknown error'));
+                    }
+                });
+            },
+            onError: function(err) {
+                console.error('PayPal error:', err);
+                alert('PayPal error. Please try again.');
+            }
+        }).render('#paypal-button-container');
+    }
+
+    // Redirect flow handler
+    const redirectBtn = document.getElementById('paypal-redirect-btn');
+    if (redirectBtn) {
+        redirectBtn.addEventListener('click', async function(){
+            try {
+                const res = await fetch('{% url "main:paypal_create_order" %}?order_id=' + orderId, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+                    body: JSON.stringify({})
+                });
+                const data = await res.json();
+                if (!data.success) throw new Error('Failed to create PayPal order');
+                // Find approval link
+                const approve = (data.data && data.data.links || []).find(l => l.rel === 'approve');
+                if (approve && approve.href) {
+                    window.location.href = approve.href;
+                } else {
+                    alert('Could not find PayPal approval link.');
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Error starting PayPal redirect.');
+            }
+        });
+    }
+    
+    // Helper function to get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+});
+</script>
+{% endblock %}
+

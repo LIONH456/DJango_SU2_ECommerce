@@ -251,8 +251,147 @@
     {% block extra_js %}{% endblock %}
     
     <script>
+    // Track current user to detect user changes
+    let currentUser = '{{ user.username|default:"" }}';
+    
+    // Save cart to MongoDB for authenticated users
+    async function saveCartToMongoDB() {
+        {% if user.is_authenticated %}
+        try {
+            const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+            // Always save cart to MongoDB (even if empty) to preserve user's cart state
+            await fetch('{% url "main:save_cart" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ cart: cart })
+            }).catch(err => console.error('Error saving cart to MongoDB:', err));
+        } catch (error) {
+            console.error('Error saving cart to MongoDB:', error);
+        }
+        {% endif %}
+    }
+    
+    // Make saveCartToMongoDB globally accessible so other scripts can use it
+    window.saveCartToMongoDB = saveCartToMongoDB;
+    
+    // Sync cart with server if user is logged in
+    async function syncCartWithServer() {
+        {% if user.is_authenticated %}
+        try {
+            // Always load cart from server for authenticated users (cart is user-specific from MongoDB)
+            console.log('Loading cart from MongoDB for user: {{ user.username }}');
+            const response = await fetch('{% url "main:load_cart" %}');
+            const data = await response.json();
+            
+            if (data.success && data.cart !== undefined) {
+                const serverCart = data.cart || [];
+                
+                // For authenticated users, server cart (from MongoDB) is ALWAYS the source of truth
+                // This ensures each user has their own cart from the database
+                if (serverCart.length > 0) {
+                    // Server cart exists - use it (cart is user-specific from MongoDB)
+                    localStorage.setItem('cart', JSON.stringify(serverCart));
+                    console.log(`Loaded ${serverCart.length} items from MongoDB cart for user {{ user.username }}`);
+                } else {
+                    // Server cart is empty - clear localStorage (user has no items in their cart)
+                    localStorage.setItem('cart', '[]');
+                    console.log('MongoDB cart is empty for user {{ user.username }}, cleared localStorage');
+                }
+                updateCartCount();
+            } else {
+                // If API call failed, try to preserve local cart temporarily
+                const localCart = JSON.parse(localStorage.getItem('cart') || '[]');
+                if (localCart.length > 0) {
+                    // Try to save local cart to server
+                    console.log(`API call failed, trying to save ${localCart.length} local items to MongoDB`);
+                    await saveCartToMongoDB();
+                } else {
+                    localStorage.setItem('cart', '[]');
+                }
+                updateCartCount();
+            }
+        } catch (error) {
+            console.error('Error syncing cart:', error);
+            // Try to preserve local cart and save to MongoDB
+            const localCart = JSON.parse(localStorage.getItem('cart') || '[]');
+            if (localCart.length > 0) {
+                console.log(`Error syncing cart, trying to save ${localCart.length} local items to MongoDB`);
+                await saveCartToMongoDB();
+            } else {
+                localStorage.setItem('cart', '[]');
+            }
+            updateCartCount();
+        }
+        {% else %}
+        // For logged out users, keep cart in localStorage (guest cart)
+        updateCartCount();
+        {% endif %}
+    }
+    
+    // Helper function to get cookie value
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
     // Initialize cart count on all pages
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', async function() {
+        const newUser = '{{ user.username|default:"" }}';
+        
+        // Check if logout just occurred (via cookie)
+        const logoutOccurred = getCookie('logout_occurred');
+        if (logoutOccurred === 'true') {
+            // Clear localStorage AFTER logout
+            console.log('Logout occurred, clearing localStorage cart');
+            localStorage.removeItem('cart');
+            localStorage.removeItem('checkoutItems');
+            // Clear the cookie
+            document.cookie = 'logout_occurred=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        }
+        
+        // If user changed (logged in as different user), clear localStorage cart
+        // This ensures users don't see other users' cart items
+        if (currentUser !== '' && currentUser !== newUser && newUser !== '') {
+            console.log(`User changed from ${currentUser} to ${newUser}, clearing localStorage`);
+            localStorage.removeItem('cart');
+            localStorage.removeItem('checkoutItems');
+        }
+        
+        // Update current user
+        currentUser = newUser;
+        
+        {% if user.is_authenticated %}
+        // Load and sync cart from server FIRST (this loads user's own cart from MongoDB)
+        // This ensures we restore the cart from MongoDB when user logs in
+        await syncCartWithServer();
+        
+        // Also save cart to MongoDB periodically (every 30 seconds) to ensure persistence
+        setInterval(async function() {
+            await saveCartToMongoDB();
+        }, 30000); // Save every 30 seconds
+        
+        // Save cart to MongoDB before page unload
+        window.addEventListener('beforeunload', async function() {
+            await saveCartToMongoDB();
+        });
+        {% else %}
+        // For logged out users, keep cart in localStorage (guest cart)
+        updateCartCount();
+        {% endif %}
+        
         updateCartCount();
         setupCartNavigation();
     });

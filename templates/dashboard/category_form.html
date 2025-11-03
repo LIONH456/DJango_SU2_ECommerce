@@ -1,0 +1,234 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Display Messages at Top -->
+{% if messages %}
+<div class="container-fluid p-0">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert" id="alert-message">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<main class="content">
+    <div class="container-fluid p-0">
+
+        <h1 class="h3 mb-3">{% if category %}Edit Category{% else %}Create New Category{% endif %}</h1>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Category Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="name" class="form-label">Category Name <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="name" name="name" 
+                                               value="{{ category.name|default:'' }}" required placeholder="Enter category name">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="slug" class="form-label">Slug</label>
+                                        <input type="text" class="form-control" id="slug" name="slug" 
+                                               value="{{ category.slug|default:'' }}" placeholder="category-slug">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Description</label>
+                                <textarea class="form-control" id="description" name="description" rows="3" 
+                                          placeholder="Enter category description">{{ category.description|default:'' }}</textarea>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="parent_id" class="form-label">Parent Category</label>
+                                        <select class="form-select" id="parent_id" name="parent_id">
+                                            <option value="">None (Top Level)</option>
+                                            {% for parent in parent_categories %}
+                                                <option value="{{ parent.id }}" {% if category.parent_id == parent.id %}selected{% endif %}>
+                                                    {{ parent.name }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                        <small class="form-text text-muted">Leave empty for top-level category</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="image" class="form-label">Category Image</label>
+                                        <input type="file" class="form-control mb-2" id="image" name="image" accept="image/*">
+                                        <small class="form-text text-muted d-block mb-2">Or enter image URL:</small>
+                                        <input type="url" class="form-control" id="image_url" name="image_url" 
+                                               value="{% if category.image and category.image|slice:':4' == 'http' %}{{ category.image }}{% endif %}" 
+                                               placeholder="https://example.com/category.jpg">
+                                        <small class="form-text text-muted">Upload file OR enter URL (file takes priority)</small>
+                                        {% if category.image %}
+                                        <input type="hidden" id="current-image" name="current_image" value="{{ category.image }}">
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="sort_order" class="form-label">Sort Order</label>
+                                        <input type="number" class="form-control" id="sort_order" name="sort_order" 
+                                               value="{{ category.sort_order|default:0 }}" min="0" placeholder="0">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="is_active" class="form-label">Status</label>
+                                <select class="form-select" id="is_active" name="is_active">
+                                    <option value="true" {% if category.is_active != False %}selected{% endif %}>Active</option>
+                                    <option value="false" {% if category.is_active == False %}selected{% endif %}>Inactive</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="image-preview" class="form-label">Image Preview</label>
+                                <div id="image-preview" class="border rounded p-3 text-center" style="min-height: 200px;">
+                                    {% if category.image %}
+                                        {% if category.image|slice:':4' == 'http' %}
+                                            <img src="{{ category.image }}" alt="Category Image" class="img-fluid" style="max-height: 180px;" id="preview-img">
+                                        {% else %}
+                                            <img src="{% get_static_prefix %}{{ category.image }}" alt="Category Image" class="img-fluid" style="max-height: 180px;" id="preview-img">
+                                        {% endif %}
+                                    {% else %}
+                                        <p class="text-muted">No image selected</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between">
+                                <a href="{% url 'dashboard:categories_list' %}" class="btn btn-secondary">
+                                    <i class="align-middle" data-feather="arrow-left"></i> Back to Categories
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="align-middle" data-feather="save"></i> 
+                                    {% if category %}Update Category{% else %}Create Category{% endif %}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Auto-generate slug from name (update in real-time)
+    const nameInput = document.getElementById('name');
+    const slugInput = document.getElementById('slug');
+    
+    if (nameInput && slugInput) {
+        let lastSlugValue = slugInput.value;
+        nameInput.addEventListener('input', function() {
+            // Only auto-generate if slug field is empty or hasn't been manually edited
+            if (!slugInput.value || slugInput.value === lastSlugValue) {
+                const slug = this.value.toLowerCase()
+                    .replace(/[^a-z0-9\s-]/g, '')
+                    .replace(/\s+/g, '-')
+                    .replace(/-+/g, '-')
+                    .trim();
+                slugInput.value = slug;
+                lastSlugValue = slug;
+            }
+        });
+        
+        // Track manual edits
+        slugInput.addEventListener('input', function() {
+            lastSlugValue = this.value;
+        });
+    }
+
+    // Image preview functionality for file upload
+    const imgInput = document.getElementById('image');
+    const imagePreview = document.getElementById('image-preview');
+    const imageUrlInput = document.getElementById('image_url');
+
+    if (imgInput && imagePreview) {
+        imgInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imagePreview.innerHTML = `<img src="${e.target.result}" alt="Category Image" class="img-fluid" style="max-height: 180px;" id="preview-img">`;
+                };
+                reader.readAsDataURL(file);
+                // Clear URL input when file is selected
+                if (imageUrlInput) imageUrlInput.value = '';
+            } else {
+                // Show current image if exists
+                const currentImage = document.getElementById('current-image');
+                if (currentImage && currentImage.value) {
+                    const imgPath = currentImage.value;
+                    if (imgPath.startsWith('http://') || imgPath.startsWith('https://')) {
+                        imagePreview.innerHTML = `<img src="${imgPath}" alt="Category Image" class="img-fluid" style="max-height: 180px;">`;
+                    } else {
+                        imagePreview.innerHTML = `<img src="{% get_static_prefix %}${imgPath}" alt="Category Image" class="img-fluid" style="max-height: 180px;">`;
+                    }
+                } else {
+                    imagePreview.innerHTML = '<p class="text-muted">No image selected</p>';
+                }
+            }
+        });
+    }
+    
+    // Real-time URL preview
+    if (imageUrlInput && imagePreview) {
+        let urlPreviewTimeout;
+        imageUrlInput.addEventListener('input', function() {
+            clearTimeout(urlPreviewTimeout);
+            urlPreviewTimeout = setTimeout(() => {
+                const url = this.value.trim();
+                if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+                    imagePreview.innerHTML = `
+                        <img src="${url}" alt="Category Image" class="img-fluid" style="max-height: 180px;" id="preview-img"
+                             onerror="this.parentElement.innerHTML='<p class=\\'text-muted\\'>Invalid image URL</p>'">
+                    `;
+                    // Clear file input when URL is entered
+                    if (imgInput) imgInput.value = '';
+                } else if (url === '') {
+                    // Show current image if URL is cleared
+                    const currentImage = document.getElementById('current-image');
+                    if (currentImage && currentImage.value) {
+                        const imgPath = currentImage.value;
+                        if (imgPath.startsWith('http://') || imgPath.startsWith('https://')) {
+                            imagePreview.innerHTML = `<img src="${imgPath}" alt="Category Image" class="img-fluid" style="max-height: 180px;">`;
+                        } else {
+                            imagePreview.innerHTML = `<img src="{% get_static_prefix %}${imgPath}" alt="Category Image" class="img-fluid" style="max-height: 180px;">`;
+                        }
+                    } else {
+                        imagePreview.innerHTML = '<p class="text-muted">No image selected</p>';
+                    }
+                }
+            }, 500); // Debounce for 500ms
+        });
+    }
+    
+    // Scroll to top if there's an error message
+    const alertMessage = document.getElementById('alert-message');
+    if (alertMessage && alertMessage.classList.contains('alert-danger')) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+});
+</script>
+{% endblock %}
+

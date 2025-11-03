@@ -19,7 +19,15 @@
             <div class="col-lg-6 col-md-6">
                 <div class="product-images">
                     <div class="main-image mb-20">
-                        <img src="{{ product.main_image|default:'https://zandokh.com/image/cache/catalog/products/2024-08/5152405078/Sport-Life-T-Shirt-With-Print%20(1)-cr-450x672.jpg' }}" alt="{{ product.name }}" class="img-fluid">
+                        {% if product.main_image %}
+                            {% if product.main_image|slice:':4' == 'http' %}
+                                <img src="{{ product.main_image }}" alt="{{ product.name }}" class="img-fluid main-image-img">
+                            {% else %}
+                                <img src="{% get_static_prefix %}{{ product.main_image }}" alt="{{ product.name }}" class="img-fluid main-image-img">
+                            {% endif %}
+                        {% else %}
+                            <img src="https://zandokh.com/image/cache/catalog/products/2024-08/5152405078/Sport-Life-T-Shirt-With-Print%20(1)-cr-450x672.jpg" alt="{{ product.name }}" class="img-fluid main-image-img">
+                        {% endif %}
                     </div>
                                          <div class="thumbnail-images">
                          <div class="gallery-instructions mb-2">
@@ -31,7 +39,11 @@
                          <div class="row">
                              {% for image in product.images %}
                              <div class="col-3">
-                                 <img src="{{ image }}" alt="{{ product.name }}" class="img-fluid thumbnail-img" data-image="{{ image }}">
+                                 {% if image|slice:':4' == 'http' %}
+                                     <img src="{{ image }}" alt="{{ product.name }}" class="img-fluid thumbnail-img" data-image="{{ image }}">
+                                 {% else %}
+                                     <img src="{% get_static_prefix %}{{ image }}" alt="{{ product.name }}" class="img-fluid thumbnail-img" data-image="{% get_static_prefix %}{{ image }}">
+                                 {% endif %}
                              </div>
                              {% endfor %}
                          </div>
@@ -103,8 +115,8 @@
                         <button class="btn btn-dark btn-lg add-to-cart" data-product-id="{{ product.id }}" style="padding: 20px 20px;">
                             Add to Cart
                         </button>
-                        <button class="btn btn-outline-secondary btn-lg wishlist-btn" data-product-id="{{ product.id }}" >
-                            <i class="far fa-heart"></i>
+                        <button class="btn btn-outline-secondary btn-lg wishlist-btn {% if is_in_wishlist %}active{% endif %}" data-product-id="{{ product.id }}" >
+                            <i class="{% if is_in_wishlist %}fas{% else %}far{% endif %} fa-heart"></i>
                         </button>
                     </div>
 
@@ -150,7 +162,15 @@
                     <div class="col-lg-3 col-md-6 col-sm-6">
                         <div class="single-product mb-4">
                             <div class="product-img">
-                                <img src="{{ related_product.main_image|default:'https://zandokh.com/image/cache/catalog/products/2024-08/5152405078/Sport-Life-T-Shirt-With-Print%20(1)-cr-450x672.jpg' }}" alt="{{ related_product.name }}" class="img-fluid">
+                                {% if related_product.main_image %}
+                                    {% if related_product.main_image|slice:':4' == 'http' %}
+                                        <img src="{{ related_product.main_image }}" alt="{{ related_product.name }}" class="img-fluid">
+                                    {% else %}
+                                        <img src="{% get_static_prefix %}{{ related_product.main_image }}" alt="{{ related_product.name }}" class="img-fluid">
+                                    {% endif %}
+                                {% else %}
+                                    <img src="https://zandokh.com/image/cache/catalog/products/2024-08/5152405078/Sport-Life-T-Shirt-With-Print%20(1)-cr-450x672.jpg" alt="{{ related_product.name }}" class="img-fluid">
+                                {% endif %}
                             </div>
                             <div class="product-caption text-center">
                                 <h4><a href="{% url 'main:product_detail' related_product.id %}">{{ related_product.name }}</a></h4>
@@ -606,7 +626,7 @@
 let isImageClicked = false;
 
 // Main image element
-const mainImage = document.querySelector('.main-image img');
+const mainImage = document.querySelector('.main-image-img');
 
 // Thumbnail images
 const thumbnailImages = document.querySelectorAll('.thumbnail-img');
@@ -659,7 +679,7 @@ thumbnailImages.forEach(thumbnail => {
 mainImage.addEventListener('click', function() {
     if (isImageClicked) {
         // Reset to main image
-        const originalImage = '{{ product.main_image|default:"https://zandokh.com/image/cache/catalog/products/2024-08/5152405078/Sport-Life-T-Shirt-With-Print%20(1)-cr-450x672.jpg" }}';
+        const originalImage = {% if product.main_image %}{% if product.main_image|slice:':4' == 'http' %}'{{ product.main_image }}'{% else %}'{% get_static_prefix %}{{ product.main_image }}'{% endif %}{% else %}'https://zandokh.com/image/cache/catalog/products/2024-08/5152405078/Sport-Life-T-Shirt-With-Print%20(1)-cr-450x672.jpg'{% endif %};
         mainImage.src = originalImage;
         isImageClicked = false;
         
@@ -740,7 +760,7 @@ document.querySelector('.add-to-cart').addEventListener('click', function() {
 });
 
 // Add to cart function
-function addToCart(product) {
+async function addToCart(product) {
     let cart = JSON.parse(localStorage.getItem('cart') || '[]');
     
     // Check if product already exists in cart
@@ -750,13 +770,56 @@ function addToCart(product) {
         item.color === product.color
     );
     
-            if (existingItem) {
-            existingItem.quantity += product.quantity;
+    if (existingItem) {
+        existingItem.quantity += product.quantity;
+    } else {
+        cart.push(product);
+    }
+    
+    localStorage.setItem('cart', JSON.stringify(cart));
+    
+    // Save to server if logged in
+    {% if user.is_authenticated %}
+    try {
+        const response = await fetch('{% url "main:save_cart" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ cart: cart })
+        });
+        const result = await response.json();
+        if (result.success) {
+            console.log('Cart saved to MongoDB successfully');
         } else {
-            cart.push(product);
+            console.error('Failed to save cart:', result.message);
         }
-        
-        localStorage.setItem('cart', JSON.stringify(cart));
+    } catch (error) {
+        console.error('Error saving cart to server:', error);
+    }
+    {% endif %}
+    
+    // Also call global save function if available
+    if (typeof window.saveCartToMongoDB === 'function') {
+        await window.saveCartToMongoDB();
+    }
+}
+
+// Helper function to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
 }
 
 // Toast notification function
@@ -805,24 +868,53 @@ function updateCartCount() {
 }
 
 // Wishlist functionality
-document.querySelector('.wishlist-btn').addEventListener('click', function() {
+document.querySelector('.wishlist-btn').addEventListener('click', async function() {
     const productId = this.getAttribute('data-product-id');
-    
-    // Toggle wishlist state
-    this.classList.toggle('active');
     const icon = this.querySelector('i');
+    const isActive = this.classList.contains('active');
     
-    if (this.classList.contains('active')) {
-        icon.className = 'fas fa-heart';
-        this.style.background = '#dc3545';
-        this.style.color = 'white';
-        alert('Added to wishlist!');
-    } else {
-        icon.className = 'far fa-heart';
-        this.style.background = '';
-        this.style.color = '';
-        alert('Removed from wishlist!');
+    {% if user.is_authenticated %}
+    try {
+        const url = isActive ? '{% url "main:remove_wishlist" %}' : '{% url "main:add_wishlist" %}';
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ product_id: productId })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // Toggle wishlist state
+            this.classList.toggle('active');
+            
+            if (this.classList.contains('active')) {
+                icon.className = 'fas fa-heart';
+                this.style.background = '#dc3545';
+                this.style.borderColor = '#dc3545';
+                this.style.color = 'white';
+                showToast('Added to wishlist!');
+            } else {
+                icon.className = 'far fa-heart';
+                this.style.background = '';
+                this.style.borderColor = '';
+                this.style.color = '';
+                showToast('Removed from wishlist!');
+            }
+        } else {
+            showToast(result.message || 'Error updating wishlist');
+        }
+    } catch (error) {
+        console.error('Error updating wishlist:', error);
+        showToast('Error updating wishlist. Please try again.');
     }
+    {% else %}
+    // Not authenticated - redirect to login
+    window.location.href = '{% url "main:login" %}?next=' + encodeURIComponent(window.location.pathname);
+    {% endif %}
 });
 </script>
 {% endblock %}

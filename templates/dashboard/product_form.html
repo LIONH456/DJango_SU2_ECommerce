@@ -1,0 +1,443 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Display Messages at Top -->
+{% if messages %}
+<div class="container-fluid p-0">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert" id="alert-message">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<main class="content">
+    <div class="container-fluid p-0">
+
+        <h1 class="h3 mb-3">{% if product %}Edit Product{% else %}Create New Product{% endif %}</h1>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Product Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="name" class="form-label">Product Name <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="name" name="name" 
+                                               value="{{ product.name|default:'' }}" required placeholder="Enter product name">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="slug" class="form-label">Slug</label>
+                                        <input type="text" class="form-control" id="slug" name="slug" 
+                                               value="{{ product.slug|default:'' }}" placeholder="product-slug">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Description</label>
+                                <textarea class="form-control" id="description" name="description" rows="4" 
+                                          placeholder="Enter product description">{{ product.description|default:'' }}</textarea>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="price" class="form-label">Price <span class="text-danger">*</span></label>
+                                        <input type="number" step="0.01" class="form-control" id="price" name="price" 
+                                               value="{{ product.price|default:'' }}" required placeholder="0.00">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="compare_price" class="form-label">Compare Price</label>
+                                        <input type="number" step="0.01" class="form-control" id="compare_price" name="compare_price" 
+                                               value="{{ product.compare_price|default:'' }}" placeholder="0.00">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="sku" class="form-label">SKU</label>
+                                        <input type="text" class="form-control" id="sku" name="sku" 
+                                               value="{{ product.sku|default:'' }}" placeholder="PROD-001">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="quantity" class="form-label">Quantity</label>
+                                        <input type="number" class="form-control" id="quantity" name="quantity" 
+                                               value="{{ product.quantity|default:0 }}" min="0" placeholder="0">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="category_id" class="form-label">Category</label>
+                                        <select class="form-select" id="category_id" name="category_id">
+                                            <option value="">Select Category</option>
+                                            {% for category in categories %}
+                                                <option value="{{ category.id }}" {% if product.category_id == category.id %}selected{% endif %}>
+                                                    {{ category.name }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="is_available" class="form-label">Status</label>
+                                        <select class="form-select" id="is_available" name="is_available">
+                                            <option value="true" {% if product.is_available != False %}selected{% endif %}>Available</option>
+                                            <option value="false" {% if product.is_available == False %}selected{% endif %}>Unavailable</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="images" class="form-label">Product Images</label>
+                                <input type="file" class="form-control mb-2" id="images" name="images" multiple accept="image/*">
+                                <small class="form-text text-muted d-block mb-2">Hold Ctrl/Cmd to select multiple images, or Shift to select a range</small>
+                                <small class="form-text text-muted d-block mb-2">Or enter image URLs (comma-separated):</small>
+                                <textarea class="form-control" id="images_urls" name="images_urls" rows="2" 
+                                          placeholder="https://example.com/image1.jpg, https://example.com/image2.jpg"></textarea>
+                                <small class="form-text text-muted">You can upload multiple files (Ctrl+Click) OR enter URLs (or both)</small>
+                                
+                                <div class="mt-3" id="images-container">
+                                    <label class="form-label">Images (drag to reorder, first image will be the main image):</label>
+                                    <div class="row g-2" id="current-images" data-sortable="true">
+                                        {% if product.images %}
+                                            {% for image in product.images %}
+                                            <div class="col-md-3 position-relative image-item" data-image="{{ image }}" draggable="true">
+                                                <div class="image-order-badge">{{ forloop.counter }}</div>
+                                                {% if image|slice:':4' == 'http' %}
+                                                    <img src="{{ image }}" alt="Product Image" class="img-fluid rounded border" style="height: 100px; object-fit: cover; width: 100%;">
+                                                {% else %}
+                                                    <img src="{% get_static_prefix %}{{ image }}" alt="Product Image" class="img-fluid rounded border" style="height: 100px; object-fit: cover; width: 100%;">
+                                                {% endif %}
+                                                <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 remove-image-btn" data-image="{{ image }}">
+                                                    <i class="align-middle" data-feather="x"></i>
+                                                </button>
+                                            </div>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </div>
+                                    <div id="url-preview-container" class="row g-2 mt-2"></div>
+                                    <input type="hidden" id="removed-images" name="removed_images" value="">
+                                    <input type="hidden" id="image-order" name="image_order" value="">
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="tags" class="form-label">Tags (comma-separated)</label>
+                                <input type="text" class="form-control" id="tags" name="tags" 
+                                       value="{% if product.tags %}{{ product.tags|join:', ' }}{% endif %}" placeholder="tag1, tag2, tag3">
+                                <small class="form-text text-muted">Enter tags separated by commas</small>
+                            </div>
+
+                            <div class="d-flex justify-content-between">
+                                <a href="{% url 'dashboard:products_list' %}" class="btn btn-secondary">
+                                    <i class="align-middle" data-feather="arrow-left"></i> Back to Products
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="align-middle" data-feather="save"></i> 
+                                    {% if product %}Update Product{% else %}Create Product{% endif %}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<style>
+.image-item {
+    cursor: move;
+    user-select: none;
+}
+.image-item.dragging {
+    opacity: 0.5;
+}
+.image-order-badge {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    background: #007bff;
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    z-index: 10;
+}
+.remove-image-btn {
+    z-index: 10;
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Auto-generate slug from name (update in real-time)
+    const nameInput = document.getElementById('name');
+    const slugInput = document.getElementById('slug');
+    
+    if (nameInput && slugInput) {
+        let lastSlugValue = slugInput.value;
+        nameInput.addEventListener('input', function() {
+            // Only auto-generate if slug field is empty or hasn't been manually edited
+            if (!slugInput.value || slugInput.value === lastSlugValue) {
+                const slug = this.value.toLowerCase()
+                    .replace(/[^a-z0-9\s-]/g, '')
+                    .replace(/\s+/g, '-')
+                    .replace(/-+/g, '-')
+                    .trim();
+                slugInput.value = slug;
+                lastSlugValue = slug;
+            }
+        });
+        
+        // Track manual edits
+        slugInput.addEventListener('input', function() {
+            lastSlugValue = this.value;
+        });
+    }
+    
+    // Initialize removed images field
+    let removedImagesInput = document.getElementById('removed-images');
+    if (!removedImagesInput) {
+        removedImagesInput = document.createElement('input');
+        removedImagesInput.type = 'hidden';
+        removedImagesInput.id = 'removed-images';
+        removedImagesInput.name = 'removed_images';
+        removedImagesInput.value = '';
+        document.querySelector('form').appendChild(removedImagesInput);
+    }
+    
+    // Initialize image order field
+    let imageOrderInput = document.getElementById('image-order');
+    if (!imageOrderInput) {
+        imageOrderInput = document.createElement('input');
+        imageOrderInput.type = 'hidden';
+        imageOrderInput.id = 'image-order';
+        imageOrderInput.name = 'image_order';
+        imageOrderInput.value = '';
+        document.querySelector('form').appendChild(imageOrderInput);
+    }
+    
+    function updateImageOrder() {
+        const imageItems = document.querySelectorAll('#current-images .image-item[data-image]');
+        const order = Array.from(imageItems).map(item => item.getAttribute('data-image'));
+        imageOrderInput.value = order.join(',');
+        // Update order badges
+        imageItems.forEach((item, index) => {
+            const badge = item.querySelector('.image-order-badge');
+            if (badge) {
+                badge.textContent = index + 1;
+            }
+        });
+    }
+    
+    // Handle image removal
+    function removeCurrentImage(btn) {
+        const container = btn.closest('.image-item');
+        if (!container) return;
+        
+        const imagePath = container.getAttribute('data-image');
+        
+        // Add to removed images list
+        let removedImages = removedImagesInput.value;
+        if (removedImages) {
+            removedImages += ',' + imagePath;
+        } else {
+            removedImages = imagePath;
+        }
+        removedImagesInput.value = removedImages;
+        
+        // Remove from display
+        container.remove();
+        updateImageOrder();
+    }
+    
+    // Attach remove handlers to existing images
+    document.querySelectorAll('.remove-image-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            removeCurrentImage(this);
+        });
+    });
+    
+    // Preview uploaded images (files)
+    const imagesInput = document.getElementById('images');
+    const currentImagesContainer = document.getElementById('current-images');
+    
+    if (imagesInput && currentImagesContainer) {
+        imagesInput.addEventListener('change', function(e) {
+            const files = e.target.files;
+            if (files.length > 0) {
+                Array.from(files).forEach((file, index) => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const col = document.createElement('div');
+                        col.className = 'col-md-3 position-relative image-item';
+                        col.setAttribute('data-image', 'NEW_FILE_' + Date.now() + '_' + index);
+                        col.draggable = true;
+                        col.innerHTML = `
+                            <div class="image-order-badge">${currentImagesContainer.children.length + 1}</div>
+                            <img src="${e.target.result}" alt="Preview" class="img-fluid rounded border" style="height: 100px; object-fit: cover; width: 100%;">
+                            <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 remove-image-btn">
+                                <i class="align-middle" data-feather="x"></i>
+                            </button>
+                        `;
+                        col.querySelector('.remove-image-btn').addEventListener('click', function() {
+                            removeCurrentImage(this);
+                        });
+                        currentImagesContainer.appendChild(col);
+                        setupDragAndDrop();
+                        updateImageOrder();
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+        });
+    }
+    
+    // Real-time URL preview
+    const imagesUrlsInput = document.getElementById('images_urls');
+    const urlPreviewContainer = document.getElementById('url-preview-container');
+    
+    if (imagesUrlsInput && urlPreviewContainer) {
+        let urlPreviewTimeout;
+        imagesUrlsInput.addEventListener('input', function() {
+            clearTimeout(urlPreviewTimeout);
+            urlPreviewTimeout = setTimeout(() => {
+                const urlsText = this.value.trim();
+                urlPreviewContainer.innerHTML = '';
+                
+                if (urlsText) {
+                    const urls = urlsText.split(',').map(url => url.trim()).filter(url => url && (url.startsWith('http://') || url.startsWith('https://')));
+                    
+                    urls.forEach((url, index) => {
+                        const col = document.createElement('div');
+                        col.className = 'col-md-3 position-relative image-item url-preview-item';
+                        col.setAttribute('data-image', url);
+                        col.draggable = true;
+                        col.innerHTML = `
+                            <div class="image-order-badge">${currentImagesContainer.children.length + index + 1}</div>
+                            <img src="${url}" alt="URL Preview" class="img-fluid rounded border" style="height: 100px; object-fit: cover; width: 100%;" 
+                                 onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'%3E%3Crect fill=\'%23ddd\' width=\'100\' height=\'100\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dominant-baseline=\'central\' fill=\'%23999\' font-size=\'12\'%3EInvalid URL%3C/text%3E%3C/svg%3E';">
+                            <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 remove-image-btn">
+                                <i class="align-middle" data-feather="x"></i>
+                            </button>
+                        `;
+                        col.querySelector('.remove-image-btn').addEventListener('click', function() {
+                            removeCurrentImage(this);
+                            // Remove from textarea
+                            const currentUrls = imagesUrlsInput.value.split(',').map(u => u.trim()).filter(u => u !== url);
+                            imagesUrlsInput.value = currentUrls.join(', ');
+                        });
+                        urlPreviewContainer.appendChild(col);
+                    });
+                    
+                    setupDragAndDrop();
+                    updateImageOrder();
+                }
+            }, 500); // Debounce for 500ms
+        });
+    }
+    
+    // Drag and drop for image reordering
+    let draggedElement = null;
+    
+    function setupDragAndDrop() {
+        const imageItems = document.querySelectorAll('.image-item');
+        
+        imageItems.forEach(item => {
+            item.addEventListener('dragstart', function(e) {
+                draggedElement = this;
+                this.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+            });
+            
+            item.addEventListener('dragend', function(e) {
+                this.classList.remove('dragging');
+            });
+            
+            item.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                
+                if (draggedElement && draggedElement !== this) {
+                    const container = this.closest('#current-images, #url-preview-container');
+                    if (container) {
+                        const rect = this.getBoundingClientRect();
+                        const next = (e.clientY - rect.top) / (rect.bottom - rect.top) > 0.5;
+                        container.insertBefore(draggedElement, next ? this.nextSibling : this);
+                        updateImageOrder();
+                    }
+                }
+            });
+            
+            item.addEventListener('drop', function(e) {
+                e.preventDefault();
+                updateImageOrder();
+            });
+        });
+    }
+    
+    // Move URL previews to current images on form submit
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const urlItems = document.querySelectorAll('#url-preview-container .image-item[data-image]');
+            urlItems.forEach(item => {
+                const image = item.getAttribute('data-image');
+                if (image && (image.startsWith('http://') || image.startsWith('https://'))) {
+                    // Move to current images
+                    const newItem = item.cloneNode(true);
+                    newItem.classList.remove('url-preview-item');
+                    currentImagesContainer.appendChild(newItem);
+                    item.remove();
+                    // Update remove handler
+                    newItem.querySelector('.remove-image-btn').addEventListener('click', function() {
+                        removeCurrentImage(this);
+                    });
+                }
+            });
+            updateImageOrder();
+        });
+    }
+    
+    // Initialize drag and drop
+    setupDragAndDrop();
+    updateImageOrder();
+    
+    // Scroll to top if there's an error message
+    const alertMessage = document.getElementById('alert-message');
+    if (alertMessage && alertMessage.classList.contains('alert-danger')) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+});
+</script>
+{% endblock %}
+

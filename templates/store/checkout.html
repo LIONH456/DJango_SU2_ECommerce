@@ -32,119 +32,50 @@
                                 <i class="fas fa-shipping-fast"></i>
                                 Shipping Information
                             </h3>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="first_name">First Name *</label>
-                                        <input type="text" id="first_name" name="first_name" class="form-control" required>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="last_name">Last Name *</label>
-                                        <input type="text" id="last_name" name="last_name" class="form-control" required>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="email">Email Address *</label>
-                                        <input type="email" id="email" name="email" class="form-control" required>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="phone">Phone Number *</label>
-                                        <input type="tel" id="phone" name="phone" class="form-control" required>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label for="address">Street Address *</label>
-                                <input type="text" id="address" name="address" class="form-control" required>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label for="city">City *</label>
-                                        <input type="text" id="city" name="city" class="form-control" required>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label for="state">State/Province *</label>
-                                        <input type="text" id="state" name="state" class="form-control" required>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label for="zip_code">ZIP/Postal Code *</label>
-                                        <input type="text" id="zip_code" name="zip_code" class="form-control" required>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label for="country">Country *</label>
-                                <select id="country" name="country" class="form-control" required>
-                                    <option value="">Select Country</option>
-                                    <option value="US">United States</option>
-                                    <option value="CA">Canada</option>
-                                    <option value="UK">United Kingdom</option>
-                                    <option value="AU">Australia</option>
-                                    <option value="DE">Germany</option>
-                                    <option value="FR">France</option>
-                                    <option value="JP">Japan</option>
-                                    <option value="CN">China</option>
-                                    <option value="IN">India</option>
+                            
+                            {% if user.is_authenticated %}
+                            <div class="form-group mb-3">
+                                <label>Select Saved Address <small class="text-muted">(Required)</small></label>
+                                <select id="select_address" class="form-control form-select" style="width: 100%; padding: 8px 12px; font-size: 14px; line-height: 1.5; z-index: 1;">
+                                    <option value="">Use a new address</option>
+                                    {% if saved_addresses %}
+                                        {% for address in saved_addresses %}
+                                        <option value="{{ address.id }}" 
+                                                data-first-name="{{ address.first_name|default:'' }}" 
+                                                data-last-name="{{ address.last_name|default:'' }}" 
+                                                data-email="{{ user.email }}"
+                                                data-phone="{{ address.phone|default:'' }}" 
+                                                data-address="{{ address.address_line1|default:'' }}" 
+                                                data-city="{{ address.city|default:'' }}" 
+                                                data-province="{{ address.state|default:'' }}"
+                                                data-zip-code="{{ address.postal_code|default:'' }}" 
+                                                data-country="{{ address.country|default:'Cambodia' }}">
+                                            {% if address.address_name %}{{ address.address_name }}{% else %}Address {{ forloop.counter }}{% endif %} - {{ address.address_line1|default:'' }}{% if address.city %}, {{ address.city }}{% endif %}{% if address.is_default %} (Default){% endif %}
+                                        </option>
+                                        {% endfor %}
+                                    {% else %}
+                                        <option value="">Loading addresses...</option>
+                                    {% endif %}
                                 </select>
-                            </div>
-                        </div>
-
-                        <!-- Shipping Options -->
-                        <div class="form-section">
-                            <h3 class="section-title">
-                                <i class="fas fa-truck"></i>
-                                Shipping Options
-                            </h3>
-                            <div class="shipping-options">
-                                <div class="shipping-option">
-                                    <input type="radio" id="standard" name="shipping" value="standard" checked>
-                                    <label for="standard">
-                                        <div class="option-content">
-                                            <div class="option-header">
-                                                <span class="option-name">Standard Shipping</span>
-                                                <span class="option-price">$2.00</span>
-                                            </div>
-                                            <span class="option-desc">5-7 business days</span>
-                                        </div>
-                                    </label>
+                                <div class="mt-2">
+                                    <button type="button" id="add-new-address-btn" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-plus"></i> Add New Address
+                                    </button>
                                 </div>
-                                <div class="shipping-option">
-                                    <input type="radio" id="express" name="shipping" value="express">
-                                    <label for="express">
-                                        <div class="option-content">
-                                            <div class="option-header">
-                                                <span class="option-name">Express Shipping</span>
-                                                <span class="option-price">$8.00</span>
-                                            </div>
-                                            <span class="option-desc">2-3 business days</span>
+                                <div id="address-summary" class="mt-3" style="display:none;">
+                                    <div class="card">
+                                        <div class="card-body" id="address-summary-body">
+                                            <!-- Filled by JS -->
                                         </div>
-                                    </label>
-                                </div>
-                                <div class="shipping-option">
-                                    <input type="radio" id="overnight" name="shipping" value="overnight">
-                                    <label for="overnight">
-                                        <div class="option-content">
-                                            <div class="option-header">
-                                                <span class="option-name">Overnight</span>
-                                                <span class="option-price">$15.00</span>
-                                            </div>
-                                            <span class="option-desc">Next business day</span>
-                                        </div>
-                                    </label>
+                                    </div>
                                 </div>
                             </div>
+                            {% endif %}
+                            
+                            <!-- Removed manual address inputs: address is now selected only -->
+                            {% if user.is_authenticated %}
+                            <!-- Save address controls moved to Add New Address modal -->
+                            {% endif %}
                         </div>
 
                         <!-- Payment Information -->
@@ -155,10 +86,10 @@
                             </h3>
                             <div class="payment-methods">
                                 <div class="payment-method">
-                                    <input type="radio" id="credit_card" name="payment" value="credit_card" checked>
-                                    <label for="credit_card">
-                                        <i class="fas fa-credit-card"></i>
-                                        Credit/Debit Card
+                                    <input type="radio" id="pay_later" name="payment" value="pay_later" checked>
+                                    <label for="pay_later">
+                                        <i class="fas fa-clock"></i>
+                                        Pay Later
                                     </label>
                                 </div>
                                 <div class="payment-method">
@@ -168,30 +99,19 @@
                                         PayPal
                                     </label>
                                 </div>
+                                <div class="payment-method">
+                                    <input type="radio" id="bakong" name="payment" value="bakong">
+                                    <label for="bakong">
+                                        <i class="fas fa-qrcode"></i>
+                                        Bakong (KHQR)
+                                    </label>
+                                </div>
                             </div>
                             
-                            <div id="credit-card-form" class="credit-card-form">
-                                <div class="form-group">
-                                    <label for="card_number">Card Number *</label>
-                                    <input type="text" id="card_number" name="card_number" class="form-control" placeholder="1234 5678 9012 3456" maxlength="19">
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label for="expiry">Expiry Date *</label>
-                                            <input type="text" id="expiry" name="expiry" class="form-control" placeholder="MM/YY" maxlength="5">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label for="cvv">CVV *</label>
-                                            <input type="text" id="cvv" name="cvv" class="form-control" placeholder="123" maxlength="4">
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label for="card_name">Name on Card *</label>
-                                    <input type="text" id="card_name" name="card_name" class="form-control" required>
+                            <div id="payment-info" class="payment-info mt-3">
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle"></i>
+                                    <span id="payment-method-info">You can pay for this order later from your profile.</span>
                                 </div>
                             </div>
                         </div>
@@ -219,7 +139,7 @@
 
                         <!-- Submit Button -->
                         <div class="form-section">
-                            <button type="submit" class="btn btn-primary btn-lg checkout-btn" id="place-order-btn">
+                            <button type="button" class="btn btn-primary btn-lg checkout-btn" id="place-order-btn" onclick="handleCheckout(event)">
                                 <i class="fas fa-lock"></i>
                                 Place Order
                             </button>
@@ -245,10 +165,6 @@
                             <div class="summary-row">
                                 <span>Subtotal:</span>
                                 <span id="subtotal">$0.00</span>
-                            </div>
-                            <div class="summary-row">
-                                <span>Shipping:</span>
-                                <span id="shipping-cost">$2.00</span>
                             </div>
                             <div class="summary-row">
                                 <span>Tax:</span>
@@ -301,15 +217,15 @@
 .checkout-form-container {
     background: white;
     border-radius: 20px;
-    padding: 25px;
+    padding: 40px;
     box-shadow: 0 8px 30px rgba(0,0,0,0.12);
     margin-bottom: 0;
     border: 1px solid rgba(255,255,255,0.8);
 }
 
 .form-section {
-    margin-bottom: 20px;
-    padding-bottom: 20px;
+    margin-bottom: 35px;
+    padding-bottom: 30px;
     border-bottom: 1px solid #e9ecef;
 }
 
@@ -323,7 +239,7 @@
     font-size: 26px;
     font-weight: 700;
     color: #333;
-    margin-bottom: 20px;
+    margin-bottom: 25px;
     display: flex;
     align-items: center;
     gap: 12px;
@@ -331,28 +247,116 @@
 
 .section-title i {
     color: #007bff;
-    font-size: 18px;
+    font-size: 20px;
 }
 
 /* Form Groups */
 .form-group {
-    margin-bottom: 15px;
+    margin-bottom: 25px;
 }
 
 .form-group label {
     display: block;
     font-weight: 600;
     color: #495057;
-    margin-bottom: 8px;
-    font-size: 20px;
+    margin-bottom: 10px;
+    font-size: 16px;
 }
 
 .form-control {
     border: 2px solid #e9ecef;
     border-radius: 8px;
-    padding: 16px 20px;
-    font-size: 20px;
+    padding: 14px 18px;
+    font-size: 16px;
     transition: all 0.3s ease;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Add New Address button spacing */
+#add-new-address-btn {
+    margin-top: 8px;
+    padding: 6px 12px;
+}
+
+#address-summary {
+    margin-top: 12px;
+}
+
+/* Dropdown styling - ensure text is visible and dropdowns appear above other elements */
+.form-control.form-select,
+select.form-control {
+    width: 100% !important;
+    padding: 8px 12px !important;
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+    color: #495057 !important;
+    background-color: #fff !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 4l4 4 4-4'/%3e%3c/svg%3e") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 12px center !important;
+    background-size: 12px !important;
+    border: 1px solid #ced4da !important;
+    border-radius: 4px !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    overflow: visible !important;
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+.form-control.form-select:focus,
+select.form-control:focus {
+    border-color: #80bdff !important;
+    outline: 0 !important;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+    z-index: 1050 !important; /* Higher z-index when focused to show dropdown above other elements */
+    position: relative !important;
+}
+
+.form-control.form-select:active,
+select.form-control:active {
+    z-index: 1050 !important; /* Higher z-index when active */
+    position: relative !important;
+}
+
+.form-control.form-select option,
+select.form-control option {
+    padding: 8px 12px !important;
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    overflow: visible !important;
+    display: block !important;
+}
+
+/* Ensure dropdowns (select elements) appear above header when opened */
+select:focus,
+select:active,
+select.form-control:focus,
+select.form-control:active {
+    z-index: 1050 !important;
+    position: relative !important;
+}
+
+/* Fix dropdown menu covering issue - ensure parent container has proper z-index */
+.form-group {
+    position: relative;
+    z-index: auto;
+}
+
+.form-group:has(select:focus),
+.form-group:has(select:active) {
+    z-index: 1050;
+    position: relative;
+}
+
+/* Alternative fix for browsers that don't support :has() */
+.form-group select:focus {
+    z-index: 1050 !important;
+    position: relative !important;
 }
 
 .form-control:focus {
@@ -489,17 +493,36 @@
     display: flex;
     align-items: flex-start;
     gap: 12px;
+    padding: 15px 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+/* Save address checkbox - proper spacing */
+#save_address {
+    margin-right: 12px;
+    transform: scale(1.3);
+    cursor: pointer;
+}
+
+#save_address + .form-check-label {
+    margin-left: 0;
+    font-size: 16px;
+    color: #495057;
+    line-height: 1.6;
+    cursor: pointer;
 }
 
 .form-check-input {
     margin-top: 4px;
-    transform: scale(1.2);
+    margin-right: 10px;
 }
 
 .form-check-label {
-    font-size: 20px;
+    font-size: 16px;
     color: #495057;
-    line-height: 1.4;
+    line-height: 1.6;
 }
 
 .terms-link {
@@ -805,7 +828,22 @@
 </style>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
+    {% if user.is_authenticated %}
+    // Pre-fill form with user data if logged in
+    const firstNameField = document.getElementById('first_name');
+    const lastNameField = document.getElementById('last_name');
+    const emailField = document.getElementById('email');
+    const phoneField = document.getElementById('phone');
+    
+    if (firstNameField) firstNameField.value = '{{ user.first_name|default:"" }}';
+    if (lastNameField) lastNameField.value = '{{ user.last_name|default:"" }}';
+    if (emailField) emailField.value = '{{ user.email|default:"" }}';
+    {% if user.phone %}
+    if (phoneField) phoneField.value = '{{ user.phone }}';
+    {% endif %}
+    {% endif %}
+    
     // Check if user has items to checkout
     const checkoutItems = JSON.parse(localStorage.getItem('checkoutItems') || '[]');
     if (checkoutItems.length === 0) {
@@ -820,27 +858,56 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load cart items and populate order summary
     loadOrderSummary();
     
-    // Handle shipping option changes
-    document.querySelectorAll('input[name="shipping"]').forEach(radio => {
-        radio.addEventListener('change', updateShippingCost);
-    });
-    
     // Handle payment method changes
     document.querySelectorAll('input[name="payment"]').forEach(radio => {
         radio.addEventListener('change', togglePaymentForm);
     });
     
-    // Handle form submission
-    document.getElementById('checkout-form').addEventListener('submit', handleCheckout);
+    // Add New Address button opens modal
+    const addBtn = document.getElementById('add-new-address-btn');
+    if (addBtn) {
+        addBtn.addEventListener('click', function() {
+            if (typeof $ !== 'undefined' && $('#addAddressModal').modal) {
+                $('#addAddressModal').modal('show');
+            } else {
+                const modal = document.getElementById('addAddressModal');
+                if (modal) modal.style.display = 'block';
+            }
+        });
+    }
     
-    // Format card number input
-    document.getElementById('card_number').addEventListener('input', formatCardNumber);
+    // Toggle address name in modal
+    const saveFuture = document.getElementById('modal_save_for_future');
+    const nameWrap = document.getElementById('modal_address_name_wrap');
+    const nameField = document.getElementById('modal_address_name');
+    if (saveFuture && nameWrap) {
+        saveFuture.addEventListener('change', function() {
+            if (this.checked) {
+                nameWrap.style.display = 'block';
+                if (nameField) nameField.required = true;
+            } else {
+                nameWrap.style.display = 'none';
+                if (nameField) { nameField.required = false; nameField.value = ''; }
+            }
+        });
+    }
     
-    // Format expiry date input
-    document.getElementById('expiry').addEventListener('input', formatExpiryDate);
+    // Save & Use Address from modal
+    const modalSaveBtn = document.getElementById('modal_save_address_btn');
+    if (modalSaveBtn) {
+        modalSaveBtn.addEventListener('click', submitNewAddressFromModal);
+    }
     
-    // Format CVV input
-    document.getElementById('cvv').addEventListener('input', formatCVV);
+    // Handle form submission - prevent default form submission
+    const checkoutForm = document.getElementById('checkout-form');
+    if (checkoutForm) {
+        checkoutForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            handleCheckout(e);
+        });
+    }
+    
 });
 
 // Load order summary from cart
@@ -879,101 +946,531 @@ function loadOrderSummary() {
     updateTotals(subtotal);
 }
 
-// Update shipping cost and totals
-function updateShippingCost() {
-    const selectedShipping = document.querySelector('input[name="shipping"]:checked').value;
-    let shippingCost = 2.00; // Default standard shipping
-    
-    switch(selectedShipping) {
-        case 'express':
-            shippingCost = 8.00;
-            break;
-        case 'overnight':
-            shippingCost = 15.00;
-            break;
-    }
-    
-    document.getElementById('shipping-cost').textContent = `$${shippingCost.toFixed(2)}`;
-    
-    // Recalculate totals
-    const subtotal = parseFloat(document.getElementById('subtotal').textContent.replace('$', ''));
-    updateTotals(subtotal);
-}
-
 // Update totals
 function updateTotals(subtotal) {
-    const shippingCost = parseFloat(document.getElementById('shipping-cost').textContent.replace('$', ''));
-    const taxRate = 0.08; // 8% tax rate
+    const taxRate = 0.1; // 10% tax rate
     const taxAmount = subtotal * taxRate;
-    const total = subtotal + shippingCost + taxAmount;
+    const total = subtotal + taxAmount;
     
     document.getElementById('subtotal').textContent = `$${subtotal.toFixed(2)}`;
     document.getElementById('tax-amount').textContent = `$${taxAmount.toFixed(2)}`;
     document.getElementById('total-amount').textContent = `$${total.toFixed(2)}`;
 }
 
-// Toggle payment form based on selected method
+// Toggle payment info based on selected method
 function togglePaymentForm() {
-    const selectedPayment = document.querySelector('input[name="payment"]:checked').value;
-    const creditCardForm = document.getElementById('credit-card-form');
+    const selectedRadio = document.querySelector('input[name="payment"]:checked');
+    if (!selectedRadio) return;
     
-    if (selectedPayment === 'credit_card') {
-        creditCardForm.style.display = 'block';
-    } else {
-        creditCardForm.style.display = 'none';
+    const selectedPayment = selectedRadio.value;
+    const paymentInfo = document.getElementById('payment-method-info');
+    
+    if (selectedPayment === 'pay_later') {
+        paymentInfo.textContent = 'You can pay for this order later from your profile.';
+    } else if (selectedPayment === 'paypal') {
+        paymentInfo.textContent = 'You will be redirected to PayPal to complete your payment.';
+    } else if (selectedPayment === 'bakong') {
+        paymentInfo.textContent = 'You will see a QR code to scan with any Cambodian bank app (Bakong).';
     }
 }
 
-// Format card number with spaces
-function formatCardNumber(e) {
-    let value = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
-    let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
-    e.target.value = formattedValue;
-}
+// Global address selection handler - use API approach for reliability
+let addressSelectionHandlerAttached = false;
 
-// Format expiry date
-function formatExpiryDate(e) {
-    let value = e.target.value.replace(/\D/g, '');
-    if (value.length >= 2) {
-        value = value.slice(0, 2) + '/' + value.slice(2, 4);
-    }
-    e.target.value = value;
-}
-
-// Format CVV
-function formatCVV(e) {
-    e.target.value = e.target.value.replace(/\D/g, '');
-}
-
-// Handle checkout form submission
-function handleCheckout(e) {
-    e.preventDefault();
-    
-    // Validate form
-    if (!validateForm()) {
+function handleAddressSelection() {
+    const addressSelect = document.getElementById('select_address');
+    if (!addressSelect) {
+        console.log('❌ Address select element not found yet');
         return;
+    }
+    
+    // Always attach listener - multiple listeners are okay
+    // We use a named function so we can remove duplicates if needed
+    console.log('✅ Attaching address selection handler...');
+    attachChangeListener(addressSelect);
+    addressSelectionHandlerAttached = true;
+    console.log('✅ Address selection handler attached successfully');
+}
+
+// Named function for the change handler so we can remove duplicates
+async function onAddressSelectChange(e) {
+    console.log('🔔 THE ADDRESS CHANGED!');
+    const addressSelect = this;
+    
+    const selectedValue = addressSelect.value;
+    const selectedIndex = addressSelect.selectedIndex;
+    const selectedText = addressSelect.options[selectedIndex] ? addressSelect.options[selectedIndex].text : '';
+    
+    console.log('📊 Change Event Details:', {
+        selectedValue: selectedValue,
+        selectedIndex: selectedIndex,
+        selectedText: selectedText,
+        totalOptions: addressSelect.options.length
+    });
+    
+    // If no selection, hide summary and return
+    if (!selectedValue || selectedValue === '' || selectedIndex === 0) {
+        console.log('⏭️ Empty selection or "Use a new address"');
+        const sum = document.getElementById('address-summary');
+        if (sum) sum.style.display = 'none';
+        return;
+    }
+    
+    // Call API to get address details
+    try {
+        console.log('📞 Fetching address data from API for ID:', selectedValue);
+        const apiUrl = '{% url "main:get_address" "000000000000000000000000" %}'.replace('000000000000000000000000', selectedValue);
+        console.log('🌐 API URL:', apiUrl);
+        
+        const response = await fetch(apiUrl);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('📦 API Response:', data);
+        
+        if (data.success && data.address) {
+            const address = data.address;
+            console.log('✅ Got address data:', address);
+
+            // Update address summary instead of filling inputs
+            const summary = document.getElementById('address-summary');
+            const body = document.getElementById('address-summary-body');
+            if (summary && body) {
+                body.innerHTML = `
+                    <strong>${address.address_name || 'Address'}</strong><br>
+                    ${address.first_name || ''} ${address.last_name || ''}<br>
+                    ${address.address_line1 || ''}<br>
+                    ${address.city || ''}, ${address.state || ''} ${address.postal_code || ''}<br>
+                    ${address.country || ''}<br>
+                    Phone: ${address.phone || ''}
+                `;
+                summary.style.display = 'block';
+            }
+            console.log('🎉 Address summary updated!');
+        } else {
+            console.error('❌ Failed to get address data:', data.message || 'Unknown error');
+            showToast('Failed to load address data. Please try again.', 'error');
+        }
+    } catch (error) {
+        console.error('❌ Error fetching address:', error);
+        showToast('Error loading address. Please try again.', 'error');
+    }
+}
+
+function attachChangeListener(addressSelect) {
+    // Remove any existing listener with the same name first
+    addressSelect.removeEventListener('change', onAddressSelectChange);
+    
+    // Use API approach - fetch address data when selection changes
+    addressSelect.addEventListener('change', onAddressSelectChange);
+    
+    // Also listen to input events as backup
+    addressSelect.addEventListener('input', function(e) {
+        console.log('🔔 INPUT EVENT FIRED on address select!', {
+            value: this.value,
+            index: this.selectedIndex
+        });
+        // Trigger change handler manually if input event fires
+        if (this.selectedIndex !== 0) {
+            onAddressSelectChange.call(this, e);
+        }
+    });
+}
+
+// Use event delegation on document - this ALWAYS works even when innerHTML is changed
+// This is the main listener that will catch all changes
+let delegationAttached = false;
+if (!delegationAttached) {
+    document.addEventListener('change', function(e) {
+        if (e.target && e.target.id === 'select_address') {
+            console.log('🎯 THE ADDRESS CHANGED! (via event delegation)');
+            onAddressSelectChange.call(e.target, e);
+        }
+    }, true); // Use capture phase to catch events early
+    
+    // Also catch input events via delegation
+    document.addEventListener('input', function(e) {
+        if (e.target && e.target.id === 'select_address') {
+            console.log('🎯 INPUT EVENT (via event delegation)', {
+                value: e.target.value,
+                index: e.target.selectedIndex
+            });
+            if (e.target.selectedIndex !== 0) {
+                onAddressSelectChange.call(e.target, e);
+            }
+        }
+    }, true);
+    
+    delegationAttached = true;
+    console.log('✅ Event delegation attached - will catch all address selection changes');
+}
+
+// Make setupAddressSelection globally accessible for backward compatibility
+window.setupAddressSelection = handleAddressSelection;
+
+// Handle address selection - separate event listener
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 DOM Content Loaded - Setting up address selection...');
+    
+    // Setup event delegation FIRST - this will always work
+    // Event delegation doesn't care if innerHTML is changed
+    document.addEventListener('change', function(e) {
+        if (e.target && e.target.id === 'select_address') {
+            console.log('🎯 THE ADDRESS CHANGED! (via event delegation)');
+            onAddressSelectChange.call(e.target, e);
+        }
+    }, true); // Use capture phase to catch events early
+    
+    // Also catch input events via delegation
+    document.addEventListener('input', function(e) {
+        if (e.target && e.target.id === 'select_address') {
+            console.log('🎯 INPUT EVENT (via event delegation)', {
+                value: e.target.value,
+                index: e.target.selectedIndex
+            });
+            if (e.target.selectedIndex !== 0) {
+                onAddressSelectChange.call(e.target, e);
+            }
+        }
+    }, true);
+    
+    console.log('✅ Event delegation attached - will catch all address selection changes');
+    
+    // Setup address selection handler initially (direct listener as backup)
+    handleAddressSelection();
+    
+    // Load addresses from API for authenticated users
+    {% if user.is_authenticated %}
+    // Load addresses immediately on page load
+    setTimeout(function() {
+        console.log('⏰ Loading addresses from API after delay...');
+        loadAddressesFromAPI();
+    }, 500); // Small delay to ensure page is fully loaded
+    {% endif %}
+    
+    // Call togglePaymentForm initially
+    togglePaymentForm();
+    
+    // Handle save address checkbox - show/hide address name input
+    const saveAddressCheckbox = document.getElementById('save_address');
+    const addressNameInput = document.getElementById('address_name_input');
+    const addressNameField = document.getElementById('address_name_field');
+    
+    if (saveAddressCheckbox && addressNameInput) {
+        saveAddressCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                addressNameInput.style.display = 'block';
+                if (addressNameField) {
+                    addressNameField.required = true;
+                }
+            } else {
+                addressNameInput.style.display = 'none';
+                if (addressNameField) {
+                    addressNameField.required = false;
+                    addressNameField.value = '';
+                }
+            }
+        });
+    }
+});
+
+// Load addresses from API
+async function loadAddressesFromAPI() {
+    const addressSelect = document.getElementById('select_address');
+    if (!addressSelect) return;
+    
+    try {
+        const response = await fetch('{% url "main:get_addresses" %}');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        console.log('Address API response:', data); // Debug log
+        
+        if (data.success && data.addresses && data.addresses.length > 0) {
+            // Clear loading message and add "Use a new address" option
+            addressSelect.innerHTML = '<option value="">Use a new address</option>';
+            
+            // Add each address as an option
+            data.addresses.forEach((address, index) => {
+                const option = document.createElement('option');
+                // Use address.id (already converted to string in backend)
+                const addressId = address.id || String(address.id || '');
+                option.value = addressId;
+                
+                // Set all data attributes - these must match what the form expects
+                option.setAttribute('data-first-name', address.first_name || '');
+                option.setAttribute('data-last-name', address.last_name || '');
+                option.setAttribute('data-email', '{{ user.email }}');
+                option.setAttribute('data-phone', address.phone || '');
+                option.setAttribute('data-address', address.address_line1 || '');
+                option.setAttribute('data-city', address.city || '');
+                option.setAttribute('data-province', address.state || '');
+                option.setAttribute('data-zip-code', address.postal_code || '');
+                option.setAttribute('data-country', address.country || 'Cambodia');
+                
+                // Debug: Log the data attributes to ensure they're set correctly
+                console.log('Adding address option:', {
+                    id: addressId,
+                    first_name: address.first_name,
+                    last_name: address.last_name,
+                    address: address.address_line1,
+                    city: address.city,
+                    province: address.state,
+                    zip_code: address.postal_code,
+                    phone: address.phone
+                });
+                
+                // Display text with address name
+                let displayText = '';
+                if (address.address_name) {
+                    displayText = address.address_name;
+                } else {
+                    displayText = `Address ${index + 1}`;
+                }
+                displayText += ` - ${address.address_line1 || ''}`;
+                if (address.city) {
+                    displayText += `, ${address.city}`;
+                }
+                if (address.is_default) {
+                    displayText += ' (Default)';
+                }
+                option.textContent = displayText;
+                
+                addressSelect.appendChild(option);
+            });
+            console.log(`✅ Loaded ${data.addresses.length} addresses`);
+            
+            // Reset flag and re-attach listener after loading addresses
+            // This ensures the listener works with the newly loaded options
+            addressSelectionHandlerAttached = false;
+            handleAddressSelection();
+            
+            // Test the select element
+            const testSelect = document.getElementById('select_address');
+            console.log('🧪 Testing select element after loading:', {
+                exists: !!testSelect,
+                optionsCount: testSelect ? testSelect.options.length : 0,
+                currentValue: testSelect ? testSelect.value : null,
+                currentIndex: testSelect ? testSelect.selectedIndex : null
+            });
+            
+            // Manually trigger a test to verify the listener works
+            if (testSelect && testSelect.options.length > 1) {
+                console.log('🧪 Testing: Setting index to 1 to verify event listener...');
+                // Don't actually change it, just log
+            }
+        } else {
+            // No addresses found
+            addressSelect.innerHTML = '<option value="">No saved addresses - fill form below</option>';
+            console.log('No addresses found for user');
+        }
+    } catch (error) {
+        console.error('Error loading addresses:', error);
+        addressSelect.innerHTML = '<option value="">Error loading addresses - fill form below</option>';
+        // Show error message to user
+        console.error('Failed to fetch addresses. Error:', error.message);
+    }
+}
+
+
+// Make handleCheckout globally accessible
+window.handleCheckout = async function(e) {
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    // Validate terms checkbox first
+    const termsCheckbox = document.getElementById('terms');
+    if (!termsCheckbox || !termsCheckbox.checked) {
+        showToast('Please agree to the Terms and Conditions to place your order.', 'error');
+        if (termsCheckbox) {
+            termsCheckbox.focus();
+            termsCheckbox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return false;
+    }
+    
+    // Enforce login and address selection only
+    {% if not user.is_authenticated %}
+    showToast('Please login to place an order.', 'error');
+    setTimeout(function(){ window.location.href = '{% url "main:login" %}?next={% url "main:checkout" %}'; }, 1200);
+    return false;
+    {% endif %}
+    const addressSelect = document.getElementById('select_address');
+    if (!addressSelect || !addressSelect.value) {
+        showToast('Please select an address before placing your order.', 'error');
+        addressSelect?.focus();
+        return false;
     }
     
     // Show loading state
     const submitBtn = document.getElementById('place-order-btn');
+    if (!submitBtn) {
+        console.error('Place order button not found');
+        showToast('Error: Place order button not found', 'error');
+        return false;
+    }
+    
     const originalText = submitBtn.innerHTML;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
     submitBtn.disabled = true;
     
-    // Simulate order processing
-    setTimeout(() => {
-        // Clear cart and checkout items
-        localStorage.removeItem('cart');
-        localStorage.removeItem('checkoutItems');
+    try {
+        // Get checkout items (selected items from cart)
+        const checkoutItems = JSON.parse(localStorage.getItem('checkoutItems') || '[]');
+        if (checkoutItems.length === 0) {
+            showToast('No items selected for checkout!', 'error');
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+            return false;
+        }
         
-        // Show success message
-        showToast('Order placed successfully!', 'success');
+        // Calculate totals from checkout items
+        const subtotal = checkoutItems.reduce((sum, item) => sum + (parseFloat(item.price || 0) * parseInt(item.quantity || 1)), 0);
+        const taxAmount = subtotal * 0.1; // 10% tax
+        const totalAmount = subtotal + taxAmount;
         
-        // Redirect to confirmation page or home
-        setTimeout(() => {
-            window.location.href = "{% url 'main:home' %}";
-        }, 2000);
-    }, 3000);
+        // Build form data from selected address (server source of truth)
+        const selectedAddressId = addressSelect.value;
+        const apiUrl = '{% url "main:get_address" "000000000000000000000000" %}'.replace('000000000000000000000000', selectedAddressId);
+        const addrResp = await fetch(apiUrl);
+        if (!addrResp.ok) {
+            throw new Error('Failed to load selected address');
+        }
+        const addrData = await addrResp.json();
+        if (!addrData.success || !addrData.address) {
+            showToast('Invalid address. Please select another.', 'error');
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+            return false;
+        }
+        const sel = addrData.address;
+        const paymentMethod = document.querySelector('input[name="payment"]:checked');
+        const orderNotesField = document.getElementById('order_notes');
+        const saveAddressCheckbox = document.getElementById('save_address');
+        
+        if (!paymentMethod) {
+            showToast('Please select a payment method', 'error');
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+            return false;
+        }
+        
+        const formData = {
+            first_name: sel.first_name || '',
+            last_name: sel.last_name || '',
+            email: '{{ user.email|default:"" }}',
+            phone: sel.phone || '',
+            address: sel.address_line1 || '',
+            city: sel.city || '',
+            province: sel.state || '',
+            zip_code: sel.postal_code || '',
+            country: sel.country || 'Cambodia',
+            payment: paymentMethod.value,
+            order_notes: orderNotesField ? orderNotesField.value.trim() : '',
+            is_default: false,
+            cart_items: checkoutItems,
+            subtotal: subtotal,
+            shipping_cost: 0,
+            tax_amount: taxAmount,
+            total_amount: totalAmount,
+        };
+        
+        // Save address if user is logged in and checkbox is checked
+        // Saving address is handled via Add New Address modal, not during checkout
+        
+        // Create order via API
+        try {
+            const orderResponse = await fetch('{% url "main:create_order" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify(formData)
+            });
+            
+            const orderResult = await orderResponse.json();
+            
+            if (orderResult.success) {
+                // Store checkout items before redirecting (we'll clear these after payment)
+                // They're already in checkoutItems, so we keep them until payment completes
+                
+                // Redirect based on payment method
+                const selectedPaymentMethod = formData.payment;
+                const orderId = orderResult.order_id;
+                const orderNumber = orderResult.order_number;
+                
+                if (!orderId || !orderNumber) {
+                    console.error('Order ID or number missing:', orderResult);
+                    showToast('Order created but missing order details. Please check your orders.', 'error');
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                    return false;
+                }
+                
+                // Store order info temporarily before redirect
+                sessionStorage.setItem('lastOrderId', orderId);
+                sessionStorage.setItem('lastOrderNumber', orderNumber);
+                
+                // Redirect based on payment method - DO NOT redirect to cart
+                if (selectedPaymentMethod === 'pay_later') {
+                    // Redirect to order thanks page (order created, payment pending)
+                    window.location.href = `{% url 'main:order_thanks' %}?order_id=${orderId}&order_number=${orderNumber}&pay_later=true`;
+                } else if (selectedPaymentMethod === 'bakong') {
+                    // Redirect to payment page with order details for Bakong
+                    window.location.href = `{% url 'main:payment' %}?order_id=${orderId}&order_number=${orderNumber}&payment_method=bakong`;
+                } else if (selectedPaymentMethod === 'paypal') {
+                    // Redirect to payment page with order details for PayPal
+                    window.location.href = `{% url 'main:payment' %}?order_id=${orderId}&order_number=${orderNumber}&payment_method=paypal`;
+                } else {
+                    // Default to payment page
+                    window.location.href = `{% url 'main:payment' %}?order_id=${orderId}&order_number=${orderNumber}&payment_method=${selectedPaymentMethod}`;
+                }
+                // Do not return here - let the redirect happen
+                return true;
+            } else {
+                showToast(orderResult.message || 'Error placing order. Please try again.', 'error');
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                return false;
+            }
+        } catch (error) {
+            console.error('Error placing order:', error);
+            showToast('Error placing order. Please try again.', 'error');
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }
+    } catch (error) {
+        console.error('Error processing checkout:', error);
+        showToast('Error processing order. Please try again.', 'error');
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    }
+}
+
+// Helper function to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
 }
 
 // Validate form
@@ -990,37 +1487,23 @@ function validateForm() {
         }
     });
     
-    // Validate card details if credit card is selected
-    const selectedPayment = document.querySelector('input[name="payment"]:checked').value;
-    if (selectedPayment === 'credit_card') {
-        const cardNumber = document.getElementById('card_number').value.replace(/\s/g, '');
-        const expiry = document.getElementById('expiry').value;
-        const cvv = document.getElementById('cvv').value;
-        const cardName = document.getElementById('card_name').value;
-        
-        if (cardNumber.length < 13 || cardNumber.length > 19) {
-            document.getElementById('card_number').classList.add('is-invalid');
+    // Validate address name if save address checkbox is checked
+    const saveAddressCheckbox = document.getElementById('save_address');
+    const addressNameField = document.getElementById('address_name_field');
+    if (saveAddressCheckbox && saveAddressCheckbox.checked && addressNameField) {
+        if (!addressNameField.value.trim()) {
+            addressNameField.classList.add('is-invalid');
             isValid = false;
-        }
-        
-        if (!expiry.match(/^\d{2}\/\d{2}$/)) {
-            document.getElementById('expiry').classList.add('is-invalid');
-            isValid = false;
-        }
-        
-        if (cvv.length < 3 || cvv.length > 4) {
-            document.getElementById('cvv').classList.add('is-invalid');
-            isValid = false;
-        }
-        
-        if (!cardName.trim()) {
-            document.getElementById('card_name').classList.add('is-invalid');
-            isValid = false;
+            showToast('Please enter a name for this address (e.g., Home, Work)', 'error');
+        } else {
+            addressNameField.classList.remove('is-invalid');
         }
     }
     
     if (!isValid) {
-        showToast('Please fill in all required fields correctly.', 'error');
+        if (!addressNameField || !addressNameField.classList.contains('is-invalid')) {
+            showToast('Please fill in all required fields correctly.', 'error');
+        }
     }
     
     return isValid;
@@ -1054,5 +1537,202 @@ function showToast(message, type = 'info') {
         }, 300);
     }, 5000);
 }
+
+// Submit new address from modal
+async function submitNewAddressFromModal() {
+    {% if not user.is_authenticated %}
+    showToast('Please login to add an address.', 'error');
+    setTimeout(function(){ window.location.href = '{% url "main:login" %}?next={% url "main:checkout" %}'; }, 1000);
+    return;
+    {% endif %}
+    
+    const first_name = document.getElementById('modal_first_name')?.value.trim();
+    const last_name = document.getElementById('modal_last_name')?.value.trim();
+    const phone = document.getElementById('modal_phone')?.value.trim();
+    const address = document.getElementById('modal_address')?.value.trim();
+    const city = document.getElementById('modal_city')?.value.trim();
+    const zip = document.getElementById('modal_zip')?.value.trim();
+    const country = document.getElementById('modal_country')?.value.trim();
+    const province = document.getElementById('modal_province')?.value.trim();
+    const save_for_future = document.getElementById('modal_save_for_future')?.checked || false;
+    const address_name = document.getElementById('modal_address_name')?.value.trim();
+    
+    // Validate required fields
+    const requiredValues = [first_name, last_name, phone, address, city, zip, country, province];
+    if (requiredValues.some(v => !v)) {
+        showToast('Please fill in all required address fields.', 'error');
+        return;
+    }
+    if (save_for_future && !address_name) {
+        showToast('Please enter an address name (e.g., Home, Work).', 'error');
+        return;
+    }
+    
+    try {
+        const payload = {
+            address_name: save_for_future ? address_name : '',
+            first_name: first_name,
+            last_name: last_name,
+            address: address, // backend maps to address_line1
+            city: city,
+            state: province,
+            zip_code: zip,
+            country: country,
+            phone: phone,
+            is_default: false
+        };
+        const res = await fetch('{% url "main:save_address" %}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+            body: JSON.stringify(payload)
+        });
+        const result = await res.json();
+        if (!result.success) {
+            showToast(result.message || 'Failed to save address', 'error');
+            return;
+        }
+        // Reload addresses and select the newly added one if possible
+        await loadAddressesFromAPI();
+        const selectEl = document.getElementById('select_address');
+        if (selectEl) {
+            // Prefer returned id if provided
+            if (result.address_id) {
+                selectEl.value = String(result.address_id);
+            } else {
+                // Fallback: try to find by display text match
+                const wanted = (save_for_future && address_name) ? address_name : `${address}`;
+                const found = Array.from(selectEl.options).find(o => o.text.includes(wanted));
+                if (found) selectEl.value = found.value;
+            }
+            // Trigger change to update summary
+            selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        // Hide modal
+        if (typeof $ !== 'undefined' && $('#addAddressModal').modal) {
+            $('#addAddressModal').modal('hide');
+        } else {
+            const modal = document.getElementById('addAddressModal');
+            if (modal) modal.style.display = 'none';
+        }
+        showToast('Address added and selected.', 'success');
+    } catch (err) {
+        console.error(err);
+        showToast('Error saving address. Please try again.', 'error');
+    }
+}
 </script>
+ 
+<!-- Add New Address Modal -->
+<div class="modal fade" id="addAddressModal" tabindex="-1" role="dialog" aria-labelledby="addAddressModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addAddressModalLabel">Add New Address</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                {% if user.is_authenticated %}
+                <form id="add-address-form">
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="modal_first_name">First Name *</label>
+                            <input type="text" class="form-control" id="modal_first_name" required>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="modal_last_name">Last Name *</label>
+                            <input type="text" class="form-control" id="modal_last_name" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="modal_phone">Phone Number *</label>
+                        <input type="tel" class="form-control" id="modal_phone" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="modal_address">Street Address *</label>
+                        <input type="text" class="form-control" id="modal_address" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="modal_city">City *</label>
+                            <input type="text" class="form-control" id="modal_city" required>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="modal_zip">ZIP/Postal Code *</label>
+                            <input type="text" class="form-control" id="modal_zip" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="modal_country">Country *</label>
+                            <select id="modal_country" class="form-control form-select" required>
+                                <option value="Cambodia" selected>Cambodia</option>
+                                <option value="US">United States</option>
+                                <option value="CA">Canada</option>
+                                <option value="UK">United Kingdom</option>
+                                <option value="AU">Australia</option>
+                                <option value="DE">Germany</option>
+                                <option value="FR">France</option>
+                                <option value="JP">Japan</option>
+                                <option value="CN">China</option>
+                                <option value="IN">India</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="modal_province">Province *</label>
+                            <select id="modal_province" class="form-control form-select" required>
+                                <option value="">Select Province</option>
+                                <option value="Phnom Penh">Phnom Penh</option>
+                                <option value="Kandal">Kandal</option>
+                                <option value="Takeo">Takeo</option>
+                                <option value="Kampot">Kampot</option>
+                                <option value="Kep">Kep</option>
+                                <option value="Sihanoukville">Sihanoukville</option>
+                                <option value="Kampong Speu">Kampong Speu</option>
+                                <option value="Koh Kong">Koh Kong</option>
+                                <option value="Pursat">Pursat</option>
+                                <option value="Battambang">Battambang</option>
+                                <option value="Pailin">Pailin</option>
+                                <option value="Banteay Meanchey">Banteay Meanchey</option>
+                                <option value="Oddar Meanchey">Oddar Meanchey</option>
+                                <option value="Siem Reap">Siem Reap</option>
+                                <option value="Preah Vihear">Preah Vihear</option>
+                                <option value="Kampong Thom">Kampong Thom</option>
+                                <option value="Kampong Cham">Kampong Cham</option>
+                                <option value="Tbong Khmum">Tbong Khmum</option>
+                                <option value="Prey Veng">Prey Veng</option>
+                                <option value="Svay Rieng">Svay Rieng</option>
+                                <option value="Kampong Chhnang">Kampong Chhnang</option>
+                                <option value="Mondulkiri">Mondulkiri</option>
+                                <option value="Ratanakiri">Ratanakiri</option>
+                                <option value="Stung Treng">Stung Treng</option>
+                                <option value="Kratie">Kratie</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input type="checkbox" class="form-check-input" id="modal_save_for_future">
+                        <label class="form-check-label" for="modal_save_for_future">Save this address for future orders</label>
+                    </div>
+                    <div class="form-group" id="modal_address_name_wrap" style="display:none;">
+                        <label for="modal_address_name">Address Name/Label <small class="text-muted">(e.g., Home, Work)</small> *</label>
+                        <input type="text" class="form-control" id="modal_address_name" placeholder="e.g., Home, Work">
+                    </div>
+                </form>
+                {% else %}
+                <div class="alert alert-warning">
+                    Please <a href="{% url 'main:login' %}?next={% url 'main:checkout' %}"><strong>login</strong></a> to add and select an address.
+                </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                {% if user.is_authenticated %}
+                <button type="button" id="modal_save_address_btn" class="btn btn-primary">Save & Use Address</button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    </div>
 {% endblock %}
