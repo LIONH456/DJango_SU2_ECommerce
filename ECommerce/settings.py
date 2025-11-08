@@ -25,10 +25,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-npqs9)uih$0h0o*9gt2lnvbv*zsfr)up492*y^2@fw10_w&0dg')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True  # Development mode for local testing
-# DEBUG = config('DEBUG', default=False, cast=bool)  # Production mode - uncomment when deploying
+# DEBUG is set from environment variable, defaults to False for production safety
+DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,.onrender.com', cast=lambda v: [s.strip() for s in v.split(',')])
+# ALLOWED_HOSTS - comma separated list of allowed hostnames/IPs
+# In production, set this to your VPS IP address and domain name (if available)
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=lambda v: [s.strip() for s in v.split(',')])
+
+# CSRF_TRUSTED_ORIGINS - for CSRF protection in production
+# Add your domain/IP with http:// or https:// prefix
+CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='', cast=lambda v: [s.strip() for s in v.split(',') if s.strip()])
 
 
 # Application definition
@@ -183,15 +189,25 @@ LOGOUT_REDIRECT_URL = '/'
 MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
 
 # Security settings for production
+# Note: SSL/HTTPS settings are optional and should only be enabled when using HTTPS
+# Set USE_HTTPS=True in .env when you have SSL certificate configured
+USE_HTTPS = config('USE_HTTPS', default=False, cast=bool)
+
 if not DEBUG:
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_SECONDS = 31536000
-    SECURE_REDIRECT_EXEMPT = []
-    SECURE_SSL_REDIRECT = True
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
+    # HTTPS/SSL settings (only enable when using HTTPS)
+    if USE_HTTPS:
+        SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+        SECURE_HSTS_SECONDS = 31536000
+        SECURE_SSL_REDIRECT = True
+        SESSION_COOKIE_SECURE = True
+        CSRF_COOKIE_SECURE = True
+    else:
+        # Disable HTTPS-only settings when using HTTP
+        SECURE_SSL_REDIRECT = False
+        SESSION_COOKIE_SECURE = False
+        CSRF_COOKIE_SECURE = False
 
 # Django REST Framework configuration
 REST_FRAMEWORK = {
@@ -220,16 +236,23 @@ REST_FRAMEWORK = {
 }
 
 # CORS settings
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://localhost:8000",
-    "http://127.0.0.1:8000",
-]
+# In production, set CORS_ALLOWED_ORIGINS via environment variable
+# Format: CORS_ALLOWED_ORIGINS=http://yourdomain.com,https://yourdomain.com
+CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='', cast=lambda v: [s.strip() for s in v.split(',') if s.strip()])
+
+# If no CORS origins are specified, use default localhost origins for development
+if not CORS_ALLOWED_ORIGINS:
+    CORS_ALLOWED_ORIGINS = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+    ]
 
 CORS_ALLOW_CREDENTIALS = True
 
-# Allow all origins in development (remove in production)
+# Allow all origins only in development (when DEBUG=True)
+# In production, always use CORS_ALLOWED_ORIGINS for security
 if DEBUG:
     CORS_ALLOW_ALL_ORIGINS = True
 

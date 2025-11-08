@@ -47,12 +47,12 @@
                         </a>
                         <div class="collapse {% if active_page == 'products' or active_page == 'categories' %}show{% endif %}" id="productsCollapse">
                             <ul class="sidebar-dropdown list-unstyled small">
-                                <li class="sidebar-item {% if request.resolver_match.url_name == 'products_list' %}active{% endif %}">
+                                <li class="sidebar-item {% if request.resolver_match.url_name == 'products_list' or request.resolver_match.url_name == 'product_create' or request.resolver_match.url_name == 'product_edit' %}active{% endif %}">
                                     <a class="sidebar-link" href="{% url 'dashboard:products_list' %}">
                                         <i class="align-middle" data-feather="list"></i> <span class="align-middle">All Products</span>
                                     </a>
                                 </li>
-                                <li class="sidebar-item {% if request.resolver_match.url_name == 'categories_list' %}active{% endif %}">
+                                <li class="sidebar-item {% if request.resolver_match.url_name == 'categories_list' or request.resolver_match.url_name == 'category_create' or request.resolver_match.url_name == 'category_edit' %}active{% endif %}">
                                     <a class="sidebar-link" href="{% url 'dashboard:categories_list' %}">
                                         <i class="align-middle" data-feather="tag"></i> <span class="align-middle">Categories</span>
                                     </a>
@@ -149,12 +149,12 @@
                         </a>
                         <div class="collapse {% if active_page == 'users' %}show{% endif %}" id="usersCollapse">
                             <ul class="sidebar-dropdown list-unstyled small">
-                                <li class="sidebar-item {% if request.resolver_match.url_name == 'users_list' %}active{% endif %}">
+                                <li class="sidebar-item {% if active_page == 'users' and request.resolver_match.url_name == 'users_list' %}active{% endif %}">
                                     <a class="sidebar-link" href="{% url 'dashboard:users_list' %}">
                                         <i class="align-middle" data-feather="list"></i> <span class="align-middle">All Users</span>
                                     </a>
                                 </li>
-                                <li class="sidebar-item {% if request.resolver_match.url_name == 'user_create' %}active{% endif %}">
+                                <li class="sidebar-item {% if active_page == 'users' and request.resolver_match.url_name == 'user_create' %}active{% endif %}">
                                     <a class="sidebar-link" href="{% url 'dashboard:user_create' %}">
                                         <i class="align-middle" data-feather="user-plus"></i> <span class="align-middle">Add User</span>
                                     </a>
@@ -163,6 +163,17 @@
                         </div>
 					</li>
 
+                    <li class="sidebar-item">
+                        <a class="sidebar-link" href="{% url 'dashboard:dashboard' %}">
+                            <i class="align-middle" data-feather="user"></i> <span class="align-middle">User Profiles</span>
+                        </a>
+					</li>
+
+                    <li class="sidebar-item">
+                        <a class="sidebar-link" href="{% url 'dashboard:dashboard' %}">
+                            <i class="align-middle" data-feather="map-pin"></i> <span class="align-middle">Addresses</span>
+                        </a>
+					</li>
 
                     <li class="sidebar-header">
 						Content Management

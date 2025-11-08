@@ -1,0 +1,79 @@
+# Docker Compose configuration for Django ECommerce Application
+# This file defines the services, networks, and volumes needed to run the application
+
+version: '3.8'
+
+services:
+  # Django web application service
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ecommerce_web
+    restart: unless-stopped
+    # Environment variables are loaded from .env file
+    env_file:
+      - .env
+    # Expose port 8000 internally (nginx will use this)
+    expose:
+      - "8000"
+    # Volumes for persistent data
+    volumes:
+      # Media files (user uploads) - persistent storage
+      - ./media:/app/media
+      # Static files (will be collected on startup)
+      - ./staticfiles:/app/staticfiles
+    # Health check to ensure the service is running
+    # Using python to check if the server is responding
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    # Command to run migrations and collectstatic before starting gunicorn
+    command: >
+      sh -c "
+        python manage.py migrate --no-input &&
+        python manage.py collectstatic --no-input &&
+        gunicorn --bind 0.0.0.0:8000 --workers 3 --timeout 120 --access-logfile - --error-logfile - ECommerce.wsgi:application
+      "
+
+  # Nginx reverse proxy service
+  nginx:
+    image: nginx:alpine
+    container_name: ecommerce_nginx
+    restart: unless-stopped
+    # Map port 80 (HTTP) to host
+    ports:
+      - "80:80"
+    # Nginx configuration file
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      # Static files served by nginx (read-only)
+      - ./staticfiles:/app/staticfiles:ro
+      # Media files served by nginx (read-only)
+      - ./media:/app/media:ro
+    # Depends on web service
+    depends_on:
+      - web
+    # Health check (nginx alpine has wget)
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+# Networks
+# Default network allows services to communicate using service names
+networks:
+  default:
+    name: ecommerce_network
+
+# Volumes (if you want named volumes instead of bind mounts)
+# Uncomment if you prefer named volumes
+# volumes:
+#   media_data:
+#   static_data:
+
