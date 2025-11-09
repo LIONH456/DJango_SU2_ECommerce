@@ -17,15 +17,15 @@ git pull origin main || git pull origin master
 
 # Stop containers
 echo "2. Stopping containers..."
-docker compose down
+sudo docker compose down
 
 # Rebuild Docker image (this includes your code changes)
 echo "3. Rebuilding Docker image with latest code..."
-docker compose build --no-cache
+sudo docker compose build --no-cache
 
 # Start containers
 echo "4. Starting containers..."
-docker compose up -d
+sudo docker compose up -d
 
 # Wait for services to be ready
 echo "5. Waiting for services to start..."
@@ -33,7 +33,7 @@ sleep 10
 
 # Check service status
 echo "6. Checking service status..."
-docker compose ps
+sudo docker compose ps
 
 echo ""
 echo "========================================="
