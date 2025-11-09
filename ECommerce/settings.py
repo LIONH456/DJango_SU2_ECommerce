@@ -242,7 +242,7 @@ CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='', cast=lambda v:
 
 # If no CORS origins are specified, use default localhost origins for development
 if not CORS_ALLOWED_ORIGINS:
-    CORS_ALLOWED_ORIGINS = [
+CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "http://localhost:8000",
