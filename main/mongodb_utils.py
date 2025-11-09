@@ -33,6 +33,8 @@ class MongoDBManager:
         self.wishlists_collection = self.db.get_collection('wishlists')
         # Addresses collection
         self.addresses_collection = self.db.get_collection('addresses')
+        # Sliders collection
+        self.sliders_collection = self.db.get_collection('sliders')
     
     def create_user(self, user_data):
         """Create a new user in MongoDB"""
@@ -1146,6 +1148,33 @@ class MongoDBManager:
             print(f"Error getting user addresses: {e}")
             import traceback
             print(traceback.format_exc())
+            return []
+    
+    def list_sliders(self, status: str = 'active'):
+        """Get sliders from MongoDB"""
+        try:
+            query = {}
+            if status:
+                query['status'] = status
+            
+            sliders = list(self.sliders_collection.find(query).sort('order', 1))
+            
+            # Convert ObjectId to string
+            for slider in sliders:
+                slider['id'] = str(slider['_id'])
+                if '_id' in slider:
+                    del slider['_id']
+                # Convert datetime to string if needed
+                if 'created_at' in slider and isinstance(slider['created_at'], datetime):
+                    slider['created_at'] = slider['created_at'].isoformat()
+                if 'updated_at' in slider and isinstance(slider['updated_at'], datetime):
+                    slider['updated_at'] = slider['updated_at'].isoformat()
+            
+            return sliders
+        except Exception as e:
+            print(f"Error getting sliders from MongoDB: {e}")
+            import traceback
+            traceback.print_exc()
             return []
     
     def get_address_by_id(self, address_id: str):

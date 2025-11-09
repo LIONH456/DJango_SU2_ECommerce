@@ -41,26 +41,36 @@ import os
 from dashboard.models import Slider
 
 def home(request):
-    """Home page view - using API client"""
-    # Use API client to fetch data
-    from .api_client import get_api_client
-    api_client = get_api_client(request, use_api=True)
-    
-    # Fetch active sliders via API
+    """Home page view - using MongoDB for sliders"""
+    # Fetch active sliders from MongoDB
     try:
-        sliders_data = api_client.get_active_sliders()
-        # Convert serialized data back to Slider objects for template compatibility
-        if sliders_data and isinstance(sliders_data, list) and len(sliders_data) > 0:
-            slider_ids = [s.get('id') for s in sliders_data if s.get('id')]
-            sliders = Slider.objects.filter(id__in=slider_ids).order_by('order') if slider_ids else Slider.objects.filter(status='active').order_by('order')
-        else:
+        sliders_data = mongodb_manager.list_sliders(status='active')
+        # Convert MongoDB data to a format compatible with template
+        # Template expects objects with .title, .subtitle, .img, .link, etc.
+        class SliderObject:
+            def __init__(self, data):
+                self.id = data.get('id')
+                self.title = data.get('title', '')
+                self.subtitle = data.get('subtitle', '')
+                self.description = data.get('description', '')
+                self.img = data.get('img', '')
+                self.link = data.get('link', '')
+                self.status = data.get('status', 'active')
+                self.order = data.get('order', 0)
+        
+        sliders = [SliderObject(s) for s in sliders_data] if sliders_data else []
+    except Exception as e:
+        logger.exception(f"Error fetching sliders from MongoDB: {e}")
+        # Fallback to Django ORM if MongoDB fails
+        try:
             sliders = Slider.objects.filter(status='active').order_by('order')
-    except Exception:
-        # Fallback to direct access
-        sliders = Slider.objects.filter(status='active').order_by('order')
+        except Exception:
+            sliders = []
     
     # Fetch last 4 products for new arrivals via API
     try:
+        from .api_client import get_api_client
+        api_client = get_api_client(request, use_api=True)
         new_arrivals = api_client.get_new_arrivals(limit=4)
     except Exception:
         # Fallback to direct access

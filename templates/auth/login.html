@@ -1,7 +1,7 @@
 {% extends 'Home/base.html' %}
 {% load static %}
 
-{% block title %}Login | Fashion{% endblock %}
+{% block title %}Login | SU12-Ecommerce{% endblock %}
 {% block meta_description %}Sign in to your account{% endblock %}
 
 {% block breadcrumb %}
@@ -84,7 +84,7 @@
                         </script>
 
                         <div class="form-group mb-30">
-                            <button type="submit" class="btn btn-primary btn-block btn-lg">
+                            <button type="submit" class="btn btn-outline-primary btn-block btn-lg">
                                 <i class="fas fa-sign-in-alt"></i> Sign In
                             </button>
                         </div>
@@ -151,16 +151,22 @@
     box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
 }
 
-.btn-primary {
-    background: #007bff;
-    border: none;
+.btn-primary, .btn-outline-primary {
     padding: 12px 30px;
     font-weight: 600;
     transition: all 0.3s ease;
+    border-radius: 5px;
 }
 
-.btn-primary:hover {
-    background: #0056b3;
+.btn-outline-primary {
+    background: transparent;
+    border: 2px solid #007bff;
+    color: #007bff;
+}
+
+.btn-outline-primary:hover {
+    background: #007bff;
+    color: #fff;
     transform: translateY(-2px);
 }
 
