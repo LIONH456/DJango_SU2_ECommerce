@@ -179,16 +179,21 @@
 						Content Management
 					</li>
 
-                    <li class="sidebar-item {% if active_page == 'sliders' %}active{% endif %}">
-                        <a class="sidebar-link" data-bs-toggle="collapse" href="#contentCollapse" role="button" aria-expanded="{% if active_page == 'sliders' %}true{% else %}false{% endif %}" aria-controls="contentCollapse">
+                    <li class="sidebar-item {% if active_page == 'sliders' or active_page == 'faqs' %}active{% endif %}">
+                        <a class="sidebar-link" data-bs-toggle="collapse" href="#contentCollapse" role="button" aria-expanded="{% if active_page == 'sliders' or active_page == 'faqs' %}true{% else %}false{% endif %}" aria-controls="contentCollapse">
                             <i class="align-middle" data-feather="file-text"></i> <span class="align-middle">Content</span>
                             <i class="align-middle ms-auto" data-feather="chevron-down"></i>
                         </a>
-                        <div class="collapse {% if active_page == 'sliders' %}show{% endif %}" id="contentCollapse">
+                        <div class="collapse {% if active_page == 'sliders' or active_page == 'faqs' %}show{% endif %}" id="contentCollapse">
                             <ul class="sidebar-dropdown list-unstyled small">
                                 <li class="sidebar-item {% if active_page == 'sliders' %}active{% endif %}">
                                     <a class="sidebar-link" href="{% url 'dashboard:sliders_list' %}">
                                         <i class="align-middle" data-feather="image"></i> <span class="align-middle">Sliders</span>
+                                    </a>
+                                </li>
+                                <li class="sidebar-item {% if active_page == 'faqs' %}active{% endif %}">
+                                    <a class="sidebar-link" href="{% url 'dashboard:faqs_list' %}">
+                                        <i class="align-middle" data-feather="help-circle"></i> <span class="align-middle">FAQs</span>
                                     </a>
                                 </li>
                                 <li class="sidebar-item">

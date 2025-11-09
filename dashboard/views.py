@@ -28,13 +28,34 @@ def index(request):
 
 @login_required
 def sliders_list(request):
-    """Display list of all sliders"""
+    """Display list of all sliders from MongoDB"""
     # Only allow superusers to access dashboard
     if not request.user.is_superuser:
         messages.error(request, 'Access denied. Superuser privileges required.')
         return redirect('main:home')
     
-    sliders = Slider.objects.all()
+    # Fetch sliders from MongoDB
+    from main.mongodb_utils import mongodb_manager
+    try:
+        sliders_data = mongodb_manager.list_sliders(status=None)  # Get all sliders
+        # Convert to Slider-like objects for template compatibility
+        class SliderObject:
+            def __init__(self, data):
+                self.id = data.get('id')
+                self.title = data.get('title', '')
+                self.subtitle = data.get('subtitle', '')
+                self.description = data.get('description', '')
+                self.img = data.get('img', '')
+                self.link = data.get('link', '')
+                self.status = data.get('status', 'active')
+                self.order = data.get('order', 0)
+        
+        sliders = [SliderObject(s) for s in sliders_data] if sliders_data else []
+    except Exception as e:
+        messages.error(request, f'Error loading sliders from MongoDB: {str(e)}')
+        # Fallback to Django ORM
+        sliders = Slider.objects.all()
+    
     context = {
         'sliders': sliders,
         'active_page': 'sliders'
@@ -49,6 +70,9 @@ def slider_create(request):
         messages.error(request, 'Access denied. Superuser privileges required.')
         return redirect('main:home')
     
+    # Fetch sliders from MongoDB
+    from main.mongodb_utils import mongodb_manager
+    
     if request.method == 'POST':
         try:
             # Get the order number from form
@@ -57,30 +81,32 @@ def slider_create(request):
                 order = int(order)
             else:
                 # Auto-assign order number (next available)
-                order = Slider.get_next_order()
+                order = mongodb_manager.get_next_slider_order()
             
-            # Check if order number already exists
-            existing_slider = Slider.objects.filter(order=order).first()
-            if existing_slider:
-                # Shift existing sliders to make room
-                Slider.objects.filter(order__gte=order).update(order=models.F('order') + 1)
+            # Create slider data
+            slider_data = {
+                'title': request.POST.get('title', ''),
+                'subtitle': request.POST.get('subtitle', ''),
+                'description': request.POST.get('description', ''),
+                'img': request.POST.get('img', ''),
+                'link': request.POST.get('link', ''),
+                'status': request.POST.get('status', 'active'),
+                'order': order
+            }
             
-            slider = Slider.objects.create(
-                title=request.POST.get('title', ''),
-                subtitle=request.POST.get('subtitle', ''),
-                description=request.POST.get('description', ''),
-                img=request.POST.get('img', ''),
-                link=request.POST.get('link', ''),
-                status=request.POST.get('status', 'active'),
-                order=order
-            )
-            messages.success(request, 'Slider created successfully!')
-            return redirect('dashboard:sliders_list')
+            # Create slider in MongoDB
+            slider_id = mongodb_manager.create_slider(slider_data)
+            
+            if slider_id:
+                messages.success(request, 'Slider created successfully!')
+                return redirect('dashboard:sliders_list')
+            else:
+                messages.error(request, 'Error creating slider in MongoDB')
         except Exception as e:
             messages.error(request, f'Error creating slider: {str(e)}')
     
     # Get next available order number for the form
-    next_order = Slider.get_next_order()
+    next_order = mongodb_manager.get_next_slider_order()
     
     context = {
         'slider': None,
@@ -97,40 +123,42 @@ def slider_edit(request, slider_id):
         messages.error(request, 'Access denied. Superuser privileges required.')
         return redirect('main:home')
     
-    slider = get_object_or_404(Slider, id=slider_id)
+    # Fetch slider from MongoDB
+    from main.mongodb_utils import mongodb_manager
+    slider = mongodb_manager.get_slider_by_id(slider_id)
+    
+    if not slider:
+        messages.error(request, 'Slider not found')
+        return redirect('dashboard:sliders_list')
     
     if request.method == 'POST':
         try:
-            old_order = slider.order
+            old_order = slider.get('order', 0)
             new_order = request.POST.get('order', 0)
             if new_order:
                 new_order = int(new_order)
             else:
                 new_order = old_order
             
-            # Check if order number changed and conflicts with existing
-            if new_order != old_order:
-                existing_slider = Slider.objects.filter(order=new_order).exclude(id=slider_id).first()
-                if existing_slider:
-                    # Shift existing sliders to make room
-                    if new_order > old_order:
-                        # Moving to higher order - shift sliders between old and new
-                        Slider.objects.filter(order__gt=old_order, order__lte=new_order).exclude(id=slider_id).update(order=models.F('order') - 1)
-                    else:
-                        # Moving to lower order - shift sliders between new and old
-                        Slider.objects.filter(order__gte=new_order, order__lt=old_order).exclude(id=slider_id).update(order=models.F('order') + 1)
+            # Update slider data
+            update_data = {
+                'title': request.POST.get('title', ''),
+                'subtitle': request.POST.get('subtitle', ''),
+                'description': request.POST.get('description', ''),
+                'img': request.POST.get('img', ''),
+                'link': request.POST.get('link', ''),
+                'status': request.POST.get('status', 'active'),
+                'order': new_order
+            }
             
-            slider.title = request.POST.get('title', '')
-            slider.subtitle = request.POST.get('subtitle', '')
-            slider.description = request.POST.get('description', '')
-            slider.img = request.POST.get('img', '')
-            slider.link = request.POST.get('link', '')
-            slider.status = request.POST.get('status', 'active')
-            slider.order = new_order
-            slider.save()
+            # Update slider in MongoDB
+            success = mongodb_manager.update_slider(slider_id, update_data)
             
-            messages.success(request, 'Slider updated successfully!')
-            return redirect('dashboard:sliders_list')
+            if success:
+                messages.success(request, 'Slider updated successfully!')
+                return redirect('dashboard:sliders_list')
+            else:
+                messages.error(request, 'Error updating slider in MongoDB')
         except Exception as e:
             messages.error(request, f'Error updating slider: {str(e)}')
     
@@ -148,15 +176,15 @@ def slider_delete(request, slider_id):
         messages.error(request, 'Access denied. Superuser privileges required.')
         return redirect('main:home')
     
-    slider = get_object_or_404(Slider, id=slider_id)
+    # Delete slider from MongoDB
+    from main.mongodb_utils import mongodb_manager
     try:
-        order_to_delete = slider.order
-        slider.delete()
+        success = mongodb_manager.delete_slider(slider_id)
         
-        # Reorder remaining sliders
-        Slider.objects.filter(order__gt=order_to_delete).update(order=models.F('order') - 1)
-        
-        messages.success(request, 'Slider deleted successfully!')
+        if success:
+            messages.success(request, 'Slider deleted successfully!')
+        else:
+            messages.error(request, 'Error deleting slider from MongoDB')
     except Exception as e:
         messages.error(request, f'Error deleting slider: {str(e)}')
     
@@ -171,13 +199,18 @@ def slider_toggle_status(request, slider_id):
         return JsonResponse({'success': False, 'message': 'Access denied. Superuser privileges required.'}, status=403)
     """Toggle slider status via AJAX"""
     try:
-        slider = get_object_or_404(Slider, id=slider_id)
-        slider.status = 'inactive' if slider.status == 'active' else 'active'
-        slider.save()
+        from main.mongodb_utils import mongodb_manager
+        new_status = mongodb_manager.toggle_slider_status(slider_id)
         
-        return JsonResponse({
-            'success': True,
-            'status': slider.status
+        if new_status:
+            return JsonResponse({
+                'success': True,
+                    'status': new_status
+                })
+        else:
+            return JsonResponse({
+                'success': False,
+                'error': 'Slider not found'
         })
     except Exception as e:
         return JsonResponse({
@@ -194,24 +227,20 @@ def slider_reorder(request):
         return JsonResponse({'success': False, 'message': 'Access denied. Superuser privileges required.'}, status=403)
     """Reorder sliders via AJAX"""
     try:
+        from main.mongodb_utils import mongodb_manager
         data = json.loads(request.body)
         items = data.get('items', [])
         
-        # First, update all sliders to temporary high order numbers to avoid conflicts
-        temp_start = 10000
-        for i, item in enumerate(items):
-            slider_id = item.get('id')
-            if slider_id:
-                Slider.objects.filter(id=slider_id).update(order=temp_start + i)
+        # Reorder sliders in MongoDB
+        success = mongodb_manager.reorder_sliders(items)
         
-        # Then update to final order numbers
-        for i, item in enumerate(items):
-            slider_id = item.get('id')
-            final_order = item.get('order')
-            if slider_id and final_order is not None:
-                Slider.objects.filter(id=slider_id).update(order=final_order)
-        
-        return JsonResponse({'success': True})
+        if success:
+            return JsonResponse({'success': True})
+        else:
+            return JsonResponse({
+                'success': False,
+                'error': 'Error reordering sliders'
+            })
     except Exception as e:
         return JsonResponse({
             'success': False,
@@ -1791,3 +1820,175 @@ def user_toggle_status(request, user_id):
         messages.error(request, f'Error toggling user status: {str(e)}')
     
     return redirect('dashboard:users_list')
+
+# FAQ Management Views
+@login_required
+def faqs_list(request):
+    """Display list of all FAQs"""
+    # Only allow superusers to access dashboard
+    if not request.user.is_superuser:
+        messages.error(request, 'Access denied. Superuser privileges required.')
+        return redirect('main:home')
+    
+    # Fetch FAQs from MongoDB
+    from main.mongodb_utils import mongodb_manager
+    try:
+        faqs_data = mongodb_manager.list_faqs(is_active=None)  # Get all FAQs
+        # Convert to FAQ-like objects for template compatibility
+        class FAQObject:
+            def __init__(self, data):
+                self.id = data.get('id')
+                self.question = data.get('question', '')
+                self.answer = data.get('answer', '')
+                self.category = data.get('category', 'general')
+                self.keywords = data.get('keywords', [])
+                self.order = data.get('order', 0)
+                self.is_active = data.get('is_active', True)
+        
+        faqs = [FAQObject(f) for f in faqs_data] if faqs_data else []
+    except Exception as e:
+        messages.error(request, f'Error loading FAQs from MongoDB: {str(e)}')
+        faqs = []
+    
+    context = {
+        'faqs': faqs,
+        'active_page': 'faqs'
+    }
+    return render(request, 'dashboard/faqs_list.html', context)
+
+@login_required
+def faq_create(request):
+    """Create a new FAQ"""
+    # Only allow superusers to access dashboard
+    if not request.user.is_superuser:
+        messages.error(request, 'Access denied. Superuser privileges required.')
+        return redirect('main:home')
+    
+    # Fetch FAQs from MongoDB
+    from main.mongodb_utils import mongodb_manager
+    
+    if request.method == 'POST':
+        try:
+            # Get keywords from form (comma-separated)
+            keywords_str = request.POST.get('keywords', '').strip()
+            keywords = [k.strip() for k in keywords_str.split(',') if k.strip()] if keywords_str else []
+            
+            # Get order number from form
+            order = request.POST.get('order', 0)
+            if order:
+                order = int(order)
+            else:
+                order = 0
+            
+            # Create FAQ data
+            faq_data = {
+                'question': request.POST.get('question', ''),
+                'answer': request.POST.get('answer', ''),
+                'category': request.POST.get('category', 'general'),
+                'keywords': keywords,
+                'order': order,
+                'is_active': request.POST.get('is_active', 'true').lower() == 'true'
+            }
+            
+            # Create FAQ in MongoDB
+            faq_id = mongodb_manager.create_faq(faq_data)
+            
+            if faq_id:
+                messages.success(request, 'FAQ created successfully!')
+                return redirect('dashboard:faqs_list')
+            else:
+                messages.error(request, 'Error creating FAQ in MongoDB')
+        except Exception as e:
+            messages.error(request, f'Error creating FAQ: {str(e)}')
+    
+    # Get categories for dropdown
+    categories = ['general', 'products', 'orders', 'payment', 'shipping', 'returns', 'account', 'support', 'privacy']
+    
+    context = {
+        'faq': None,
+        'active_page': 'faqs',
+        'categories': categories
+    }
+    return render(request, 'dashboard/faq_form.html', context)
+
+@login_required
+def faq_edit(request, faq_id):
+    """Edit an existing FAQ"""
+    # Only allow superusers to access dashboard
+    if not request.user.is_superuser:
+        messages.error(request, 'Access denied. Superuser privileges required.')
+        return redirect('main:home')
+    
+    # Fetch FAQ from MongoDB
+    from main.mongodb_utils import mongodb_manager
+    faq = mongodb_manager.get_faq_by_id(faq_id)
+    
+    if not faq:
+        messages.error(request, 'FAQ not found')
+        return redirect('dashboard:faqs_list')
+    
+    if request.method == 'POST':
+        try:
+            # Get keywords from form (comma-separated)
+            keywords_str = request.POST.get('keywords', '').strip()
+            keywords = [k.strip() for k in keywords_str.split(',') if k.strip()] if keywords_str else []
+            
+            # Get order number from form
+            order = request.POST.get('order', 0)
+            if order:
+                order = int(order)
+            else:
+                order = faq.get('order', 0)
+            
+            # Update FAQ data
+            update_data = {
+                'question': request.POST.get('question', ''),
+                'answer': request.POST.get('answer', ''),
+                'category': request.POST.get('category', 'general'),
+                'keywords': keywords,
+                'order': order,
+                'is_active': request.POST.get('is_active', 'true').lower() == 'true'
+            }
+            
+            # Update FAQ in MongoDB
+            success = mongodb_manager.update_faq(faq_id, update_data)
+            
+            if success:
+                messages.success(request, 'FAQ updated successfully!')
+                return redirect('dashboard:faqs_list')
+            else:
+                messages.error(request, 'Error updating FAQ in MongoDB')
+        except Exception as e:
+            messages.error(request, f'Error updating FAQ: {str(e)}')
+    
+    # Get categories for dropdown
+    categories = ['general', 'products', 'orders', 'payment', 'shipping', 'returns', 'account', 'support', 'privacy']
+    
+    context = {
+        'faq': faq,
+        'active_page': 'faqs',
+        'categories': categories
+    }
+    return render(request, 'dashboard/faq_form.html', context)
+
+@login_required
+def faq_delete(request, faq_id):
+    """Delete a FAQ"""
+    # Only allow superusers to access dashboard
+    if not request.user.is_superuser:
+        messages.error(request, 'Access denied. Superuser privileges required.')
+        return redirect('main:home')
+    
+    # Delete FAQ from MongoDB
+    from main.mongodb_utils import mongodb_manager
+    try:
+        success = mongodb_manager.delete_faq(faq_id)
+        
+        if success:
+            messages.success(request, 'FAQ deleted successfully!')
+        else:
+            messages.error(request, 'Error deleting FAQ from MongoDB')
+    except Exception as e:
+        messages.error(request, f'Error deleting FAQ: {str(e)}')
+    
+    return redirect('dashboard:faqs_list')

@@ -35,6 +35,8 @@ class MongoDBManager:
         self.addresses_collection = self.db.get_collection('addresses')
         # Sliders collection
         self.sliders_collection = self.db.get_collection('sliders')
+        # FAQs collection
+        self.faqs_collection = self.db.get_collection('faqs')
     
     def create_user(self, user_data):
         """Create a new user in MongoDB"""
@@ -1176,6 +1178,313 @@ class MongoDBManager:
             import traceback
             traceback.print_exc()
             return []
+    
+    def get_slider_by_id(self, slider_id: str):
+        """Get slider by ID from MongoDB"""
+        try:
+            slider_id_obj = ObjectId(slider_id)
+            slider = self.sliders_collection.find_one({'_id': slider_id_obj})
+            if slider:
+                slider['id'] = str(slider['_id'])
+                if '_id' in slider:
+                    del slider['_id']
+                # Convert datetime to string if needed
+                if 'created_at' in slider and isinstance(slider['created_at'], datetime):
+                    slider['created_at'] = slider['created_at'].isoformat()
+                if 'updated_at' in slider and isinstance(slider['updated_at'], datetime):
+                    slider['updated_at'] = slider['updated_at'].isoformat()
+            return slider
+        except Exception as e:
+            print(f"Error getting slider by ID from MongoDB: {e}")
+            return None
+    
+    def create_slider(self, slider_data: dict):
+        """Create a new slider in MongoDB"""
+        try:
+            # Add timestamps
+            slider_data['created_at'] = datetime.utcnow()
+            slider_data['updated_at'] = datetime.utcnow()
+            
+            # Set default values
+            slider_data.setdefault('status', 'active')
+            slider_data.setdefault('order', 0)
+            
+            # If order is provided, check if it conflicts and adjust
+            if 'order' in slider_data:
+                order = slider_data['order']
+                # Shift existing sliders with same or higher order
+                self.sliders_collection.update_many(
+                    {'order': {'$gte': order}},
+                    {'$inc': {'order': 1}}
+                )
+            
+            result = self.sliders_collection.insert_one(slider_data)
+            return str(result.inserted_id)
+        except Exception as e:
+            print(f"Error creating slider in MongoDB: {e}")
+            import traceback
+            traceback.print_exc()
+            return None
+    
+    def update_slider(self, slider_id: str, update_data: dict):
+        """Update slider in MongoDB"""
+        try:
+            slider_id_obj = ObjectId(slider_id)
+            update_data['updated_at'] = datetime.utcnow()
+            
+            # If order is being changed, handle reordering
+            if 'order' in update_data:
+                # Get current slider
+                current_slider = self.sliders_collection.find_one({'_id': slider_id_obj})
+                if current_slider:
+                    old_order = current_slider.get('order', 0)
+                    new_order = update_data['order']
+                    
+                    if old_order != new_order:
+                        # Shift other sliders
+                        if new_order > old_order:
+                            # Moving to higher order - shift sliders between old and new down
+                            self.sliders_collection.update_many(
+                                {'order': {'$gt': old_order, '$lte': new_order}, '_id': {'$ne': slider_id_obj}},
+                                {'$inc': {'order': -1}}
+                            )
+                        else:
+                            # Moving to lower order - shift sliders between new and old up
+                            self.sliders_collection.update_many(
+                                {'order': {'$gte': new_order, '$lt': old_order}, '_id': {'$ne': slider_id_obj}},
+                                {'$inc': {'order': 1}}
+                            )
+            
+            result = self.sliders_collection.update_one(
+                {'_id': slider_id_obj},
+                {'$set': update_data}
+            )
+            return result.modified_count > 0
+        except Exception as e:
+            print(f"Error updating slider in MongoDB: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
+    
+    def delete_slider(self, slider_id: str):
+        """Delete slider from MongoDB"""
+        try:
+            slider_id_obj = ObjectId(slider_id)
+            # Get slider to get its order
+            slider = self.sliders_collection.find_one({'_id': slider_id_obj})
+            if slider:
+                order = slider.get('order', 0)
+                # Delete the slider
+                result = self.sliders_collection.delete_one({'_id': slider_id_obj})
+                if result.deleted_count > 0:
+                    # Reorder remaining sliders
+                    self.sliders_collection.update_many(
+                        {'order': {'$gt': order}},
+                        {'$inc': {'order': -1}}
+                    )
+                    return True
+            return False
+        except Exception as e:
+            print(f"Error deleting slider from MongoDB: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
+    
+    def toggle_slider_status(self, slider_id: str):
+        """Toggle slider status (active/inactive)"""
+        try:
+            slider_id_obj = ObjectId(slider_id)
+            slider = self.sliders_collection.find_one({'_id': slider_id_obj})
+            if slider:
+                new_status = 'inactive' if slider.get('status') == 'active' else 'active'
+                result = self.sliders_collection.update_one(
+                    {'_id': slider_id_obj},
+                    {'$set': {'status': new_status, 'updated_at': datetime.utcnow()}}
+                )
+                return new_status if result.modified_count > 0 else None
+            return None
+        except Exception as e:
+            print(f"Error toggling slider status in MongoDB: {e}")
+            return None
+    
+    def reorder_sliders(self, items: list):
+        """Reorder sliders based on provided items list"""
+        try:
+            # First, update all sliders to temporary high order numbers to avoid conflicts
+            temp_start = 10000
+            for i, item in enumerate(items):
+                slider_id = item.get('id')
+                if slider_id:
+                    try:
+                        slider_id_obj = ObjectId(slider_id)
+                        self.sliders_collection.update_one(
+                            {'_id': slider_id_obj},
+                            {'$set': {'order': temp_start + i}}
+                        )
+                    except:
+                        continue
+            
+            # Then update to final order numbers
+            for item in items:
+                slider_id = item.get('id')
+                final_order = item.get('order')
+                if slider_id and final_order is not None:
+                    try:
+                        slider_id_obj = ObjectId(slider_id)
+                        self.sliders_collection.update_one(
+                            {'_id': slider_id_obj},
+                            {'$set': {'order': final_order, 'updated_at': datetime.utcnow()}}
+                        )
+                    except:
+                        continue
+            
+            return True
+        except Exception as e:
+            print(f"Error reordering sliders in MongoDB: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
+    
+    def get_next_slider_order(self):
+        """Get the next available order number for sliders"""
+        try:
+            max_order = self.sliders_collection.find_one(sort=[('order', -1)])
+            if max_order and 'order' in max_order:
+                return max_order['order'] + 1
+            return 1
+        except:
+            return 1
+    
+    # FAQ Methods
+    def list_faqs(self, category: str = None, is_active: bool = True):
+        """Get FAQs from MongoDB"""
+        try:
+            query = {}
+            if is_active is not None:
+                query['is_active'] = is_active
+            if category:
+                query['category'] = category
+            
+            faqs = list(self.faqs_collection.find(query).sort('order', 1))
+            
+            # Convert ObjectId to string
+            for faq in faqs:
+                faq['id'] = str(faq['_id'])
+                if '_id' in faq:
+                    del faq['_id']
+                # Convert datetime to string if needed
+                if 'created_at' in faq and isinstance(faq['created_at'], datetime):
+                    faq['created_at'] = faq['created_at'].isoformat()
+                if 'updated_at' in faq and isinstance(faq['updated_at'], datetime):
+                    faq['updated_at'] = faq['updated_at'].isoformat()
+            
+            return faqs
+        except Exception as e:
+            print(f"Error getting FAQs from MongoDB: {e}")
+            import traceback
+            traceback.print_exc()
+            return []
+    
+    def get_faq_by_id(self, faq_id: str):
+        """Get FAQ by ID from MongoDB"""
+        try:
+            faq_id_obj = ObjectId(faq_id)
+            faq = self.faqs_collection.find_one({'_id': faq_id_obj})
+            if faq:
+                faq['id'] = str(faq['_id'])
+                if '_id' in faq:
+                    del faq['_id']
+                # Convert datetime to string if needed
+                if 'created_at' in faq and isinstance(faq['created_at'], datetime):
+                    faq['created_at'] = faq['created_at'].isoformat()
+                if 'updated_at' in faq and isinstance(faq['updated_at'], datetime):
+                    faq['updated_at'] = faq['updated_at'].isoformat()
+            return faq
+        except Exception as e:
+            print(f"Error getting FAQ by ID from MongoDB: {e}")
+            return None
+    
+    def search_faqs(self, query: str, is_active: bool = True):
+        """Search FAQs by question or answer"""
+        try:
+            search_query = {
+                'is_active': is_active,
+                '$or': [
+                    {'question': {'$regex': query, '$options': 'i'}},
+                    {'answer': {'$regex': query, '$options': 'i'}},
+                    {'keywords': {'$regex': query, '$options': 'i'}}
+                ]
+            }
+            
+            faqs = list(self.faqs_collection.find(search_query).sort('order', 1))
+            
+            # Convert ObjectId to string
+            for faq in faqs:
+                faq['id'] = str(faq['_id'])
+                if '_id' in faq:
+                    del faq['_id']
+                # Convert datetime to string if needed
+                if 'created_at' in faq and isinstance(faq['created_at'], datetime):
+                    faq['created_at'] = faq['created_at'].isoformat()
+                if 'updated_at' in faq and isinstance(faq['updated_at'], datetime):
+                    faq['updated_at'] = faq['updated_at'].isoformat()
+            
+            return faqs
+        except Exception as e:
+            print(f"Error searching FAQs from MongoDB: {e}")
+            import traceback
+            traceback.print_exc()
+            return []
+    
+    def create_faq(self, faq_data: dict):
+        """Create a new FAQ in MongoDB"""
+        try:
+            # Add timestamps
+            faq_data['created_at'] = datetime.utcnow()
+            faq_data['updated_at'] = datetime.utcnow()
+            
+            # Set default values
+            faq_data.setdefault('is_active', True)
+            faq_data.setdefault('order', 0)
+            faq_data.setdefault('category', 'general')
+            faq_data.setdefault('keywords', [])
+            
+            result = self.faqs_collection.insert_one(faq_data)
+            return str(result.inserted_id)
+        except Exception as e:
+            print(f"Error creating FAQ in MongoDB: {e}")
+            import traceback
+            traceback.print_exc()
+            return None
+    
+    def update_faq(self, faq_id: str, update_data: dict):
+        """Update FAQ in MongoDB"""
+        try:
+            faq_id_obj = ObjectId(faq_id)
+            update_data['updated_at'] = datetime.utcnow()
+            
+            result = self.faqs_collection.update_one(
+                {'_id': faq_id_obj},
+                {'$set': update_data}
+            )
+            return result.modified_count > 0
+        except Exception as e:
+            print(f"Error updating FAQ in MongoDB: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
+    
+    def delete_faq(self, faq_id: str):
+        """Delete FAQ from MongoDB"""
+        try:
+            faq_id_obj = ObjectId(faq_id)
+            result = self.faqs_collection.delete_one({'_id': faq_id_obj})
+            return result.deleted_count > 0
+        except Exception as e:
+            print(f"Error deleting FAQ from MongoDB: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
     
     def get_address_by_id(self, address_id: str):
         """Get address by ID"""

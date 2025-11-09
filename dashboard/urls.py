@@ -7,9 +7,9 @@ urlpatterns = [
     path('', views.index, name='dashboard'),
     path('sliders/', views.sliders_list, name='sliders_list'),
     path('sliders/create/', views.slider_create, name='slider_create'),
-    path('sliders/<int:slider_id>/edit/', views.slider_edit, name='slider_edit'),
-    path('sliders/<int:slider_id>/delete/', views.slider_delete, name='slider_delete'),
-    path('sliders/<int:slider_id>/toggle-status/', views.slider_toggle_status, name='slider_toggle_status'),
+    path('sliders/<str:slider_id>/edit/', views.slider_edit, name='slider_edit'),
+    path('sliders/<str:slider_id>/delete/', views.slider_delete, name='slider_delete'),
+    path('sliders/<str:slider_id>/toggle-status/', views.slider_toggle_status, name='slider_toggle_status'),
     path('sliders/reorder/', views.slider_reorder, name='slider_reorder'),
     # Product Management
     path('products/', views.products_list, name='products_list'),
@@ -30,4 +30,9 @@ urlpatterns = [
     path('users/create/', views.user_create, name='user_create'),
     path('users/<str:user_id>/edit/', views.user_edit, name='user_edit'),
     path('users/<str:user_id>/toggle-status/', views.user_toggle_status, name='user_toggle_status'),
+    # FAQ Management
+    path('faqs/', views.faqs_list, name='faqs_list'),
+    path('faqs/create/', views.faq_create, name='faq_create'),
+    path('faqs/<str:faq_id>/edit/', views.faq_edit, name='faq_edit'),
+    path('faqs/<str:faq_id>/delete/', views.faq_delete, name='faq_delete'),
 ]

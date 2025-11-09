@@ -1,0 +1,89 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block content %}
+<main class="content">
+    <div class="container-fluid p-0">
+
+        <h1 class="h3 mb-3">{% if faq %}Edit FAQ{% else %}Create New FAQ{% endif %}</h1>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">FAQ Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post">
+                            {% csrf_token %}
+                            
+                            <div class="mb-3">
+                                <label for="question" class="form-label">Question <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="question" name="question" rows="2" 
+                                          placeholder="Enter FAQ question" required>{{ faq.question|default:'' }}</textarea>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="answer" class="form-label">Answer <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="answer" name="answer" rows="5" 
+                                          placeholder="Enter FAQ answer" required>{{ faq.answer|default:'' }}</textarea>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="category" class="form-label">Category</label>
+                                        <select class="form-select" id="category" name="category">
+                                            {% for cat in categories %}
+                                                <option value="{{ cat }}" {% if faq.category == cat %}selected{% endif %}>{{ cat|title }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="order" class="form-label">Order</label>
+                                        <input type="number" class="form-control" id="order" name="order" 
+                                               value="{% if faq %}{{ faq.order }}{% else %}0{% endif %}" min="0" placeholder="0">
+                                        <small class="form-text text-muted">Lower numbers appear first</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="keywords" class="form-label">Keywords</label>
+                                <input type="text" class="form-control" id="keywords" name="keywords" 
+                                       value="{% if faq.keywords %}{{ faq.keywords|join:', ' }}{% endif %}" 
+                                       placeholder="keyword1, keyword2, keyword3">
+                                <small class="form-text text-muted">Comma-separated keywords for better search matching</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="is_active" name="is_active" 
+                                           {% if not faq or faq.is_active %}checked{% endif %}>
+                                    <label class="form-check-label" for="is_active">
+                                        Active (FAQ will be visible in chatbot)
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between">
+                                <a href="{% url 'dashboard:faqs_list' %}" class="btn btn-secondary">
+                                    <i class="align-middle" data-feather="arrow-left"></i> Back to FAQs
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="align-middle" data-feather="save"></i> 
+                                    {% if faq %}Update FAQ{% else %}Create FAQ{% endif %}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</main>
+{% endblock %}
+

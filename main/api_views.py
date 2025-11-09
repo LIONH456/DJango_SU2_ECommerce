@@ -485,3 +485,32 @@ class CategoryAPIViewSet(viewsets.ViewSet):
         
         return Response({'results': root_categories})
 
+
+# MongoDB FAQ API Views
+class FAQViewSet(viewsets.ViewSet):
+    """ViewSet for FAQ operations using MongoDB"""
+    permission_classes = [AllowAny]  # Public endpoint for chatbot
+    
+    def list(self, request):
+        """Get all active FAQs"""
+        category = request.query_params.get('category', None)
+        faqs = mongodb_manager.list_faqs(category=category, is_active=True)
+        return Response({'results': faqs})
+    
+    @action(detail=False, methods=['get'])
+    def search(self, request):
+        """Search FAQs by query"""
+        query = request.query_params.get('q', '').strip()
+        if not query:
+            return Response({'results': []})
+        
+        faqs = mongodb_manager.search_faqs(query, is_active=True)
+        return Response({'results': faqs})
+    
+    @action(detail=False, methods=['get'])
+    def categories(self, request):
+        """Get all FAQ categories"""
+        faqs = mongodb_manager.list_faqs(is_active=True)
+        categories = list(set([faq.get('category', 'general') for faq in faqs]))
+        return Response({'results': sorted(categories)})
+
