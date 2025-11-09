@@ -334,8 +334,13 @@ class DirectAccessClient:
         if not product or not product.get('category_id'):
             return []
         
+        # Convert category_id to string if it's an ObjectId
+        category_id = product['category_id']
+        if not isinstance(category_id, str):
+            category_id = str(category_id)
+        
         result = self.mongodb_manager.list_products(
-            category=product['category_id'],
+            category=category_id,
             page=1,
             page_size=4
         )

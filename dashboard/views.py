@@ -208,8 +208,8 @@ def slider_toggle_status(request, slider_id):
         if new_status:
             return JsonResponse({
                 'success': True,
-                    'status': new_status
-                })
+                        'status': new_status
+        })
         else:
             return JsonResponse({
                 'success': False,
@@ -1587,9 +1587,13 @@ def user_create(request):
             if mongodb_manager.get_user_by_username(username):
                 errors.append('Username already exists.')
             
-            # Check if email already exists
+            # Check if email already exists (in both MongoDB and SQLite)
             if mongodb_manager.get_user_by_email(email):
                 errors.append('Email already exists.')
+            
+            # Check SQLite
+            if User.objects.filter(email=email).exists():
+                errors.append('Email already exists in system.')
             
             if errors:
                 for error in errors:
@@ -1728,10 +1732,20 @@ def user_edit(request, user_id):
                 if mongodb_manager.get_user_by_username(username):
                     errors.append('Username already exists.')
             
-            # Check if email changed and already exists
+            # Check if email changed and already exists (in both MongoDB and SQLite)
             if email != mongo_user.get('email'):
+                # Check MongoDB
                 if mongodb_manager.get_user_by_email(email):
                     errors.append('Email already exists.')
+                
+                # Check SQLite (exclude current user if exists)
+                if django_user:
+                    existing_user = User.objects.filter(email=email).exclude(id=django_user.id).first()
+                else:
+                    existing_user = User.objects.filter(email=email).first()
+                
+                if existing_user:
+                    errors.append('Email already exists in system.')
             
             if errors:
                 for error in errors:
@@ -1770,7 +1784,9 @@ def user_edit(request, user_id):
                     # Update Django user
                     if django_user:
                         django_user.username = username
-                        django_user.email = email
+                        # Only update email if it changed (to avoid UNIQUE constraint issues)
+                        if email != django_user.email:
+                            django_user.email = email
                         django_user.first_name = first_name
                         django_user.last_name = last_name
                         django_user.is_active = is_active
@@ -1781,19 +1797,35 @@ def user_edit(request, user_id):
                         django_user.save()
                     else:
                         # Create Django user if doesn't exist
-                        django_user = User.objects.create_user(
-                            username=username,
-                            email=email,
-                            password=password or 'temp_password_123',
-                            first_name=first_name,
-                            last_name=last_name,
-                            is_active=is_active,
-                            is_staff=is_staff,
-                            is_superuser=is_superuser,
-                        )
-                        if password:
-                            django_user.set_password(password)
+                        # Check if user with this email already exists in SQLite
+                        existing_django_user = User.objects.filter(email=email).first()
+                        if existing_django_user:
+                            # Update existing Django user instead of creating new one
+                            django_user = existing_django_user
+                            django_user.username = username
+                            django_user.first_name = first_name
+                            django_user.last_name = last_name
+                            django_user.is_active = is_active
+                            django_user.is_staff = is_staff
+                            django_user.is_superuser = is_superuser
+                            if password:
+                                django_user.set_password(password)
                             django_user.save()
+                        else:
+                            # Create new Django user
+                            django_user = User.objects.create_user(
+                                username=username,
+                                email=email,
+                                password=password or 'temp_password_123',
+                                first_name=first_name,
+                                last_name=last_name,
+                                is_active=is_active,
+                                is_staff=is_staff,
+                                is_superuser=is_superuser,
+                            )
+                            if password:
+                                django_user.set_password(password)
+                                django_user.save()
                     
                     messages.success(request, '✅ User updated successfully!')
                     return redirect('dashboard:users_list')

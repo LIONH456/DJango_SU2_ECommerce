@@ -237,7 +237,11 @@ def product_detail(request, product_id):
     # naive related products: same category if present
     related = []
     if product.get('category_id'):
-        rel_result = mongodb_manager.list_products(category=product['category_id'], page=1, page_size=4)
+        # Convert category_id to string if it's an ObjectId
+        category_id = product['category_id']
+        if not isinstance(category_id, str):
+            category_id = str(category_id)
+        rel_result = mongodb_manager.list_products(category=category_id, page=1, page_size=4)
         related = [p for p in rel_result['items'] if p['id'] != product['id']][:4]
 
     # Check if product is in user's wishlist

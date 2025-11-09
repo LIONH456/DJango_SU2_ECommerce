@@ -162,34 +162,42 @@ class MongoDBManager:
         
         # Category filter - supports hierarchical filtering (parent includes children)
         category_ids_list = []
-        if category and category.strip():
-            try:
-                category_id_obj = ObjectId(category.strip())
-                # Get all child categories (recursively) for hierarchical filtering
-                all_category_ids = [category_id_obj]
-                
-                # Recursive function to get all child categories
-                def get_child_categories(parent_obj_id):
-                    child_categories = self.categories_collection.find({'parent_id': parent_obj_id})
-                    child_ids = []
-                    for child in child_categories:
-                        child_id = child.get('_id')
-                        if child_id:
-                            child_ids.append(child_id)
-                            # Recursively get grandchildren
-                            child_ids.extend(get_child_categories(child_id))
-                    return child_ids
-                
-                # Get all child categories
-                child_ids = get_child_categories(category_id_obj)
-                if child_ids:
-                    all_category_ids.extend(child_ids)
-                
-                # Store category IDs for later use in query building
-                category_ids_list = all_category_ids
-            except Exception:
-                # If ObjectId conversion fails, skip category filter
-                pass
+        if category:
+            # Handle both ObjectId and string inputs
+            category_str = None
+            if isinstance(category, ObjectId):
+                category_str = str(category)
+            elif isinstance(category, str):
+                category_str = category.strip()
+            
+            if category_str:
+                try:
+                    category_id_obj = ObjectId(category_str)
+                    # Get all child categories (recursively) for hierarchical filtering
+                    all_category_ids = [category_id_obj]
+                    
+                    # Recursive function to get all child categories
+                    def get_child_categories(parent_obj_id):
+                        child_categories = self.categories_collection.find({'parent_id': parent_obj_id})
+                        child_ids = []
+                        for child in child_categories:
+                            child_id = child.get('_id')
+                            if child_id:
+                                child_ids.append(child_id)
+                                # Recursively get grandchildren
+                                child_ids.extend(get_child_categories(child_id))
+                        return child_ids
+                    
+                    # Get all child categories
+                    child_ids = get_child_categories(category_id_obj)
+                    if child_ids:
+                        all_category_ids.extend(child_ids)
+                    
+                    # Store category IDs for later use in query building
+                    category_ids_list = all_category_ids
+                except Exception:
+                    # If ObjectId conversion fails, skip category filter
+                    pass
         
         # Search filter (only if search is provided and not empty)
         search_pattern = None
