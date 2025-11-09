@@ -11,6 +11,9 @@ from django.urls import reverse
 import logging
 logger = logging.getLogger(__name__)
 
+# Import Telegram notification utilities
+from .telegram_utils import send_order_notification, send_payment_notification
+
 
 def send_html_email(subject, template_name, context, to_email):
     """Render an HTML email and send with a plain-text fallback."""
@@ -1165,6 +1168,21 @@ def create_order(request):
                     send_html_email(subject, 'emails/order_placed.html', context_email, recipient)
             except Exception as e:
                 logger.exception(f"Email send failed (order placed). To={getattr(request.user, 'email', None)} Host={getattr(settings, 'EMAIL_HOST', None)} User={getattr(settings, 'EMAIL_HOST_USER', None)} Port={getattr(settings, 'EMAIL_PORT', None)} TLS={getattr(settings, 'EMAIL_USE_TLS', None)}: {e}")
+            
+            # Send Telegram notification to owner (new order placed)
+            try:
+                order_notification_data = {
+                    'order_number': order_number or order_id,
+                    'total_amount': total_amount,
+                    'payment_method': payment_method,
+                    'customer_name': request.user.get_full_name() or request.user.username,
+                    'customer_email': request.user.email or '',
+                    'items': cart_items,
+                    'shipping_address': shipping_address,
+                }
+                send_order_notification(order_notification_data)
+            except Exception as e:
+                logger.exception(f"Telegram notification failed (order placed): {e}")
 
             return JsonResponse({
                 'success': True,
@@ -1396,6 +1414,20 @@ def paypal_capture_order(request):
                     send_html_email(subject, 'emails/payment_received.html', context_email, recipient)
             except Exception as e:
                 logger.exception(f"Email send failed (PayPal payment). {e}")
+            
+            # Send Telegram notification to owner (payment received)
+            try:
+                payment_notification_data = {
+                    'order_number': order.get('order_number', order_id),
+                    'total_amount': order.get('total_amount', 0),
+                    'payment_method': 'PayPal',
+                    'customer_name': request.user.get_full_name() or request.user.username,
+                    'customer_email': request.user.email or '',
+                    'items': order.get('items', []),
+                }
+                send_payment_notification(payment_notification_data)
+            except Exception as e:
+                logger.exception(f"Telegram notification failed (PayPal payment): {e}")
 
             return JsonResponse({'success': True, 'order_id': order_id, 'order_number': order.get('order_number', '')})
 
@@ -1455,6 +1487,22 @@ def paypal_return(request):
                     send_html_email(subject, 'emails/payment_received.html', context_email, recipient)
             except Exception as e:
                 logger.exception(f"Email send failed (PayPal return). {e}")
+            
+            # Send Telegram notification to owner (payment received via redirect)
+            try:
+                order = mongodb_manager.get_order_by_id(order_id) or {}
+                payment_notification_data = {
+                    'order_number': order.get('order_number', order_id),
+                    'total_amount': order.get('total_amount', 0),
+                    'payment_method': 'PayPal',
+                    'customer_name': request.user.get_full_name() or request.user.username,
+                    'customer_email': request.user.email or '',
+                    'items': order.get('items', []),
+                }
+                send_payment_notification(payment_notification_data)
+            except Exception as e:
+                logger.exception(f"Telegram notification failed (PayPal return): {e}")
+            
             # Redirect to thanks
             order = mongodb_manager.get_order_by_id(order_id) or {}
             return redirect(f"{reverse('main:order_thanks')}?order_id={order_id}&order_number={order.get('order_number','')}")
@@ -1678,6 +1726,20 @@ def check_payment_status(request):
                             send_html_email(subject, 'emails/payment_received.html', context_email, recipient)
                     except Exception as e:
                         logger.exception(f"Email send failed (payment completed). To={getattr(request.user, 'email', None)} Host={getattr(settings, 'EMAIL_HOST', None)} User={getattr(settings, 'EMAIL_HOST_USER', None)} Port={getattr(settings, 'EMAIL_PORT', None)} TLS={getattr(settings, 'EMAIL_USE_TLS', None)}: {e}")
+                    
+                    # Send Telegram notification to owner (Bakong payment completed)
+                    try:
+                        payment_notification_data = {
+                            'order_number': order.get('order_number', order_id),
+                            'total_amount': order.get('total_amount', 0),
+                            'payment_method': order.get('payment_method', 'Bakong'),
+                            'customer_name': request.user.get_full_name() or request.user.username,
+                            'customer_email': request.user.email or '',
+                            'items': order.get('items', []),
+                        }
+                        send_payment_notification(payment_notification_data)
+                    except Exception as e:
+                        logger.exception(f"Telegram notification failed (Bakong payment): {e}")
                     
                     # Clear only selected items from user's cart after successful payment
                     # The frontend will handle removing only checkoutItems from localStorage

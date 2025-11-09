@@ -1,7 +1,6 @@
 # Docker Compose configuration for Django ECommerce Application
 # This file defines the services, networks, and volumes needed to run the application
-
-version: '3.8'
+# Note: version is not needed in Docker Compose v2+ (it's automatically detected)
 
 services:
   # Django web application service
@@ -54,16 +53,18 @@ services:
       - ./staticfiles:/app/staticfiles:ro
       # Media files served by nginx (read-only)
       - ./media:/app/media:ro
-    # Depends on web service
+    # Depends on web service (wait for web to be healthy)
     depends_on:
-      - web
+      web:
+        condition: service_healthy
     # Health check (nginx alpine has wget)
+    # Check if nginx is running and can serve requests
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/nginx-health"]
       interval: 30s
       timeout: 10s
-      retries: 3
-      start_period: 10s
+      retries: 5
+      start_period: 30s
 
 # Networks
 # Default network allows services to communicate using service names

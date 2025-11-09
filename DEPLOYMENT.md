@@ -251,7 +251,11 @@ Edit the `.env` file with your actual values:
 # Django Settings
 SECRET_KEY=your-generated-secret-key-here
 DEBUG=False
-ALLOWED_HOSTS=YOUR_VPS_IP  # Replace with your actual VPS IP, e.g., 123.45.67.89
+# For production with domain: yourdomain.com,www.yourdomain.com,YOUR_VPS_IP
+# For IP only: YOUR_VPS_IP
+ALLOWED_HOSTS=yourdomain.com,www.yourdomain.com,YOUR_VPS_IP
+CSRF_TRUSTED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
+USE_HTTPS=True
 
 # MongoDB Atlas (your cloud database)
 MONGODB_ATLAS_URI=mongodb+srv://username:password@cluster.mongodb.net/ECommerceSU2?retryWrites=true&w=majority
@@ -268,14 +272,11 @@ DEFAULT_FROM_EMAIL=your-email@gmail.com
 # PayPal Configuration
 PAYPAL_CLIENT_ID=your-paypal-client-id
 PAYPAL_CLIENT_SECRET=your-paypal-client-secret
-PAYPAL_ENV=sandbox
+PAYPAL_MODE=sandbox  # Change to 'live' for production
 
-# Database (leave empty to use SQLite, or configure PostgreSQL)
-DB_NAME=
-DB_USER=
-DB_PASSWORD=
-DB_HOST=
-DB_PORT=5432
+# Telegram Bot Configuration (for owner notifications)
+TELEGRAM_BOT_TOKEN=your-telegram-bot-token-here
+TELEGRAM_CHAT_ID=your-telegram-chat-id-here
 ```
 
 **Important Notes:**
