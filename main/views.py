@@ -176,11 +176,44 @@ def shop(request):
         page_size=1000  # Load all products at once
     )
 
+    # Fetch all active categories from MongoDB
+    try:
+        all_categories = mongodb_manager.list_categories(is_active=True)
+        # Build hierarchical category structure
+        categories_tree = []
+        category_map = {}
+        
+        # First pass: create map of all categories
+        for cat in all_categories:
+            category_map[cat['id']] = cat
+            cat['children'] = []
+        
+        # Second pass: build tree structure
+        for cat in all_categories:
+            if cat.get('parent_id') and cat['parent_id'] in category_map:
+                # This is a child category
+                category_map[cat['parent_id']]['children'].append(cat)
+            else:
+                # This is a top-level category
+                categories_tree.append(cat)
+        
+        # Sort categories by sort_order
+        def sort_categories(cats):
+            cats.sort(key=lambda x: x.get('sort_order', 0))
+            for cat in cats:
+                if cat['children']:
+                    sort_categories(cat['children'])
+        
+        sort_categories(categories_tree)
+    except Exception as e:
+        logger.exception(f"Error fetching categories: {e}")
+        categories_tree = []
+
     context = {
         'page_title': 'Shop',
         'products': result['items'],
         'total_products': result['total'],
-        'categories': [],
+        'categories': categories_tree,
         'current_category': category or '',
         'search_query': search or '',
     }

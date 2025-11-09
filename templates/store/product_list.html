@@ -124,6 +124,80 @@
                 color: white;
             }
             
+            .category-list > li {
+                position: relative;
+            }
+            
+            .category-list > li > a.has-children {
+                position: relative;
+                padding-right: 35px;
+            }
+            
+            .category-toggle {
+                position: absolute;
+                right: 8px;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 20px;
+                height: 20px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                border-radius: 3px;
+                transition: background-color 0.2s ease;
+                z-index: 1;
+            }
+            
+            .category-toggle:hover {
+                background-color: rgba(0, 123, 255, 0.1);
+            }
+            
+            .category-toggle::after {
+                content: '▶';
+                font-size: 10px;
+                color: #666;
+                transition: transform 0.3s ease;
+            }
+            
+            .category-list > li.expanded > a.has-children .category-toggle::after {
+                transform: rotate(90deg);
+            }
+            
+            .subcategory-list {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+                max-height: 0;
+                overflow: hidden;
+                transition: max-height 0.3s ease, margin 0.3s ease, padding 0.3s ease;
+            }
+            
+            .category-list > li.expanded > .subcategory-list {
+                max-height: 1000px;
+                margin: 8px 0 0 20px;
+                padding: 0;
+            }
+            
+            .subcategory-list li {
+                margin-bottom: 6px;
+            }
+            
+            .subcategory-list a {
+                color: #666;
+                font-size: 14px;
+                padding: 6px 12px;
+                display: block;
+                border-radius: 4px;
+                transition: all 0.2s;
+            }
+            
+            .subcategory-list a:hover, .subcategory-list a.active {
+                background: #e3f2fd;
+                color: #007bff;
+                padding-left: 16px;
+            }
+            
             .price-range {
                 padding: 10px 0;
             }
@@ -397,11 +471,31 @@
                         <div class="widget-content">
                             <ul class="category-list">
                                 <li><a href="{% url 'main:shop' %}" class="{% if not current_category %}active{% endif %}">All Categories</a></li>
-                                <li><a href="{% url 'main:shop' %}?category=women" class="{% if current_category == 'women' %}active{% endif %}">Women's Fashion</a></li>
-                                <li><a href="{% url 'main:shop' %}?category=men" class="{% if current_category == 'men' %}active{% endif %}">Men's Fashion</a></li>
-                                <li><a href="{% url 'main:shop' %}?category=accessories" class="{% if current_category == 'accessories' %}active{% endif %}">Accessories</a></li>
-                                <li><a href="{% url 'main:shop' %}?category=shoes" class="{% if current_category == 'shoes' %}active{% endif %}">Shoes</a></li>
-                                <li><a href="{% url 'main:shop' %}?category=bags" class="{% if current_category == 'bags' %}active{% endif %}">Bags</a></li>
+                                {% for category in categories %}
+                                    <li class="{% if category.children %}{% for subcat in category.children %}{% if current_category == subcat.id %}expanded{% endif %}{% endfor %}{% if current_category == category.id %}expanded{% endif %}{% endif %}">
+                                        <a href="{% url 'main:shop' %}?category={{ category.id }}" 
+                                           class="{% if current_category == category.id %}active{% endif %} {% if category.children %}has-children{% endif %}">
+                                            {{ category.name }}
+                                            {% if category.children %}
+                                                <span class="category-toggle" onclick="event.stopPropagation(); toggleCategory(this.closest('li'));"></span>
+                                            {% endif %}
+                                        </a>
+                                        {% if category.children %}
+                                            <ul class="subcategory-list">
+                                                {% for subcat in category.children %}
+                                                    <li>
+                                                        <a href="{% url 'main:shop' %}?category={{ subcat.id }}" 
+                                                           class="{% if current_category == subcat.id %}active{% endif %}">
+                                                            {{ subcat.name }}
+                                                        </a>
+                                                    </li>
+                                                {% endfor %}
+                                            </ul>
+                                        {% endif %}
+                                    </li>
+                                {% empty %}
+                                    <li class="text-muted">No categories available</li>
+                                {% endfor %}
                             </ul>
                         </div>
                     </div>
@@ -526,10 +620,37 @@ function toggleFilters() {
     sidebar.classList.toggle('show');
 }
 
-// Price range slider update
-document.getElementById('priceRange').addEventListener('input', function() {
-    document.getElementById('priceValue').textContent = '$' + this.value;
+// Category expand/collapse toggle
+function toggleCategory(categoryElement) {
+    categoryElement.classList.toggle('expanded');
+}
+
+// Auto-expand categories that contain the active category
+document.addEventListener('DOMContentLoaded', function() {
+    const currentCategory = '{{ current_category }}';
+    if (currentCategory) {
+        // Find all category items
+        const categoryItems = document.querySelectorAll('.category-list > li');
+        categoryItems.forEach(item => {
+            const subcategoryLinks = item.querySelectorAll('.subcategory-list a');
+            subcategoryLinks.forEach(link => {
+                const href = link.getAttribute('href');
+                if (href && href.includes('category=' + currentCategory)) {
+                    // This parent contains the active category, expand it
+                    item.classList.add('expanded');
+                }
+            });
+        });
+    }
 });
+
+// Price range slider update
+const priceRange = document.getElementById('priceRange');
+if (priceRange) {
+    priceRange.addEventListener('input', function() {
+        document.getElementById('priceValue').textContent = '$' + this.value;
+    });
+}
 
 // Product sorting (you can implement this with AJAX or page reload)
 function sortProducts(value) {

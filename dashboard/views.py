@@ -8,10 +8,13 @@ from django.conf import settings
 import json
 import os
 import uuid
+import logging
 from pathlib import Path
 from .models import Slider
 from django.db import models
 from main.api_client import get_api_client
+
+logger = logging.getLogger(__name__)
 
 # Create your views here.
 @login_required
@@ -824,12 +827,45 @@ def categories_list(request):
                    search_lower in (cat.get('description', '') or '').lower()
             ]
         
-        total = len(all_categories)
+        # Build hierarchical structure for display
+        category_map = {}
+        top_level_categories = []
+        
+        # First pass: create map and identify top-level categories
+        for cat in all_categories:
+            category_map[cat['id']] = cat
+            cat['children'] = []
+            cat['level'] = 0
+        
+        # Second pass: build tree and calculate levels
+        for cat in all_categories:
+            parent_id = cat.get('parent_id')
+            if parent_id and parent_id in category_map:
+                # This is a child category
+                category_map[parent_id]['children'].append(cat)
+                # Calculate level based on parent
+                parent = category_map[parent_id]
+                cat['level'] = parent.get('level', 0) + 1
+            else:
+                # This is a top-level category
+                top_level_categories.append(cat)
+        
+        # Flatten tree for display (maintaining hierarchy order)
+        def flatten_categories(cats, result_list):
+            for cat in sorted(cats, key=lambda x: x.get('sort_order', 0)):
+                result_list.append(cat)
+                if cat['children']:
+                    flatten_categories(cat['children'], result_list)
+        
+        categories_flat = []
+        flatten_categories(top_level_categories, categories_flat)
+        
+        total = len(categories_flat)
         
         # Manual pagination
         start = (page - 1) * per_page
         end = start + per_page
-        categories = all_categories[start:end]
+        categories = categories_flat[start:end]
         
     except Exception as e:
         categories = []
@@ -855,36 +891,65 @@ def categories_list(request):
     return render(request, 'dashboard/categories_list.html', context)
 
 def handle_category_image(request, existing_image=None):
-    """Handle category image upload or URL"""
+    """Handle category image upload or URL - saves to both static and staticfiles for VPS compatibility"""
     image_path = existing_image
     
     # Handle uploaded file (priority)
     if 'image' in request.FILES:
         uploaded_file = request.FILES['image']
-        static_dir = Path(settings.BASE_DIR) / 'static' / 'images' / 'categories'
-        static_dir.mkdir(parents=True, exist_ok=True)
-        
-        # Delete old image if exists (only local files)
-        if existing_image and not existing_image.startswith('http://') and not existing_image.startswith('https://'):
-            old_path = Path(settings.BASE_DIR) / 'static' / existing_image
-            if old_path.exists():
-                try:
-                    os.remove(old_path)
-                except Exception:
-                    pass
         
         # Generate unique filename
         file_extension = uploaded_file.name.split('.')[-1]
         unique_filename = f"{uuid.uuid4()}.{file_extension}"
-        file_path = static_dir / unique_filename
+        relative_path = f"images/categories/{unique_filename}"
         
-        # Save file
-        with open(file_path, 'wb+') as destination:
-            for chunk in uploaded_file.chunks():
-                destination.write(chunk)
+        # Save to static directory (for development)
+        static_dir = Path(settings.BASE_DIR) / 'static' / 'images' / 'categories'
+        static_dir.mkdir(parents=True, exist_ok=True)
+        static_file_path = static_dir / unique_filename
+        
+        # Save to staticfiles directory (for production/VPS)
+        staticfiles_dir = Path(settings.BASE_DIR) / 'staticfiles' / 'images' / 'categories'
+        staticfiles_dir.mkdir(parents=True, exist_ok=True)
+        staticfiles_file_path = staticfiles_dir / unique_filename
+        
+        # Delete old image if exists (only local files)
+        if existing_image and not existing_image.startswith('http://') and not existing_image.startswith('https://'):
+            # Try to delete from static
+            old_static_path = Path(settings.BASE_DIR) / 'static' / existing_image
+            if old_static_path.exists():
+                try:
+                    os.remove(old_static_path)
+                except Exception:
+                    pass
+            # Try to delete from staticfiles
+            old_staticfiles_path = Path(settings.BASE_DIR) / 'staticfiles' / existing_image
+            if old_staticfiles_path.exists():
+                try:
+                    os.remove(old_staticfiles_path)
+                except Exception:
+                    pass
+        
+        # Read file content once
+        file_content = uploaded_file.read()
+        uploaded_file.seek(0)  # Reset file pointer for next read
+        
+        # Save to static directory
+        try:
+            with open(static_file_path, 'wb+') as destination:
+                destination.write(file_content)
+        except Exception as e:
+            logger.error(f"Error saving to static directory: {e}")
+        
+        # Save to staticfiles directory (for production)
+        try:
+            with open(staticfiles_file_path, 'wb+') as destination:
+                destination.write(file_content)
+        except Exception as e:
+            logger.error(f"Error saving to staticfiles directory: {e}")
         
         # Store relative path for static files
-        image_path = f"images/categories/{unique_filename}"
+        image_path = relative_path
     # Handle URL input (if no file uploaded)
     elif 'image_url' in request.POST and request.POST.get('image_url', '').strip():
         image_path = request.POST.get('image_url', '').strip()
