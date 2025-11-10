@@ -175,7 +175,7 @@ class MongoDBManager:
                     category_id_obj = ObjectId(category_str)
                     # Get all child categories (recursively) for hierarchical filtering
                     all_category_ids = [category_id_obj]
-                    
+                
                     # Recursive function to get all child categories
                     def get_child_categories(parent_obj_id):
                         child_categories = self.categories_collection.find({'parent_id': parent_obj_id})
@@ -187,7 +187,7 @@ class MongoDBManager:
                                 # Recursively get grandchildren
                                 child_ids.extend(get_child_categories(child_id))
                         return child_ids
-                    
+                
                     # Get all child categories
                     child_ids = get_child_categories(category_id_obj)
                     if child_ids:

@@ -207,6 +207,236 @@
             font-size: 14px;
             font-weight: 500;
         }
+
+        /* FAQ Chatbot Styles */
+        .faq-chatbot-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9998;
+            font-family: Arial, sans-serif;
+        }
+
+        .faq-chatbot-button {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .faq-chatbot-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+        }
+
+        .faq-chatbot-window {
+            position: absolute;
+            bottom: 80px;
+            right: 0;
+            width: 380px;
+            height: 500px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .faq-chatbot-window.active {
+            display: flex;
+        }
+
+        .faq-chatbot-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .faq-chatbot-header h4 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .faq-chatbot-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+
+        .faq-chatbot-close:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .faq-chatbot-messages {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 15px;
+            background: #f8f9fa;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            position: relative;
+        }
+
+        .faq-message {
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .faq-message.user {
+            align-items: flex-end;
+        }
+
+        .faq-message.bot {
+            align-items: flex-start;
+        }
+
+        .faq-message-content {
+            max-width: 80%;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .faq-message.user .faq-message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .faq-message.bot .faq-message-content {
+            background: white;
+            color: #333;
+            border: 1px solid #e0e0e0;
+            border-bottom-left-radius: 4px;
+        }
+
+        .faq-quick-questions {
+            padding: 10px 15px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            border-bottom: 1px solid #e0e0e0;
+            display: none;
+            flex-shrink: 0;
+        }
+
+        .faq-quick-questions.show {
+            display: block;
+        }
+
+        .faq-quick-questions-title {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .faq-quick-questions-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .faq-quick-question {
+            background: #f0f0f0;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+            color: #333;
+        }
+
+        .faq-quick-question:hover {
+            background: #e0e0e0;
+            transform: translateX(2px);
+        }
+
+        .faq-chatbot-input-container {
+            padding: 12px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 8px;
+        }
+
+        .faq-chatbot-input {
+            flex: 1;
+            border: 1px solid #e0e0e0;
+            border-radius: 20px;
+            padding: 8px 14px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .faq-chatbot-input:focus {
+            border-color: #667eea;
+        }
+
+        .faq-chatbot-send {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .faq-chatbot-send:hover {
+            transform: scale(1.1);
+        }
+
+        .faq-chatbot-send:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .faq-loading {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid #667eea;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
     
     {% block extra_css %}{% endblock %}
@@ -245,6 +475,36 @@
     <!-- Scroll Up -->
     <div id="back-top" >
         <a title="Go to Top" href="#"> <i class="fas fa-level-up-alt"></i></a>
+    </div>
+
+    <!-- FAQ Chatbot Widget -->
+    <div class="faq-chatbot-container">
+        <button class="faq-chatbot-button" id="faqChatbotToggle" title="FAQ Chat">
+            <i class="fas fa-comments"></i>
+        </button>
+        <div class="faq-chatbot-window" id="faqChatbotWindow">
+            <div class="faq-chatbot-header">
+                <h4>FAQ Assistant</h4>
+                <button class="faq-chatbot-close" id="faqChatbotClose">×</button>
+            </div>
+            <div class="faq-chatbot-messages" id="faqChatbotMessages">
+                <div class="faq-message bot">
+                    <div class="faq-message-content">
+                        Hello! I'm here to help. Ask me anything about our store, products, or services.
+                    </div>
+                </div>
+            </div>
+            <div class="faq-quick-questions" id="faqQuickQuestions">
+                <div class="faq-quick-questions-title">Quick Questions:</div>
+                <div class="faq-quick-questions-list" id="faqQuickQuestionsList"></div>
+            </div>
+            <div class="faq-chatbot-input-container">
+                <input type="text" class="faq-chatbot-input" id="faqChatbotInput" placeholder="Type your question...">
+                <button class="faq-chatbot-send" id="faqChatbotSend">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
     </div>
 
     {% include 'Home/includes/scripts.html' %}
@@ -493,6 +753,249 @@
             }, 300); // Wait for animation to complete
         }, 3000);
     }
+
+    // FAQ Chatbot Functionality
+    (function() {
+        const chatbotToggle = document.getElementById('faqChatbotToggle');
+        const chatbotWindow = document.getElementById('faqChatbotWindow');
+        const chatbotClose = document.getElementById('faqChatbotClose');
+        const chatbotMessages = document.getElementById('faqChatbotMessages');
+        const chatbotInput = document.getElementById('faqChatbotInput');
+        const chatbotSend = document.getElementById('faqChatbotSend');
+        const quickQuestions = document.getElementById('faqQuickQuestions');
+        const quickQuestionsList = document.getElementById('faqQuickQuestionsList');
+
+        let allFAQs = [];
+        let currentQuickQuestions = [];
+        let quickQuestionsShown = false;
+        let lastQuestionClickTime = 0;
+        let questionChangeTimer = null;
+        let answeredQuestions = new Set(); // Track answered questions to avoid duplicates
+        let quickQuestionsHidden = false; // Flag to prevent showing quick questions immediately after hiding
+
+        // Toggle chatbot window
+        chatbotToggle.addEventListener('click', function() {
+            chatbotWindow.classList.toggle('active');
+            if (chatbotWindow.classList.contains('active')) {
+                quickQuestionsHidden = false; // Reset flag when opening
+                loadFAQs();
+                // Show quick questions immediately when opening
+                setTimeout(() => {
+                    showQuickQuestions();
+                }, 300); // Small delay to ensure FAQs are loaded
+            }
+        });
+
+        chatbotClose.addEventListener('click', function() {
+            chatbotWindow.classList.remove('active');
+        });
+
+        // Load FAQs from API
+        async function loadFAQs() {
+            try {
+                const response = await fetch('/api/faqs/');
+                const data = await response.json();
+                allFAQs = data.results || [];
+                generateQuickQuestions();
+                // Show quick questions when FAQs are loaded
+                showQuickQuestions();
+            } catch (error) {
+                console.error('Error loading FAQs:', error);
+                addBotMessage('Sorry, I couldn\'t load FAQs. Please try again later.');
+            }
+        }
+
+        // Generate quick questions from FAQs
+        function generateQuickQuestions() {
+            if (allFAQs.length === 0) return;
+            
+            // Filter out already answered questions
+            const availableFAQs = allFAQs.filter(faq => !answeredQuestions.has(faq.question));
+            
+            // If we've answered all questions, reset the answered set
+            if (availableFAQs.length === 0) {
+                answeredQuestions.clear();
+                availableFAQs.push(...allFAQs);
+            }
+            
+            // Get random FAQs for quick questions (max 3), excluding already answered ones
+            const shuffled = [...availableFAQs].sort(() => 0.5 - Math.random());
+            currentQuickQuestions = shuffled.slice(0, 3).map(faq => faq.question);
+            renderQuickQuestions();
+        }
+
+        // Render quick questions
+        function renderQuickQuestions() {
+            quickQuestionsList.innerHTML = '';
+            currentQuickQuestions.forEach(question => {
+                const btn = document.createElement('button');
+                btn.className = 'faq-quick-question';
+                btn.textContent = question;
+                btn.addEventListener('click', function() {
+                    handleQuickQuestionClick(question);
+                });
+                quickQuestionsList.appendChild(btn);
+            });
+        }
+
+        // Handle quick question click
+        function handleQuickQuestionClick(question) {
+            // Mark question as answered
+            answeredQuestions.add(question);
+            
+            // Set flag to prevent showing quick questions
+            quickQuestionsHidden = true;
+            
+            // Hide quick questions immediately
+            hideQuickQuestions();
+            
+            addUserMessage(question);
+            searchFAQ(question);
+            
+            // Set timer to show new questions after 10 seconds
+            lastQuestionClickTime = Date.now();
+            if (questionChangeTimer) clearTimeout(questionChangeTimer);
+            questionChangeTimer = setTimeout(() => {
+                quickQuestionsHidden = false;
+                generateQuickQuestions();
+                checkAndShowQuickQuestions();
+            }, 10000);
+        }
+
+        // Show/hide quick questions based on scroll position
+        function checkAndShowQuickQuestions() {
+            // Don't show if we just hid them after answering
+            if (quickQuestionsHidden) {
+                return;
+            }
+            
+            // Always show quick questions when not hidden
+            if (!quickQuestionsShown && currentQuickQuestions.length > 0) {
+                showQuickQuestions();
+            }
+        }
+
+        function showQuickQuestions() {
+            if (currentQuickQuestions.length > 0 && !quickQuestionsHidden) {
+                quickQuestions.classList.add('show');
+                quickQuestionsShown = true;
+            }
+        }
+
+        function hideQuickQuestions() {
+            if (quickQuestions.classList.contains('show')) {
+                quickQuestions.classList.remove('show');
+                quickQuestionsShown = false;
+            }
+        }
+
+        // No need for scroll listener since quick questions are always at bottom
+
+        // Send message
+        chatbotSend.addEventListener('click', sendMessage);
+        chatbotInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        async function sendMessage() {
+            const message = chatbotInput.value.trim();
+            if (!message) return;
+
+            // Mark question as answered if it matches a quick question
+            if (currentQuickQuestions.includes(message)) {
+                answeredQuestions.add(message);
+            }
+
+            // Set flag to prevent showing quick questions
+            quickQuestionsHidden = true;
+
+            // Hide quick questions immediately
+            hideQuickQuestions();
+
+            addUserMessage(message);
+            chatbotInput.value = '';
+            chatbotSend.disabled = true;
+            chatbotSend.innerHTML = '<div class="faq-loading"></div>';
+
+            await searchFAQ(message);
+
+            chatbotSend.disabled = false;
+            chatbotSend.innerHTML = '<i class="fas fa-paper-plane"></i>';
+            
+            // Show new questions after 10 seconds
+            if (questionChangeTimer) clearTimeout(questionChangeTimer);
+            questionChangeTimer = setTimeout(() => {
+                quickQuestionsHidden = false;
+                generateQuickQuestions();
+                checkAndShowQuickQuestions();
+            }, 10000);
+        }
+
+        // Search FAQ
+        async function searchFAQ(query) {
+            try {
+                const response = await fetch(`/api/faqs/search/?q=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                const results = data.results || [];
+
+                if (results.length > 0) {
+                    // Find best match (highest relevance)
+                    const bestMatch = results[0];
+                    addBotMessage(bestMatch.answer);
+                } else {
+                    addBotMessage('I couldn\'t find an answer to that question. Please try rephrasing or ask something else.');
+                }
+            } catch (error) {
+                console.error('Error searching FAQs:', error);
+                addBotMessage('Sorry, I encountered an error. Please try again.');
+            }
+        }
+
+        // Add user message
+        function addUserMessage(text) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'faq-message user';
+            messageDiv.innerHTML = `<div class="faq-message-content">${escapeHtml(text)}</div>`;
+            chatbotMessages.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        // Add bot message
+        function addBotMessage(text) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'faq-message bot';
+            messageDiv.innerHTML = `<div class="faq-message-content">${escapeHtml(text)}</div>`;
+            chatbotMessages.appendChild(messageDiv);
+            scrollToBottom();
+            
+            // Don't check for quick questions if we just hid them after answering
+            // They will be shown by the timer instead
+        }
+
+        // Scroll to bottom
+        function scrollToBottom() {
+            // Use requestAnimationFrame to ensure DOM is updated
+            requestAnimationFrame(() => {
+                const messagesContainer = chatbotMessages;
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            });
+        }
+
+        // Escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Show quick questions on initial load
+        if (chatbotWindow.classList.contains('active')) {
+            loadFAQs();
+            showQuickQuestions();
+        }
+    })();
     </script>
 </body>
 </html>

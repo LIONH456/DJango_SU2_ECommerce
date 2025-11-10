@@ -208,7 +208,7 @@ def slider_toggle_status(request, slider_id):
         if new_status:
             return JsonResponse({
                 'success': True,
-                        'status': new_status
+                            'status': new_status
         })
         else:
             return JsonResponse({
@@ -1787,11 +1787,11 @@ def user_edit(request, user_id):
                         # Only update email if it changed (to avoid UNIQUE constraint issues)
                         if email != django_user.email:
                             django_user.email = email
-                        django_user.first_name = first_name
-                        django_user.last_name = last_name
-                        django_user.is_active = is_active
-                        django_user.is_staff = is_staff
-                        django_user.is_superuser = is_superuser
+                            django_user.first_name = first_name
+                            django_user.last_name = last_name
+                            django_user.is_active = is_active
+                            django_user.is_staff = is_staff
+                            django_user.is_superuser = is_superuser
                         if password:
                             django_user.set_password(password)
                         django_user.save()
@@ -1814,18 +1814,18 @@ def user_edit(request, user_id):
                         else:
                             # Create new Django user
                             django_user = User.objects.create_user(
-                                username=username,
-                                email=email,
-                                password=password or 'temp_password_123',
-                                first_name=first_name,
-                                last_name=last_name,
-                                is_active=is_active,
-                                is_staff=is_staff,
-                                is_superuser=is_superuser,
-                            )
-                            if password:
-                                django_user.set_password(password)
-                                django_user.save()
+                            username=username,
+                            email=email,
+                            password=password or 'temp_password_123',
+                            first_name=first_name,
+                            last_name=last_name,
+                            is_active=is_active,
+                            is_staff=is_staff,
+                            is_superuser=is_superuser,
+                        )
+                        if password:
+                            django_user.set_password(password)
+                            django_user.save()
                     
                     messages.success(request, '✅ User updated successfully!')
                     return redirect('dashboard:users_list')
