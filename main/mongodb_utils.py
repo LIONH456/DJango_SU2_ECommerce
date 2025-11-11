@@ -136,6 +136,12 @@ class MongoDBManager:
             # URL-encode spaces in local file paths if needed
             if not main_image.startswith('http://') and not main_image.startswith('https://'):
                 main_image = main_image.replace(' ', '%20') if ' ' in main_image else main_image
+        # Normalize category_id to string for JSON serialization
+        raw_category_id = product_doc.get('category_id')
+        if isinstance(raw_category_id, ObjectId):
+            category_id_str = str(raw_category_id)
+        else:
+            category_id_str = raw_category_id if (isinstance(raw_category_id, str) or raw_category_id is None) else str(raw_category_id)
         return {
             'id': str(product_doc.get('_id')),
             'name': product_doc.get('name', ''),
@@ -146,7 +152,7 @@ class MongoDBManager:
             'sku': product_doc.get('sku', ''),
             'quantity': product_doc.get('quantity', 0),
             'is_available': product_doc.get('is_available', True),
-            'category_id': product_doc.get('category_id'),
+            'category_id': category_id_str,
             'tags': product_doc.get('tags') or [],
             'images': images,
             'main_image': main_image,
